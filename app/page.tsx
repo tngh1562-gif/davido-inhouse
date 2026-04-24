@@ -12,14 +12,15 @@ export default function Home() {
   const [auth, setAuth] = useState(false)
   const [pwInput, setPwInput] = useState('')
   const [pwError, setPwError] = useState(false)
-  const [tab, setTab] = useState<'inhouse'|'vote'|'roulette'>('inhouse')
+  const [tab, setTab] = useState<'inhouse'|'vote'>('inhouse')
   const [chzzkConnected, setChzzkConnected] = useState(false)
   const [channelId, setChannelId] = useState('')
   const [inputCid, setInputCid] = useState('')
   const [chatLog, setChatLog] = useState<{nickname:string,text:string}[]>([])
   const [vote, setVote] = useState<Vote>({ active: false, title: '', items: [], startedAt: null })
-  const [voteTitle, setVoteTitle] = useState('블루팀 vs 레드팀')
-  const [voteItemsText, setVoteItemsText] = useState('블루팀 승리\n레드팀 승리')
+  const [voteTitle, setVoteTitle] = useState('내전 투표')
+  const [voteItemsText, setVoteItemsText] = useState('첫참\n선참권\n중참\n연참\n취소')
+  const [showRoulette, setShowRoulette] = useState(false)
   const [rouletteItems, setRouletteItems] = useState<RouletteItem[]>([])
   const [rInput, setRInput] = useState('')
   const [rWeight, setRWeight] = useState('1')
@@ -68,7 +69,7 @@ export default function Home() {
     return () => es.close()
   }, [auth])
 
-  useEffect(() => { if (tab === 'roulette') drawWheel(angle) }, [rouletteItems, angle, tab])
+  useEffect(() => { if (showRoulette) drawWheel(angle) }, [rouletteItems, angle, showRoulette])
 
   function drawWheel(rot: number) {
     const c = canvasRef.current; if (!c) return
@@ -146,6 +147,7 @@ export default function Home() {
   const btn = (bg='#e8b84b', fg='#0d1117'): React.CSSProperties => ({ padding:'7px 16px', borderRadius:'4px', border:'none', background:bg, color:fg, cursor:'pointer', fontSize:'13px', fontWeight:600, fontFamily:'inherit', whiteSpace:'nowrap' })
   const navBtn = (on:boolean): React.CSSProperties => ({ padding:'14px 20px', border:'none', borderBottom:on?'2px solid #e8b84b':'2px solid transparent', background:'none', color:on?'#e8b84b':'#5a7a9a', cursor:'pointer', fontSize:'13px', fontFamily:'inherit', fontWeight:on?700:400 })
 
+  // ── 비밀번호 화면 ──
   if (!auth) return (
     <div style={{minHeight:'100vh',background:'#07090f',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'sans-serif'}}>
       <div style={{background:'#0d1117',border:'1px solid #1f2d42',borderRadius:'8px',padding:'44px 52px',textAlign:'center',minWidth:'340px'}}>
@@ -166,166 +168,182 @@ export default function Home() {
     </div>
   )
 
+  const total = vote.items.reduce((s,i)=>s+i.votes.length, 0)
+
   return (
     <div style={{fontFamily:'sans-serif',minHeight:'100vh',background:'#07090f',color:'#c8d8ec'}}>
+
+      {/* 헤더 탭 */}
       <div style={{background:'#0d1117',borderBottom:'1px solid #1f2d42',padding:'0 24px',display:'flex',alignItems:'stretch'}}>
         <div style={{fontSize:'18px',fontWeight:700,color:'#e8b84b',display:'flex',alignItems:'center',marginRight:'20px'}}>⚔ 다비도의 내전</div>
-        {([['inhouse','⚔ 내전 진행'],['vote','📊 채팅 투표'],['roulette','🎡 룰렛']] as [string,string][]).map(([t,label])=>(
-          <button key={t} style={navBtn(tab===t)} onClick={()=>setTab(t as any)}>{label}</button>
-        ))}
+        <button style={navBtn(tab==='inhouse')} onClick={()=>setTab('inhouse')}>⚔ 내전 진행</button>
+        <button style={navBtn(tab==='vote')} onClick={()=>setTab('vote')}>📊 채팅 투표</button>
       </div>
 
-      {tab !== 'inhouse' && (
+      {/* 치지직 연결 바 - 투표 탭에서만 */}
+      {tab==='vote' && (
         <div style={{background:'#0d1117',borderBottom:'1px solid #1f2d42',padding:'9px 24px',display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap',fontSize:'13px'}}>
           <div style={{width:'8px',height:'8px',borderRadius:'50%',background:chzzkConnected?'#34a853':'#ea4335',flexShrink:0}}/>
           <span style={{color:'#5a7a9a'}}>치지직 채팅</span>
           {chzzkConnected ? <>
-            <span style={{color:'#34a853',fontWeight:600}}>{channelId.slice(0,12)}... 연결됨</span>
+            <span style={{color:'#34a853',fontWeight:600}}>{channelId.slice(0,16)}... 연결됨</span>
             <button style={btn('#ea4335','#fff')} onClick={()=>api('disconnect_chzzk')}>연결 해제</button>
           </> : <>
             <input style={{...inp,width:'280px'}} placeholder="채널 ID (URL 마지막 부분)" value={inputCid} onChange={e=>setInputCid(e.target.value)} onKeyDown={e=>e.key==='Enter'&&api('connect_chzzk',{channelId:inputCid})}/>
             <button style={btn()} onClick={()=>api('connect_chzzk',{channelId:inputCid})}>연결</button>
             <span style={{color:'#5a7a9a',fontSize:'12px'}}>예) chzzk.naver.com/<b style={{color:'#e8b84b'}}>여기 부분</b></span>
           </>}
-          {tab==='vote'&&<div style={{marginLeft:'auto',display:'flex',gap:'6px',alignItems:'center',fontSize:'12px',color:'#5a7a9a'}}>
-            채팅 명령어: <code style={{background:'#131a24',padding:'2px 8px',borderRadius:'3px',color:'#e8b84b'}}>!투표1</code> <code style={{background:'#131a24',padding:'2px 8px',borderRadius:'3px',color:'#e8b84b'}}>!투표2</code>
-          </div>}
+          <div style={{marginLeft:'auto',display:'flex',gap:'6px',alignItems:'center',fontSize:'12px',color:'#5a7a9a'}}>
+            채팅 명령어:
+            {['1','2','3','4','5','6','7','8'].map(n=>(
+              <code key={n} style={{background:'#131a24',padding:'2px 7px',borderRadius:'3px',color:'#e8b84b'}}>!투표{n}</code>
+            ))}
+          </div>
         </div>
       )}
 
+      {/* 내전 진행 탭 */}
       {tab==='inhouse' && (
         <iframe src="/inhouse.html" style={{width:'100%',height:'calc(100vh - 53px)',border:'none',display:'block'}} title="내전 진행"/>
       )}
 
-      {tab!=='inhouse' && (
+      {/* 투표 탭 */}
+      {tab==='vote' && (
         <div style={{maxWidth:'1200px',margin:'0 auto',padding:'20px 24px'}}>
+          <div style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:'20px',alignItems:'start'}}>
 
-          {tab==='vote' && (
-            <div style={{display:'grid',gridTemplateColumns:'360px 1fr',gap:'20px',alignItems:'start'}}>
-              <div>
-                <div style={card}>
-                  <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'16px',fontSize:'14px'}}>📊 투표 설정</div>
-                  <div style={{marginBottom:'12px'}}>
-                    <div style={{fontSize:'12px',color:'#5a7a9a',marginBottom:'5px'}}>투표 제목</div>
-                    <input style={{...inp,width:'100%',boxSizing:'border-box'}} value={voteTitle} onChange={e=>setVoteTitle(e.target.value)}/>
-                  </div>
-                  <div style={{marginBottom:'14px'}}>
-                    <div style={{fontSize:'12px',color:'#5a7a9a',marginBottom:'5px'}}>투표 항목 (한 줄에 하나)</div>
-                    <textarea style={{...inp,width:'100%',height:'120px',resize:'vertical',boxSizing:'border-box',lineHeight:'1.6'}} value={voteItemsText} onChange={e=>setVoteItemsText(e.target.value)} placeholder={'블루팀 승리\n레드팀 승리'}/>
-                  </div>
-                  <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-                    {!vote.active
-                      ? <button style={btn()} onClick={()=>api('start_vote',{title:voteTitle,items:voteItemsText.split('\n').filter(i=>i.trim())})}>▶ 투표 시작</button>
-                      : <button style={btn('#ea4335','#fff')} onClick={()=>api('end_vote')}>■ 투표 종료</button>
-                    }
-                    <button style={btn('#2a3d58','#c8d8ec')} onClick={()=>api('reset_vote')}>초기화</button>
-                    {!vote.active&&vote.items.length>0&&<button style={btn('#9c27b0','#fff')} onClick={()=>{api('vote_to_roulette');setTab('roulette')}}>룰렛으로 →</button>}
-                  </div>
+            {/* 왼쪽: 설정 + 채팅 */}
+            <div>
+              <div style={card}>
+                <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'14px',fontSize:'14px'}}>📊 투표 설정</div>
+                <div style={{marginBottom:'10px'}}>
+                  <div style={{fontSize:'12px',color:'#5a7a9a',marginBottom:'4px'}}>투표 제목</div>
+                  <input style={{...inp,width:'100%',boxSizing:'border-box'}} value={voteTitle} onChange={e=>setVoteTitle(e.target.value)}/>
                 </div>
-                <div style={{...card,maxHeight:'280px',display:'flex',flexDirection:'column'}}>
-                  <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'10px',fontSize:'14px',flexShrink:0}}>💬 실시간 채팅</div>
-                  <div style={{flex:1,overflowY:'auto',fontSize:'12px',lineHeight:'1.8'}}>
-                    {!chzzkConnected
-                      ? <div style={{color:'#5a7a9a',textAlign:'center',padding:'24px'}}>위에서 치지직 채널을 연결하세요</div>
-                      : chatLog.length===0
-                        ? <div style={{color:'#5a7a9a',textAlign:'center',padding:'24px'}}>채팅 대기 중...</div>
-                        : [...chatLog].reverse().map((c,i)=>(
-                            <div key={i} style={{padding:'2px 0',borderBottom:'1px solid rgba(31,45,66,.4)'}}>
-                              <span style={{color:c.text.startsWith('!투표')?'#e8b84b':'#82b1ff',marginRight:'6px',fontWeight:500}}>{c.nickname}</span>
-                              <span style={{color:c.text.startsWith('!투표')?'#34a853':'#c8d8ec'}}>{c.text}</span>
-                            </div>
-                          ))
-                    }
-                  </div>
+                <div style={{marginBottom:'14px'}}>
+                  <div style={{fontSize:'12px',color:'#5a7a9a',marginBottom:'4px'}}>투표 항목 (한 줄에 하나)</div>
+                  <textarea style={{...inp,width:'100%',height:'120px',resize:'vertical',boxSizing:'border-box',lineHeight:'1.8'}} value={voteItemsText} onChange={e=>setVoteItemsText(e.target.value)}/>
+                </div>
+                <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                  {!vote.active
+                    ? <button style={btn()} onClick={()=>api('start_vote',{title:voteTitle,items:voteItemsText.split('\n').filter(i=>i.trim())})}>▶ 투표 시작</button>
+                    : <button style={btn('#ea4335','#fff')} onClick={()=>api('end_vote')}>■ 투표 종료</button>
+                  }
+                  <button style={btn('#2a3d58','#c8d8ec')} onClick={()=>api('reset_vote')}>초기화</button>
+                  {!vote.active&&vote.items.length>0&&(
+                    <button style={btn('#9c27b0','#fff')} onClick={()=>{api('vote_to_roulette');setShowRoulette(true)}}>🎡 룰렛으로</button>
+                  )}
                 </div>
               </div>
-              <div style={card}>
-                <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'20px'}}>
-                  <div style={{fontWeight:700,fontSize:'16px'}}>{vote.title||'투표 결과'}</div>
-                  {vote.active&&<span style={{fontSize:'11px',padding:'2px 10px',borderRadius:'20px',background:'rgba(52,168,83,.15)',color:'#34a853',border:'1px solid rgba(52,168,83,.3)',fontWeight:600}}>진행 중</span>}
-                  <span style={{marginLeft:'auto',fontSize:'13px',color:'#5a7a9a'}}>총 {vote.items.reduce((s,i)=>s+i.votes.length,0)}표</span>
+
+              {/* 채팅 로그 */}
+              <div style={{...card,maxHeight:'300px',display:'flex',flexDirection:'column'}}>
+                <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'10px',fontSize:'14px',flexShrink:0}}>💬 실시간 채팅</div>
+                <div style={{flex:1,overflowY:'auto',fontSize:'12px',lineHeight:'1.8'}}>
+                  {!chzzkConnected
+                    ? <div style={{color:'#5a7a9a',textAlign:'center',padding:'20px'}}>위에서 채널을 연결하세요</div>
+                    : chatLog.length===0
+                      ? <div style={{color:'#5a7a9a',textAlign:'center',padding:'20px'}}>채팅 대기 중...</div>
+                      : [...chatLog].reverse().map((c,i)=>(
+                          <div key={i} style={{padding:'2px 0',borderBottom:'1px solid rgba(31,45,66,.4)'}}>
+                            <span style={{color:c.text.startsWith('!투표')?'#e8b84b':'#82b1ff',marginRight:'6px',fontWeight:500}}>{c.nickname}</span>
+                            <span style={{color:c.text.startsWith('!투표')?'#34a853':'#c8d8ec'}}>{c.text}</span>
+                          </div>
+                        ))
+                  }
                 </div>
-                {vote.items.length===0
-                  ? <div style={{textAlign:'center',padding:'60px 0',color:'#5a7a9a'}}>투표를 시작하면 여기에 실시간으로 표시됩니다</div>
-                  : vote.items.map((item,i)=>{
-                      const total=vote.items.reduce((s,it)=>s+it.votes.length,0)
-                      const pct=total>0?Math.round(item.votes.length/total*100):0
-                      return (
-                        <div key={i} style={{marginBottom:'20px'}}>
-                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'7px'}}>
-                            <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                              <span style={{fontSize:'11px',padding:'2px 8px',borderRadius:'3px',background:item.color+'22',color:item.color,border:`1px solid ${item.color}44`,fontFamily:'monospace',fontWeight:600}}>!투표{i+1}</span>
-                              <span style={{fontSize:'15px',fontWeight:500}}>{item.label}</span>
-                            </div>
-                            <div style={{display:'flex',alignItems:'baseline',gap:'8px'}}>
-                              <span style={{fontSize:'22px',fontWeight:700,color:item.color}}>{pct}%</span>
-                              <span style={{fontSize:'13px',color:'#5a7a9a'}}>{item.votes.length}표</span>
-                            </div>
-                          </div>
-                          <div style={{height:'12px',background:'#131a24',borderRadius:'6px',overflow:'hidden'}}>
-                            <div style={{height:'100%',width:`${pct}%`,background:item.color,borderRadius:'6px',transition:'width .4s ease'}}/>
-                          </div>
-                          {item.votes.length>0&&<div style={{marginTop:'5px',fontSize:'11px',color:'#5a7a9a'}}>{item.votes.slice(0,15).join(' · ')}{item.votes.length>15?` 외 ${item.votes.length-15}명`:''}</div>}
-                        </div>
-                      )
-                    })
-                }
               </div>
             </div>
-          )}
 
-          {tab==='roulette' && (
-            <div style={{display:'grid',gridTemplateColumns:'420px 1fr',gap:'20px',alignItems:'start'}}>
+            {/* 오른쪽: 실시간 투표 결과 */}
+            <div style={card}>
+              <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'20px'}}>
+                <div style={{fontWeight:700,fontSize:'16px'}}>{vote.title||'투표 결과'}</div>
+                {vote.active&&<span style={{fontSize:'11px',padding:'3px 10px',borderRadius:'20px',background:'rgba(52,168,83,.15)',color:'#34a853',border:'1px solid rgba(52,168,83,.3)',fontWeight:600}}>● 진행 중</span>}
+                <span style={{marginLeft:'auto',fontSize:'13px',color:'#5a7a9a'}}>총 {total}표</span>
+              </div>
+
+              {vote.items.length===0
+                ? <div style={{textAlign:'center',padding:'60px 0',color:'#5a7a9a',fontSize:'14px'}}>투표를 시작하면 여기에 실시간으로 표시됩니다</div>
+                : vote.items.map((item,i)=>{
+                    const pct = total>0 ? Math.round(item.votes.length/total*100) : 0
+                    return (
+                      <div key={i} style={{display:'grid',gridTemplateColumns:'140px 1fr',gap:'12px',alignItems:'center',marginBottom:'16px'}}>
+                        {/* 왼쪽: 라벨 */}
+                        <div>
+                          <div style={{fontSize:'11px',color:item.color,fontFamily:'monospace',fontWeight:700,marginBottom:'3px'}}>!투표{i+1}</div>
+                          <div style={{fontSize:'17px',fontWeight:700,color:'#c8d8ec'}}>{item.label}</div>
+                        </div>
+                        {/* 오른쪽: 바 + 숫자 */}
+                        <div>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'6px'}}>
+                            <span style={{fontSize:'13px',color:'#5a7a9a'}}>{item.votes.length}표</span>
+                            <span style={{fontSize:'20px',fontWeight:700,color:item.color}}>{pct}%</span>
+                          </div>
+                          <div style={{height:'14px',background:'#192030',borderRadius:'7px',overflow:'hidden'}}>
+                            <div style={{height:'100%',width:`${pct}%`,background:item.color,borderRadius:'7px',transition:'width .4s ease'}}/>
+                          </div>
+                          {item.votes.length>0&&(
+                            <div style={{marginTop:'4px',fontSize:'11px',color:'#5a7a9a'}}>
+                              {item.votes.slice(0,12).join(', ')}{item.votes.length>12?` 외 ${item.votes.length-12}명`:''}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })
+              }
+            </div>
+          </div>
+
+          {/* 룰렛 섹션 (투표 결과 가져오기 누르면 펼쳐짐) */}
+          {showRoulette && (
+            <div style={{marginTop:'20px',display:'grid',gridTemplateColumns:'420px 1fr',gap:'20px',alignItems:'start'}}>
               <div style={{...card,textAlign:'center'}}>
-                <canvas ref={canvasRef} width={380} height={380} style={{maxWidth:'100%',display:'block',margin:'0 auto'}}/>
-                <div style={{marginTop:'16px'}}>
-                  <button style={{...btn(),fontSize:'15px',padding:'12px 36px',opacity:spinning||!rouletteItems.length?.5:1}} onClick={spin} disabled={spinning||!rouletteItems.length}>
+                <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'14px',fontSize:'14px'}}>🎡 룰렛</div>
+                <canvas ref={canvasRef} width={360} height={360} style={{maxWidth:'100%',display:'block',margin:'0 auto'}}/>
+                <div style={{marginTop:'14px'}}>
+                  <button style={{...btn(),fontSize:'14px',padding:'10px 32px',opacity:spinning||!rouletteItems.length?.5:1}} onClick={spin} disabled={spinning||!rouletteItems.length}>
                     {spinning?'돌아가는 중...':'🎡 돌리기'}
                   </button>
                 </div>
                 {winner&&(
-                  <div style={{marginTop:'16px',padding:'16px',background:'rgba(232,184,75,.1)',border:'1px solid rgba(232,184,75,.3)',borderRadius:'6px'}}>
-                    <div style={{fontSize:'12px',color:'#5a7a9a',marginBottom:'6px'}}>🎉 당첨!</div>
-                    <div style={{fontSize:'26px',fontWeight:700,color:'#e8b84b'}}>{winner}</div>
+                  <div style={{marginTop:'14px',padding:'14px',background:'rgba(232,184,75,.1)',border:'1px solid rgba(232,184,75,.3)',borderRadius:'6px'}}>
+                    <div style={{fontSize:'12px',color:'#5a7a9a',marginBottom:'4px'}}>🎉 당첨!</div>
+                    <div style={{fontSize:'24px',fontWeight:700,color:'#e8b84b'}}>{winner}</div>
                   </div>
                 )}
               </div>
-              <div>
-                <div style={card}>
-                  <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'14px',fontSize:'14px'}}>항목 추가</div>
-                  <div style={{display:'flex',gap:'8px',marginBottom:'14px',flexWrap:'wrap'}}>
-                    <input style={{...inp,flex:1,minWidth:'140px'}} placeholder="항목명" value={rInput} onChange={e=>setRInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addRouletteItem()}/>
-                    <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
-                      <span style={{fontSize:'12px',color:'#5a7a9a'}}>가중치</span>
-                      <input style={{...inp,width:'60px',textAlign:'center'}} type="number" min="1" value={rWeight} onChange={e=>setRWeight(e.target.value)}/>
+              <div style={card}>
+                <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'12px',fontSize:'14px'}}>항목 설정</div>
+                <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+                  <input style={{...inp,flex:1,minWidth:'120px'}} placeholder="항목명" value={rInput} onChange={e=>setRInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addRouletteItem()}/>
+                  <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+                    <span style={{fontSize:'12px',color:'#5a7a9a'}}>가중치</span>
+                    <input style={{...inp,width:'56px',textAlign:'center'}} type="number" min="1" value={rWeight} onChange={e=>setRWeight(e.target.value)}/>
+                  </div>
+                  <button style={btn()} onClick={addRouletteItem}>추가</button>
+                </div>
+                {rouletteItems.map((item,i)=>{
+                  const t=rouletteItems.reduce((s,it)=>s+(it.weight||1),0)
+                  return (
+                    <div key={i} style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 0',borderBottom:'1px solid #1f2d42'}}>
+                      <div style={{width:'10px',height:'10px',borderRadius:'2px',background:item.color,flexShrink:0}}/>
+                      <span style={{flex:1,fontSize:'13px'}}>{item.label}</span>
+                      <span style={{fontSize:'11px',color:'#5a7a9a'}}>가중치 {item.weight} ({Math.round((item.weight||1)/t*100)}%)</span>
+                      <button style={{background:'none',border:'none',color:'#5a7a9a',cursor:'pointer',fontSize:'15px'}} onClick={()=>removeRouletteItem(i)}>✕</button>
                     </div>
-                    <button style={btn()} onClick={addRouletteItem}>추가</button>
-                  </div>
-                  {rouletteItems.length===0
-                    ? <div style={{textAlign:'center',padding:'20px',color:'#5a7a9a',fontSize:'13px'}}>항목을 추가하거나 투표 결과를 가져오세요</div>
-                    : <div style={{marginBottom:'12px'}}>
-                        {rouletteItems.map((item,i)=>{
-                          const total=rouletteItems.reduce((s,it)=>s+(it.weight||1),0)
-                          return (
-                            <div key={i} style={{display:'flex',alignItems:'center',gap:'10px',padding:'8px 0',borderBottom:'1px solid #1f2d42'}}>
-                              <div style={{width:'10px',height:'10px',borderRadius:'2px',background:item.color,flexShrink:0}}/>
-                              <span style={{flex:1,fontSize:'13px'}}>{item.label}</span>
-                              <span style={{fontSize:'11px',color:'#5a7a9a'}}>가중치 {item.weight} ({Math.round((item.weight||1)/total*100)}%)</span>
-                              <button style={{background:'none',border:'none',color:'#5a7a9a',cursor:'pointer',fontSize:'16px',padding:'0 4px'}} onClick={()=>removeRouletteItem(i)}>✕</button>
-                            </div>
-                          )
-                        })}
-                      </div>
-                  }
-                  <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-                    <button style={btn('#9c27b0','#fff')} onClick={async()=>{
-                      await api('vote_to_roulette')
-                      const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'get_state'})})
-                      const data=await r.json()
-                      if(data.roulette?.items) setRouletteItems(data.roulette.items)
-                    }}>← 투표 결과 가져오기</button>
-                    <button style={btn('#2a3d58','#c8d8ec')} onClick={()=>{setRouletteItems([]);api('set_roulette',{items:[]})}}>전체 삭제</button>
-                  </div>
+                  )
+                })}
+                <div style={{display:'flex',gap:'8px',marginTop:'12px'}}>
+                  <button style={btn('#9c27b0','#fff')} onClick={async()=>{
+                    await api('vote_to_roulette')
+                    const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'get_state'})})
+                    const data=await r.json()
+                    if(data.roulette?.items) setRouletteItems(data.roulette.items)
+                  }}>← 투표 결과 갱신</button>
+                  <button style={btn('#2a3d58','#c8d8ec')} onClick={()=>{setRouletteItems([]);api('set_roulette',{items:[]})}}>전체 삭제</button>
+                  <button style={btn('#607080','#c8d8ec')} onClick={()=>setShowRoulette(false)}>닫기</button>
                 </div>
               </div>
             </div>
