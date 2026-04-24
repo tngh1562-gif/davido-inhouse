@@ -93,27 +93,30 @@ export default function Home() {
     return () => es.close()
   }, [auth])
 
-  // YouTube IFrame API 로드
+  // YouTube IFrame API 로드 및 초기화
   useEffect(() => {
     if (!auth) return
-    const tag = document.createElement('script')
-    tag.src = 'https://www.youtube.com/iframe_api'
-    document.head.appendChild(tag)
-    ;(window as any).onYouTubeIframeAPIReady = () => {
-      ytReady.current = true
+
+    function initPlayer() {
       const container = document.getElementById('yt-player-container')
       if (!container) return
       const player = new (window as any).YT.Player(container, {
         width: '320', height: '180',
-        playerVars: { autoplay: 0, controls: 1, rel: 0, modestbranding: 1 },
+        videoId: '',
+        playerVars: { controls: 1, rel: 0, modestbranding: 1, origin: window.location.origin },
         events: {
           onReady: (e: any) => {
             e.target.setVolume(80)
-            // 타임라인 업데이트 인터벌
+            playerRef.current = e.target
+            ytReady.current = true
+            ;(window as any).__ytPlayer = e.target
+            // 타임라인 업데이트
             setInterval(() => {
               try {
-                const dur = e.target.getDuration()
-                const cur = e.target.getCurrentTime()
+                const p = playerRef.current
+                if (!p) return
+                const dur = p.getDuration?.() || 0
+                const cur = p.getCurrentTime?.() || 0
                 const tl = document.getElementById('yt-timeline') as HTMLInputElement
                 const ct = document.getElementById('yt-current-time')
                 const dt = document.getElementById('yt-duration')
@@ -124,35 +127,42 @@ export default function Home() {
             }, 500)
           },
           onStateChange: (e: any) => {
+            // 재생 끝나면 다음곡
             if (e.data === 0) api('music_next')
           }
         }
       })
-      playerRef.current = player
-      ;(window as any).__ytPlayer = player
+    }
+
+    if ((window as any).YT?.Player) {
+      initPlayer()
+    } else {
+      ;(window as any).onYouTubeIframeAPIReady = initPlayer
+      if (!document.getElementById('yt-api-script')) {
+        const tag = document.createElement('script')
+        tag.id = 'yt-api-script'
+        tag.src = 'https://www.youtube.com/iframe_api'
+        document.head.appendChild(tag)
+      }
     }
   }, [auth])
 
-  // music 상태 변화에 따른 재생 제어
+  // 곡/재생상태 변화 → 플레이어 제어
   useEffect(() => {
-    const player = playerRef.current
-    if (!player || !ytReady.current) return
+    if (!ytReady.current || !playerRef.current) return
     const cur = music.queue[music.currentIdx]
     if (!cur) return
+    const p = playerRef.current
     try {
-      const curId = player.getVideoData?.()?.video_id
-      if (curId !== cur.videoId) {
-        // 영상 교체 - cueVideoById로 로드만 하고 사용자가 직접 재생
-        player.cueVideoById(cur.videoId)
-        // 자동재생 시도 (첫 상호작용 후엔 됨)
-        if (music.playing) {
-          setTimeout(()=>{ try{ player.playVideo() }catch{} }, 300)
-        }
+      const loaded = p.getVideoData?.()?.video_id
+      if (loaded !== cur.videoId) {
+        if (music.playing) p.loadVideoById(cur.videoId)
+        else p.cueVideoById(cur.videoId)
       } else {
-        if (music.playing) player.playVideo()
-        else player.pauseVideo()
+        if (music.playing) p.playVideo()
+        else p.pauseVideo()
       }
-    } catch {}
+    } catch(e) { console.error('[YT]', e) }
   }, [music.currentIdx, music.playing, music.queue.length])
 
   // 타이머
