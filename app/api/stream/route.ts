@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getSseClients } from '@/lib/chzzk'
-import { getState, isChzzkConnected } from '@/lib/chzzk'
+import { getSseClients, isChzzkConnected } from '@/lib/chzzk'
+import { getState } from '@/lib/state'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
