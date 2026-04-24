@@ -383,53 +383,52 @@ export default function Home() {
         flexShrink:0,
         zIndex: (tab as string)==='music' ? 10 : -1,
       }}>
-        <div style={{display:'flex',gap:0,maxWidth:'100%'}}>
-          {/* 유튜브 iframe - key로 곡 바뀔때만 새로 렌더링 */}
-          {music.queue[music.currentIdx] ? (
+        {music.queue[music.currentIdx] ? (
+          <div style={{display:'flex',alignItems:'stretch'}}>
+            {/* 영상 */}
             <iframe
               key={`${music.queue[music.currentIdx].videoId}-${music.currentIdx}`}
               src={`https://www.youtube.com/embed/${music.queue[music.currentIdx].videoId}?autoplay=1&controls=1&rel=0&modestbranding=1`}
-              width="426" height="240"
+              width="480" height="270"
               style={{flexShrink:0,border:'none',display:'block'}}
               allow="autoplay; encrypted-media; fullscreen"
               allowFullScreen
             />
-          ) : (
-            <div style={{width:'426px',height:'240px',background:'#111',flexShrink:0,
-              display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'8px'}}>
-              <span style={{fontSize:'40px',opacity:.2}}>🎵</span>
-              <span style={{fontSize:'12px',color:'#444'}}>신청곡을 추가하세요</span>
-            </div>
-          )}
-          {/* 곡 정보 + 컨트롤 */}
-          <div style={{flex:1,padding:'16px 24px',display:'flex',flexDirection:'column',justifyContent:'space-between',minWidth:0}}>
-            {music.queue[music.currentIdx] ? (<>
+            {/* 곡 정보 */}
+            <div style={{flex:1,padding:'20px 28px',display:'flex',flexDirection:'column',justifyContent:'center',gap:'10px',minWidth:0,background:'#111'}}>
               <div>
-                <div style={{fontSize:'16px',fontWeight:700,color:'#fff',marginBottom:'4px',
-                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                <div style={{fontSize:'18px',fontWeight:700,color:'#fff',marginBottom:'5px',
+                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',lineHeight:1.3}}>
                   {music.queue[music.currentIdx].title}
                 </div>
-                <div style={{fontSize:'13px',color:'#999',marginBottom:'3px'}}>{music.queue[music.currentIdx].channel}</div>
-                <div style={{fontSize:'12px',color:acc}}>🙋 {music.queue[music.currentIdx].requestedBy}</div>
+                <div style={{fontSize:'13px',color:'#888',marginBottom:'4px'}}>{music.queue[music.currentIdx].channel}</div>
+                <div style={{fontSize:'12px',color:acc,fontWeight:600}}>🙋 {music.queue[music.currentIdx].requestedBy}</div>
               </div>
-              <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'12px',marginTop:'4px'}}>
                 <button onClick={()=>api('music_prev')}
-                  style={{background:'rgba(255,255,255,.1)',border:'none',borderRadius:'50%',
-                    width:'40px',height:'40px',cursor:'pointer',fontSize:'16px',color:'#fff',
-                    display:'flex',alignItems:'center',justifyContent:'center'}}>⏮</button>
+                  style={{background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.1)',borderRadius:'50%',
+                    width:'42px',height:'42px',cursor:'pointer',fontSize:'16px',color:'#ccc',
+                    display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}}
+                  onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,.18)')}
+                  onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,.08)')}>⏮</button>
                 <button onClick={()=>api('music_next')}
-                  style={{background:'rgba(255,255,255,.1)',border:'none',borderRadius:'50%',
-                    width:'40px',height:'40px',cursor:'pointer',fontSize:'16px',color:'#fff',
-                    display:'flex',alignItems:'center',justifyContent:'center'}}>⏭</button>
-                <span style={{fontSize:'13px',color:'#555'}}>
+                  style={{background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.1)',borderRadius:'50%',
+                    width:'42px',height:'42px',cursor:'pointer',fontSize:'16px',color:'#ccc',
+                    display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}}
+                  onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,.18)')}
+                  onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,.08)')}>⏭</button>
+                <span style={{fontSize:'12px',color:'#555',padding:'4px 10px',background:'rgba(255,255,255,.05)',borderRadius:'20px'}}>
                   {music.currentIdx+1} / {music.queue.length}
                 </span>
               </div>
-            </>) : (
-              <div style={{color:'#444',fontSize:'13px'}}>대기열이 비어있습니다</div>
-            )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div style={{height:'80px',display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',color:'#444'}}>
+            <span style={{fontSize:'20px'}}>🎵</span>
+            <span style={{fontSize:'13px'}}>신청곡을 추가하면 여기서 재생됩니다</span>
+          </div>
+        )}
       </div>
 
       {/* ── 내전 탭 ── */}
