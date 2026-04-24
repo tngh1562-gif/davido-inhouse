@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from 'react'
 
 const COLORS = ['#4285f4','#ea4335','#34a853','#fbbc04','#9c27b0','#00bcd4','#ff5722','#607d8b']
-const PASSWORD = '09870987'
 
 interface VoteItem { label: string; votes: string[]; color: string }
 interface Vote { active: boolean; title: string; items: VoteItem[]; startedAt: number | null }
@@ -11,7 +10,7 @@ interface MusicTrack { videoId: string; title: string; channel: string; thumbnai
 interface MusicState { queue: MusicTrack[]; currentIdx: number; playing: boolean }
 
 export default function Home() {
-  const [auth, setAuth]           = useState(false)
+  const [auth, setAuth]           = useState<boolean|null>(null) // null=로딩중
   const [pwInput, setPwInput]     = useState('')
   const [pwError, setPwError]     = useState(false)
   const [tab, setTab]             = useState<'inhouse'|'vote'>('inhouse')
@@ -55,6 +54,17 @@ export default function Home() {
       body: JSON.stringify({ type, ...extra }),
     })
   }
+
+  // 초기 인증 상태 확인
+  useEffect(() => {
+    fetch('/api/action', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({type:'get_state'}),
+    }).then(r => {
+      if (r.ok) setAuth(true)
+      else setAuth(false)
+    }).catch(()=>setAuth(false))
+  }, [])
 
   useEffect(() => {
     if (!auth) return
@@ -338,6 +348,12 @@ export default function Home() {
     }),
   }
 
+  if (auth === null) return (
+    <div style={{minHeight:'100vh',background:bg,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Pretendard','Noto Sans KR',sans-serif"}}>
+      <div style={{color:txt2,fontSize:'14px'}}>로딩 중...</div>
+    </div>
+  )
+
   if (!auth) return (
     <div style={{minHeight:'100vh',background:bg,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'\'Noto Sans KR\',sans-serif'}}>
       <div style={{background:card,border:`1px solid ${bdr}`,borderRadius:'14px',padding:'52px',textAlign:'center',width:'360px',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}>
@@ -346,13 +362,19 @@ export default function Home() {
         <div style={{fontSize:'13px',color:'#b0c0d0',marginBottom:'32px'}}>관리자 전용</div>
         <input type="password" value={pwInput} autoFocus
           onChange={e=>{setPwInput(e.target.value);setPwError(false)}}
-          onKeyDown={e=>{if(e.key==='Enter'){if(pwInput===PASSWORD)setAuth(true);else setPwError(true)}}}
+          onKeyDown={async e=>{if(e.key==='Enter'){
+            const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'login',password:pwInput})})
+            if(r.ok){const d=await r.json();if(d.ok)setAuth(true);else setPwError(true)}else setPwError(true)
+          }}}
           placeholder="비밀번호"
           style={{...S.inp(),marginBottom:'8px',fontSize:'14px',padding:'11px 14px',
             border:`1px solid ${pwError?'#e03020':bdr}`}}
         />
         {pwError&&<div style={{fontSize:'12px',color:'#e03020',marginBottom:'8px'}}>비밀번호가 틀렸습니다</div>}
-        <button onClick={()=>{if(pwInput===PASSWORD)setAuth(true);else setPwError(true)}}
+        <button onClick={async()=>{
+          const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'login',password:pwInput})})
+          if(r.ok){const d=await r.json();if(d.ok)setAuth(true);else setPwError(true)}else setPwError(true)
+        }}
           style={{width:'100%',padding:'12px',borderRadius:'8px',border:'none',
             background:acc,color:'#fff',fontWeight:700,fontSize:'14px',
             fontFamily:'inherit',cursor:'pointer',marginTop:'4px'}}>

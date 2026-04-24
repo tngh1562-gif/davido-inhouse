@@ -6,10 +6,19 @@ import { connectChzzk, disconnectChzzk, broadcastSSE, isChzzkConnected } from '@
 export const runtime = 'nodejs'
 
 const COLORS = ['#4285f4','#ea4335','#34a853','#fbbc04','#9c27b0','#00bcd4','#ff5722','#607d8b']
+const PASSWORD = process.env.APP_PASSWORD || '09870987'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const { type } = body
+
+  // login/logout은 인증 불필요
+  if (type !== 'login' && type !== 'logout') {
+    const auth = req.cookies.get('auth')?.value
+    if (auth !== 'ok') {
+      return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    }
+  }
 
   switch (type) {
 
@@ -138,6 +147,21 @@ export async function POST(req: NextRequest) {
       setState(s => { s.music.playing = body.playing })
       broadcastSSE('music_state', getState().music)
       return NextResponse.json({ ok: true })
+    }
+
+    case 'login': {
+      const ok = body.password === PASSWORD
+      if (ok) {
+        const res = NextResponse.json({ ok: true })
+        res.cookies.set('auth', 'ok', { httpOnly: true, maxAge: 60*60*24*30, sameSite: 'strict' })
+        return res
+      }
+      return NextResponse.json({ ok: false }, { status: 401 })
+    }
+    case 'logout': {
+      const res = NextResponse.json({ ok: true })
+      res.cookies.delete('auth')
+      return res
     }
 
     default:
