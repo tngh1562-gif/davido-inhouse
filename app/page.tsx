@@ -27,8 +27,6 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [searching, setSearching]     = useState(false)
-  const playerRef = useRef<any>(null)
-  const ytReady   = useRef(false)
   const [rouletteItems, setRouletteItems] = useState<RouletteItem[]>([])
   const [excludedWinners, setExcludedWinners] = useState<string[]>([])
   const [excludeEnabled, setExcludeEnabled]   = useState(true)
@@ -103,77 +101,12 @@ export default function Home() {
     return () => es.close()
   }, [auth])
 
-  // YouTube IFrame API 로드 및 초기화 (항상 DOM에 있는 숨겨진 플레이어)
+  // 곡 변경 → music.playing 자동 true
   useEffect(() => {
-    if (!auth) return
-
-    function initPlayer() {
-      const container = document.getElementById('yt-player-container')
-      if (!container) { setTimeout(initPlayer, 500); return }
-      const player = new (window as any).YT.Player(container, {
-        width: '320', height: '180',
-        videoId: '',
-        playerVars: { controls: 1, rel: 0, modestbranding: 1, origin: window.location.origin },
-        events: {
-          onReady: (e: any) => {
-            e.target.setVolume(80)
-            playerRef.current = e.target
-            ytReady.current = true
-            ;(window as any).__ytPlayer = e.target
-            // 타임라인 업데이트
-            setInterval(() => {
-              try {
-                const p = playerRef.current
-                if (!p) return
-                const dur = p.getDuration?.() || 0
-                const cur = p.getCurrentTime?.() || 0
-                const tl = document.getElementById('yt-timeline') as HTMLInputElement
-                const ct = document.getElementById('yt-current-time')
-                const dt = document.getElementById('yt-duration')
-                if (tl && dur > 0) tl.value = String((cur / dur) * 100)
-                if (ct) ct.textContent = fmtSec(cur)
-                if (dt) dt.textContent = fmtSec(dur)
-              } catch {}
-            }, 500)
-          },
-          onStateChange: (e: any) => {
-            // 재생 끝나면 다음곡
-            if (e.data === 0) api('music_next')
-          }
-        }
-      })
+    if (music.queue.length > 0 && !music.playing) {
+      setMusic(p => ({...p, playing: true}))
     }
-
-    if ((window as any).YT?.Player) {
-      initPlayer()
-    } else {
-      ;(window as any).onYouTubeIframeAPIReady = initPlayer
-      if (!document.getElementById('yt-api-script')) {
-        const tag = document.createElement('script')
-        tag.id = 'yt-api-script'
-        tag.src = 'https://www.youtube.com/iframe_api'
-        document.head.appendChild(tag)
-      }
-    }
-  }, [auth])
-
-  // 곡/재생상태 변화 → 숨겨진 IFrame API 플레이어 제어 (오디오)
-  useEffect(() => {
-    if (!ytReady.current || !playerRef.current) return
-    const cur = music.queue[music.currentIdx]
-    if (!cur) return
-    const p = playerRef.current
-    try {
-      const loaded = p.getVideoData?.()?.video_id
-      if (loaded !== cur.videoId) {
-        if (music.playing) p.loadVideoById(cur.videoId)
-        else p.cueVideoById(cur.videoId)
-      } else {
-        if (music.playing) p.playVideo()
-        else p.pauseVideo()
-      }
-    } catch(e) { console.error('[YT audio]', e) }
-  }, [music.currentIdx, music.playing, music.queue.length])
+  }, [music.queue.length])
 
   // 타이머
   useEffect(() => {
@@ -408,11 +341,6 @@ export default function Home() {
         ))}
 
 
-      </div>
-
-      {/* YouTube 플레이어 - 항상 DOM에 존재 (탭 관계없이 재생 유지) */}
-      <div style={{position:'fixed',bottom:'-9999px',left:'-9999px',width:'1px',height:'1px',overflow:'hidden',zIndex:-1}}>
-        <div id="yt-player-container"/>
       </div>
 
       {/* ── 치지직 연결 바 (투표 탭) ── */}
@@ -833,21 +761,21 @@ export default function Home() {
           {/* YouTube 플레이어 영역 */}
           <div style={{background:'#0f0f0f',borderBottom:'1px solid #222',flexShrink:0}}>
             <div style={{display:'flex',gap:0}}>
-              {/* 유튜브 영상 - iframe embed로 직접 표시 */}
+              {/* 유튜브 iframe - autoplay=1로 바로 재생 */}
               {music.queue[music.currentIdx] ? (
                 <iframe
-                  key={music.queue[music.currentIdx].videoId}
-                  id="yt-visible-player"
-                  src={`https://www.youtube.com/embed/${music.queue[music.currentIdx].videoId}?autoplay=1&controls=1&rel=0&modestbranding=1&enablejsapi=1`}
+                  key={`${music.queue[music.currentIdx].videoId}-${music.currentIdx}`}
+                  src={`https://www.youtube.com/embed/${music.queue[music.currentIdx].videoId}?autoplay=1&controls=1&rel=0&modestbranding=1&fs=0&iv_load_policy=3`}
                   width="320" height="180"
-                  style={{flexShrink:0,borderRadius:'0',border:'none',display:'block'}}
-                  allow="autoplay; encrypted-media"
+                  style={{flexShrink:0,border:'none',display:'block'}}
+                  allow="autoplay; encrypted-media; fullscreen"
                   allowFullScreen
                 />
               ) : (
-                <div style={{width:'320px',height:'180px',background:'#1a1a1a',flexShrink:0,
-                  display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <span style={{fontSize:'32px',opacity:.3}}>🎵</span>
+                <div style={{width:'320px',height:'180px',background:'#111',flexShrink:0,
+                  display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'8px'}}>
+                  <span style={{fontSize:'36px',opacity:.25}}>🎵</span>
+                  <span style={{fontSize:'12px',color:'#444'}}>신청곡을 추가하세요</span>
                 </div>
               )}
               {/* 컨트롤 영역 */}
@@ -865,50 +793,19 @@ export default function Home() {
                     <div style={{fontSize:'11px',color:acc}}>🙋 {music.queue[music.currentIdx].requestedBy}</div>
                   </div>
 
-                  {/* 타임라인 */}
-                  <div style={{margin:'10px 0 6px'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',fontSize:'11px',color:'#666',marginBottom:'5px'}}>
-                      <span id="yt-current-time">0:00</span>
-                      <span id="yt-duration">0:00</span>
-                    </div>
-                    <input type="range" id="yt-timeline" min={0} max={100} defaultValue={0}
-                      style={{width:'100%',accentColor:acc,cursor:'pointer',height:'4px'}}
-                      onChange={e=>{
-                        const p=(window as any).__ytPlayer
-                        if(p?.getDuration) p.seekTo(p.getDuration()*parseFloat(e.target.value)/100,true)
-                      }}/>
-                  </div>
-
-                  {/* 버튼 + 볼륨 */}
-                  <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                  {/* 이전/다음 버튼 */}
+                  <div style={{display:'flex',alignItems:'center',gap:'10px',marginTop:'auto'}}>
                     <button onClick={()=>api('music_prev')}
                       style={{background:'rgba(255,255,255,.08)',border:'none',borderRadius:'50%',
-                        width:'34px',height:'34px',cursor:'pointer',fontSize:'14px',color:'#fff',
+                        width:'36px',height:'36px',cursor:'pointer',fontSize:'15px',color:'#fff',
                         display:'flex',alignItems:'center',justifyContent:'center'}}>⏮</button>
-                    <button onClick={()=>api('music_set_playing',{playing:!music.playing})}
-                      style={{background:acc,border:'none',borderRadius:'50%',
-                        width:'42px',height:'42px',cursor:'pointer',fontSize:'17px',color:'#fff',
-                        display:'flex',alignItems:'center',justifyContent:'center',
-                        boxShadow:`0 2px 10px ${acc}55`}}>
-                      {music.playing?'⏸':'▶'}
-                    </button>
                     <button onClick={()=>api('music_next')}
                       style={{background:'rgba(255,255,255,.08)',border:'none',borderRadius:'50%',
-                        width:'34px',height:'34px',cursor:'pointer',fontSize:'14px',color:'#fff',
+                        width:'36px',height:'36px',cursor:'pointer',fontSize:'15px',color:'#fff',
                         display:'flex',alignItems:'center',justifyContent:'center'}}>⏭</button>
-                    <span style={{fontSize:'11px',color:'#555',marginLeft:'2px'}}>
-                      {music.currentIdx+1}/{music.queue.length}
+                    <span style={{fontSize:'12px',color:'#555',marginLeft:'4px'}}>
+                      {music.currentIdx+1} / {music.queue.length}
                     </span>
-                    {/* 볼륨 */}
-                    <div style={{display:'flex',alignItems:'center',gap:'6px',marginLeft:'auto'}}>
-                      <span style={{fontSize:'14px',color:'#888'}}>🔊</span>
-                      <input type="range" min={0} max={100} defaultValue={80}
-                        style={{width:'80px',accentColor:acc,cursor:'pointer',height:'4px'}}
-                        onChange={e=>{
-                          const p=(window as any).__ytPlayer
-                          if(p?.setVolume) p.setVolume(parseInt(e.target.value))
-                        }}/>
-                    </div>
                   </div>
                 </>) : (
                   <div style={{color:'#555',fontSize:'13px',display:'flex',alignItems:'center',height:'100%'}}>
