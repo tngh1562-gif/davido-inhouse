@@ -81,9 +81,9 @@ export default function Home() {
   // 타이머
   useEffect(() => {
     if (vote.active && vote.startedAt) {
-      setElapsed(Math.floor((Date.now() - vote.startedAt) / 1000))
+      setElapsed(Math.max(0, Math.floor((Date.now() - vote.startedAt) / 1000)))
       timerRef.current = setInterval(() => {
-        setElapsed(Math.floor((Date.now() - (vote.startedAt||Date.now())) / 1000))
+        setElapsed(Math.max(0, Math.floor((Date.now() - (vote.startedAt||Date.now())) / 1000)))
       }, 1000)
     } else {
       clearInterval(timerRef.current)
