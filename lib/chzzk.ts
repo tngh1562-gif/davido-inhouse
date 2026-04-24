@@ -154,6 +154,12 @@ async function handleMusicRequest(nickname: string, query: string) {
       addedAt: Date.now(),
     })
   })
+  // 채팅창에 추가 알림
+  broadcastSSE('chat', {
+    nickname: '🎵 신청곡',
+    text: `[${nickname}] "${track.title}" 대기열에 추가됨 (${getState().music.queue.length}번째)`,
+    isSystem: true,
+  })
   broadcastSSE('music_queued', {
     track: { ...track, requestedBy: nickname, addedAt: Date.now() },
     queue: getState().music.queue,

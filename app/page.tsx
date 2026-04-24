@@ -494,9 +494,20 @@ export default function Home() {
                     : chatLog.length===0
                       ? <div style={{color:'#b0c0d0',textAlign:'center',padding:'28px 0'}}>채팅 대기 중...</div>
                       : chatLog.map((c,i)=>(
-                          <div key={i} style={{padding:'3px 0',borderBottom:`1px solid ${bdr}`}}>
-                            <span style={{color:c.text.startsWith('!투표')?acc:'#4a7abf',marginRight:'6px',fontWeight:600,fontSize:'11px'}}>{c.nickname}</span>
-                            <span style={{color:c.text.startsWith('!투표')?'#22c55e':txt,fontSize:'12px'}}>{c.text}</span>
+                          <div key={i} style={{
+                            padding:'3px 0',borderBottom:`1px solid ${bdr}`,
+                            background:(c as any).isSystem?'rgba(212,144,10,.06)':'transparent',
+                            borderRadius:(c as any).isSystem?'4px':'0',
+                            paddingLeft:(c as any).isSystem?'4px':'0',
+                          }}>
+                            <span style={{
+                              color:(c as any).isSystem?acc:c.text.startsWith('!투표')?acc:'#4a7abf',
+                              marginRight:'6px',fontWeight:600,fontSize:'11px'
+                            }}>{c.nickname}</span>
+                            <span style={{
+                              color:(c as any).isSystem?'#a07020':c.text.startsWith('!투표')?'#22c55e':txt,
+                              fontSize:'12px'
+                            }}>{c.text}</span>
                           </div>
                         ))
                   }
