@@ -2,6 +2,7 @@
 // 참고: https://github.com/kimcore/chzzk
 
 import { getState, setState } from './state'
+import { searchYouTube } from './youtube'
 
 declare global {
   var __chzzkWs: any | undefined
@@ -122,8 +123,40 @@ function handleMessage(msg: any) {
           }
         }
       }
+      // !신청곡 처리
+      if (text.startsWith('!신청곡 ') || text.startsWith('!신청곡 ')) {
+        const query = text.replace(/^!신청곡\s*/, '').trim()
+        if (query) {
+          handleMusicRequest(nickname, query)
+        }
+      }
     })
   }
+}
+
+async function handleMusicRequest(nickname: string, query: string) {
+  const track = await searchYouTube(query)
+  if (!track) {
+    broadcastSSE('music_error', { message: `"${query}" 검색 실패`, nickname })
+    return
+  }
+  const state = getState()
+  // 중복 체크
+  if (state.music.queue.some(t => t.videoId === track.videoId)) {
+    broadcastSSE('music_duplicate', { title: track.title, nickname })
+    return
+  }
+  setState(s => {
+    s.music.queue.push({
+      ...track,
+      requestedBy: nickname,
+      addedAt: Date.now(),
+    })
+  })
+  broadcastSSE('music_queued', {
+    track: { ...track, requestedBy: nickname, addedAt: Date.now() },
+    queue: getState().music.queue,
+  })
 }
 
 export function disconnectChzzk() {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getState, setState } from '@/lib/state'
+import { searchYouTube } from '@/lib/youtube'
 import { connectChzzk, disconnectChzzk, broadcastSSE, isChzzkConnected } from '@/lib/chzzk'
 
 export const runtime = 'nodejs'
@@ -64,6 +65,61 @@ export async function POST(req: NextRequest) {
       }))
       setState(s => { s.roulette.items = items })
       broadcastSSE('roulette_updated', getState().roulette)
+      return NextResponse.json({ ok: true })
+    }
+
+    // ── 음악 ──────────────────────
+    case 'music_next': {
+      const state = getState()
+      const q = state.music.queue
+      setState(s => {
+        if (s.music.currentIdx < q.length - 1) s.music.currentIdx++
+        else s.music.currentIdx = 0
+        s.music.playing = true
+      })
+      broadcastSSE('music_state', getState().music)
+      return NextResponse.json({ ok: true })
+    }
+    case 'music_prev': {
+      setState(s => {
+        if (s.music.currentIdx > 0) s.music.currentIdx--
+        else s.music.currentIdx = Math.max(0, getState().music.queue.length - 1)
+        s.music.playing = true
+      })
+      broadcastSSE('music_state', getState().music)
+      return NextResponse.json({ ok: true })
+    }
+    case 'music_play_idx': {
+      setState(s => { s.music.currentIdx = body.idx; s.music.playing = true })
+      broadcastSSE('music_state', getState().music)
+      return NextResponse.json({ ok: true })
+    }
+    case 'music_remove': {
+      setState(s => {
+        s.music.queue.splice(body.idx, 1)
+        if (s.music.currentIdx >= s.music.queue.length) s.music.currentIdx = Math.max(0, s.music.queue.length - 1)
+      })
+      broadcastSSE('music_state', getState().music)
+      return NextResponse.json({ ok: true })
+    }
+    case 'music_manual_add': {
+      const track = await searchYouTube(body.query)
+      if (!track) return NextResponse.json({ ok: false, error: '검색 실패' })
+      setState(s => {
+        s.music.queue.push({ ...track, requestedBy: body.requestedBy || '방장', addedAt: Date.now() })
+        if (s.music.queue.length === 1) { s.music.currentIdx = 0; s.music.playing = true }
+      })
+      broadcastSSE('music_state', getState().music)
+      return NextResponse.json({ ok: true, track })
+    }
+    case 'music_clear': {
+      setState(s => { s.music.queue = []; s.music.currentIdx = 0; s.music.playing = false })
+      broadcastSSE('music_state', getState().music)
+      return NextResponse.json({ ok: true })
+    }
+    case 'music_set_playing': {
+      setState(s => { s.music.playing = body.playing })
+      broadcastSSE('music_state', getState().music)
       return NextResponse.json({ ok: true })
     }
 

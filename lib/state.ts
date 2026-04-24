@@ -1,5 +1,3 @@
-// 서버 전역 상태 (Vercel Edge에서는 메모리가 재시작될 수 있으므로 간단하게 유지)
-
 export interface VoteItem {
   label: string
   votes: string[]
@@ -19,13 +17,28 @@ export interface RouletteItem {
   color: string
 }
 
+export interface MusicTrack {
+  videoId: string
+  title: string
+  channel: string
+  thumbnail: string
+  requestedBy: string
+  addedAt: number
+}
+
+export interface MusicState {
+  queue: MusicTrack[]
+  currentIdx: number
+  playing: boolean
+}
+
 export interface AppState {
   vote: VoteState
   roulette: { items: RouletteItem[] }
+  music: MusicState
   channelId: string | null
 }
 
-// Node.js 전역 싱글톤 (개발/프로덕션 모두)
 declare global {
   var __appState: AppState | undefined
 }
@@ -35,8 +48,12 @@ export function getState(): AppState {
     global.__appState = {
       vote: { active: false, title: '', items: [], startedAt: null },
       roulette: { items: [] },
+      music: { queue: [], currentIdx: 0, playing: false },
       channelId: null,
     }
+  }
+  if (!global.__appState.music) {
+    global.__appState.music = { queue: [], currentIdx: 0, playing: false }
   }
   return global.__appState
 }
