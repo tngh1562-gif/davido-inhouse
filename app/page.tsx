@@ -27,8 +27,10 @@ export default function Home() {
   const [spinning, setSpinning] = useState(false)
   const [winner, setWinner] = useState<string|null>(null)
   const [angle, setAngle] = useState(0)
+  const [expandedIdx, setExpandedIdx] = useState<number|null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animRef = useRef<number>()
+  const chatEndRef = useRef<HTMLDivElement>(null)
 
   const api = async (type: string, extra?: object) => {
     await fetch('/api/action', {
@@ -70,6 +72,7 @@ export default function Home() {
   }, [auth])
 
   useEffect(() => { if (showRoulette) drawWheel(angle) }, [rouletteItems, angle, showRoulette])
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatLog])
 
   function drawWheel(rot: number) {
     const c = canvasRef.current; if (!c) return
@@ -142,26 +145,40 @@ export default function Home() {
     setRouletteItems(newItems); api('set_roulette', { items: newItems })
   }
 
-  const inp: React.CSSProperties = { background:'#131a24', border:'1px solid #1f2d42', color:'#c8d8ec', borderRadius:'4px', padding:'7px 12px', fontSize:'13px', fontFamily:'inherit', outline:'none' }
-  const card: React.CSSProperties = { background:'#0d1117', border:'1px solid #1f2d42', borderRadius:'6px', padding:'20px', marginBottom:'14px' }
-  const btn = (bg='#e8b84b', fg='#0d1117'): React.CSSProperties => ({ padding:'7px 16px', borderRadius:'4px', border:'none', background:bg, color:fg, cursor:'pointer', fontSize:'13px', fontWeight:600, fontFamily:'inherit', whiteSpace:'nowrap' })
-  const navBtn = (on:boolean): React.CSSProperties => ({ padding:'14px 20px', border:'none', borderBottom:on?'2px solid #e8b84b':'2px solid transparent', background:'none', color:on?'#e8b84b':'#5a7a9a', cursor:'pointer', fontSize:'13px', fontFamily:'inherit', fontWeight:on?700:400 })
+  // ── 스타일 ──
+  const inp = (w='100%'): React.CSSProperties => ({
+    background:'#0d1117', border:'1px solid #1f2d42', color:'#c8d8ec',
+    borderRadius:'6px', padding:'8px 12px', fontSize:'13px',
+    fontFamily:'inherit', outline:'none', width:w, boxSizing:'border-box' as const,
+  })
+  const card: React.CSSProperties = {
+    background:'#0d1117', border:'1px solid #1f2d42',
+    borderRadius:'10px', padding:'20px', marginBottom:'12px',
+  }
+  const btn = (bg='#e8b84b', fg='#0d1117', outline=false): React.CSSProperties => ({
+    padding:'8px 18px', borderRadius:'6px',
+    border: outline ? `1px solid ${bg}` : 'none',
+    background: outline ? 'transparent' : bg,
+    color: outline ? bg : fg,
+    cursor:'pointer', fontSize:'13px', fontWeight:600,
+    fontFamily:'inherit', whiteSpace:'nowrap' as const,
+  })
 
   // ── 비밀번호 화면 ──
   if (!auth) return (
-    <div style={{minHeight:'100vh',background:'#07090f',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'sans-serif'}}>
-      <div style={{background:'#0d1117',border:'1px solid #1f2d42',borderRadius:'8px',padding:'44px 52px',textAlign:'center',minWidth:'340px'}}>
-        <div style={{fontSize:'24px',fontWeight:700,color:'#e8b84b',marginBottom:'6px'}}>⚔ 다비도의 내전</div>
-        <div style={{fontSize:'13px',color:'#5a7a9a',marginBottom:'28px'}}>비밀번호를 입력하세요</div>
+    <div style={{minHeight:'100vh',background:'#07090f',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'\'Noto Sans KR\',sans-serif'}}>
+      <div style={{background:'#0d1117',border:'1px solid #1f2d42',borderRadius:'12px',padding:'48px 52px',textAlign:'center',minWidth:'340px',boxShadow:'0 20px 60px rgba(0,0,0,.6)'}}>
+        <div style={{fontSize:'26px',fontWeight:700,color:'#e8b84b',marginBottom:'6px',letterSpacing:'1px'}}>⚔ 다비도의 내전</div>
+        <div style={{fontSize:'13px',color:'#5a7a9a',marginBottom:'32px'}}>비밀번호를 입력하세요</div>
         <input type="password" value={pwInput} autoFocus
           onChange={e=>{setPwInput(e.target.value);setPwError(false)}}
           onKeyDown={e=>{if(e.key==='Enter'){if(pwInput===PASSWORD)setAuth(true);else setPwError(true)}}}
           placeholder="비밀번호"
-          style={{...inp,width:'100%',boxSizing:'border-box',marginBottom:'8px',fontSize:'14px',padding:'10px 14px',border:`1px solid ${pwError?'#ea4335':'#1f2d42'}`}}
+          style={{...inp(),marginBottom:'8px',fontSize:'14px',padding:'11px 14px',border:`1px solid ${pwError?'#ea4335':'#1f2d42'}`}}
         />
         {pwError&&<div style={{fontSize:'12px',color:'#ea4335',marginBottom:'8px'}}>비밀번호가 틀렸습니다</div>}
         <button onClick={()=>{if(pwInput===PASSWORD)setAuth(true);else setPwError(true)}}
-          style={{width:'100%',padding:'11px',borderRadius:'4px',border:'none',background:'#e8b84b',color:'#0d1117',fontWeight:700,fontSize:'14px',fontFamily:'inherit',cursor:'pointer',marginTop:'4px'}}>
+          style={{width:'100%',padding:'12px',borderRadius:'6px',border:'none',background:'#e8b84b',color:'#0d1117',fontWeight:700,fontSize:'14px',fontFamily:'inherit',cursor:'pointer',marginTop:'4px'}}>
           입장
         </button>
       </div>
@@ -171,124 +188,204 @@ export default function Home() {
   const total = vote.items.reduce((s,i)=>s+i.votes.length, 0)
 
   return (
-    <div style={{fontFamily:'sans-serif',minHeight:'100vh',background:'#07090f',color:'#c8d8ec'}}>
+    <div style={{fontFamily:'\'Noto Sans KR\',sans-serif',minHeight:'100vh',background:'#07090f',color:'#c8d8ec'}}>
 
-      {/* 헤더 탭 */}
-      <div style={{background:'#0d1117',borderBottom:'1px solid #1f2d42',padding:'0 24px',display:'flex',alignItems:'stretch'}}>
-        <div style={{fontSize:'18px',fontWeight:700,color:'#e8b84b',display:'flex',alignItems:'center',marginRight:'20px'}}>⚔ 다비도의 내전</div>
-        <button style={navBtn(tab==='inhouse')} onClick={()=>setTab('inhouse')}>⚔ 내전 진행</button>
-        <button style={navBtn(tab==='vote')} onClick={()=>setTab('vote')}>📊 채팅 투표</button>
+      {/* 헤더 */}
+      <div style={{background:'#0d1117',borderBottom:'1px solid #1f2d42',padding:'0 24px',display:'flex',alignItems:'stretch',position:'sticky',top:0,zIndex:100}}>
+        <div style={{fontSize:'17px',fontWeight:700,color:'#e8b84b',display:'flex',alignItems:'center',marginRight:'24px',gap:'8px'}}>
+          <span>⚔</span><span>다비도의 내전</span>
+        </div>
+        {(['inhouse','vote'] as const).map(t=>(
+          <button key={t} onClick={()=>setTab(t)} style={{
+            padding:'0 20px', border:'none',
+            borderBottom: tab===t ? '2px solid #e8b84b' : '2px solid transparent',
+            background:'none', color: tab===t ? '#e8b84b' : '#5a7a9a',
+            cursor:'pointer', fontSize:'13px', fontFamily:'inherit',
+            fontWeight: tab===t ? 700 : 400, transition:'all .15s',
+          }}>
+            {t==='inhouse' ? '⚔ 내전 진행' : '📊 채팅 투표'}
+          </button>
+        ))}
       </div>
 
-      {/* 치지직 연결 바 - 투표 탭에서만 */}
+      {/* 치지직 연결 바 */}
       {tab==='vote' && (
-        <div style={{background:'#0d1117',borderBottom:'1px solid #1f2d42',padding:'9px 24px',display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap',fontSize:'13px'}}>
-          <div style={{width:'8px',height:'8px',borderRadius:'50%',background:chzzkConnected?'#34a853':'#ea4335',flexShrink:0}}/>
-          <span style={{color:'#5a7a9a'}}>치지직 채팅</span>
+        <div style={{background:'#0d1117',borderBottom:'1px solid #1f2d42',padding:'8px 24px',display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap',fontSize:'13px'}}>
+          <div style={{width:'8px',height:'8px',borderRadius:'50%',background:chzzkConnected?'#34a853':'#5a7a9a',flexShrink:0,boxShadow:chzzkConnected?'0 0 6px #34a853':'none'}}/>
+          <span style={{color:'#5a7a9a',fontSize:'12px'}}>치지직 채팅</span>
           {chzzkConnected ? <>
-            <span style={{color:'#34a853',fontWeight:600}}>{channelId.slice(0,16)}... 연결됨</span>
+            <span style={{color:'#34a853',fontWeight:600,fontSize:'12px'}}>{channelId.slice(0,20)}...</span>
             <button style={btn('#ea4335','#fff')} onClick={()=>api('disconnect_chzzk')}>연결 해제</button>
           </> : <>
-            <input style={{...inp,width:'280px'}} placeholder="채널 ID (URL 마지막 부분)" value={inputCid} onChange={e=>setInputCid(e.target.value)} onKeyDown={e=>e.key==='Enter'&&api('connect_chzzk',{channelId:inputCid})}/>
-            <button style={btn()} onClick={()=>api('connect_chzzk',{channelId:inputCid})}>연결</button>
-            <span style={{color:'#5a7a9a',fontSize:'12px'}}>예) chzzk.naver.com/<b style={{color:'#e8b84b'}}>여기 부분</b></span>
+            <input style={{...inp('240px'),padding:'5px 10px',fontSize:'12px'}} placeholder="채널 ID" value={inputCid} onChange={e=>setInputCid(e.target.value)} onKeyDown={e=>e.key==='Enter'&&api('connect_chzzk',{channelId:inputCid})}/>
+            <button style={{...btn(),padding:'5px 14px',fontSize:'12px'}} onClick={()=>api('connect_chzzk',{channelId:inputCid})}>연결</button>
+            <span style={{color:'#5a7a9a',fontSize:'11px'}}>예) chzzk.naver.com/<b style={{color:'#e8b84b'}}>여기</b></span>
           </>}
-          <div style={{marginLeft:'auto',display:'flex',gap:'6px',alignItems:'center',fontSize:'12px',color:'#5a7a9a'}}>
-            채팅 명령어:
-            {['1','2','3','4','5','6','7','8'].map(n=>(
-              <code key={n} style={{background:'#131a24',padding:'2px 7px',borderRadius:'3px',color:'#e8b84b'}}>!투표{n}</code>
+          <div style={{marginLeft:'auto',display:'flex',gap:'5px',alignItems:'center',fontSize:'11px',color:'#5a7a9a'}}>
+            명령어:
+            {['1','2','3','4','5','6'].map(n=>(
+              <code key={n} style={{background:'#131a24',padding:'2px 6px',borderRadius:'3px',color:'#e8b84b',fontSize:'11px'}}>!투표{n}</code>
             ))}
           </div>
         </div>
       )}
 
-      {/* 내전 진행 탭 */}
+      {/* 내전 탭 */}
       {tab==='inhouse' && (
         <iframe src="/inhouse.html" style={{width:'100%',height:'calc(100vh - 53px)',border:'none',display:'block'}} title="내전 진행"/>
       )}
 
       {/* 투표 탭 */}
       {tab==='vote' && (
-        <div style={{maxWidth:'1200px',margin:'0 auto',padding:'20px 24px'}}>
-          <div style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:'20px',alignItems:'start'}}>
+        <div style={{maxWidth:'1100px',margin:'0 auto',padding:'20px 24px'}}>
+          <div style={{display:'grid',gridTemplateColumns:'300px 1fr',gap:'16px',alignItems:'start'}}>
 
-            {/* 왼쪽: 설정 + 채팅 */}
+            {/* 왼쪽 */}
             <div>
+              {/* 투표 설정 */}
               <div style={card}>
-                <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'14px',fontSize:'14px'}}>📊 투표 설정</div>
+                <div style={{fontWeight:700,color:'#c8d8ec',marginBottom:'14px',fontSize:'14px',display:'flex',alignItems:'center',gap:'8px'}}>
+                  <span style={{color:'#e8b84b'}}>📊</span> 투표 설정
+                </div>
                 <div style={{marginBottom:'10px'}}>
-                  <div style={{fontSize:'12px',color:'#5a7a9a',marginBottom:'4px'}}>투표 제목</div>
-                  <input style={{...inp,width:'100%',boxSizing:'border-box'}} value={voteTitle} onChange={e=>setVoteTitle(e.target.value)}/>
+                  <div style={{fontSize:'11px',color:'#5a7a9a',marginBottom:'4px',letterSpacing:'.5px',textTransform:'uppercase'}}>제목</div>
+                  <input style={inp()} value={voteTitle} onChange={e=>setVoteTitle(e.target.value)}/>
                 </div>
                 <div style={{marginBottom:'14px'}}>
-                  <div style={{fontSize:'12px',color:'#5a7a9a',marginBottom:'4px'}}>투표 항목 (한 줄에 하나)</div>
-                  <textarea style={{...inp,width:'100%',height:'120px',resize:'vertical',boxSizing:'border-box',lineHeight:'1.8'}} value={voteItemsText} onChange={e=>setVoteItemsText(e.target.value)}/>
+                  <div style={{fontSize:'11px',color:'#5a7a9a',marginBottom:'4px',letterSpacing:'.5px',textTransform:'uppercase'}}>항목 <span style={{textTransform:'none',fontSize:'10px'}}>(한 줄에 하나)</span></div>
+                  <textarea style={{...inp(),height:'110px',resize:'vertical',lineHeight:'1.9'}} value={voteItemsText} onChange={e=>setVoteItemsText(e.target.value)}/>
                 </div>
                 <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
                   {!vote.active
-                    ? <button style={btn()} onClick={()=>api('start_vote',{title:voteTitle,items:voteItemsText.split('\n').filter(i=>i.trim())})}>▶ 투표 시작</button>
-                    : <button style={btn('#ea4335','#fff')} onClick={()=>api('end_vote')}>■ 투표 종료</button>
+                    ? <button style={{...btn(),flex:1}} onClick={()=>api('start_vote',{title:voteTitle,items:voteItemsText.split('\n').filter(i=>i.trim())})}>▶ 투표 시작</button>
+                    : <button style={{...btn('#ea4335','#fff'),flex:1}} onClick={()=>api('end_vote')}>■ 투표 종료</button>
                   }
-                  <button style={btn('#2a3d58','#c8d8ec')} onClick={()=>api('reset_vote')}>초기화</button>
-                  {!vote.active&&vote.items.length>0&&(
-                    <button style={btn('#9c27b0','#fff')} onClick={()=>{api('vote_to_roulette');setShowRoulette(true)}}>🎡 룰렛으로</button>
-                  )}
+                  <button style={btn('#1e2840','#5a7a9a',true)} onClick={()=>api('reset_vote')}>초기화</button>
                 </div>
+                {!vote.active && vote.items.length>0 && (
+                  <button style={{...btn('#9c27b0','#fff'),marginTop:'8px',width:'100%'}}
+                    onClick={()=>{api('vote_to_roulette');setShowRoulette(true)}}>
+                    🎡 룰렛으로
+                  </button>
+                )}
               </div>
 
-              {/* 채팅 로그 */}
-              <div style={{...card,maxHeight:'300px',display:'flex',flexDirection:'column'}}>
-                <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'10px',fontSize:'14px',flexShrink:0}}>💬 실시간 채팅</div>
-                <div style={{flex:1,overflowY:'auto',fontSize:'12px',lineHeight:'1.8'}}>
+              {/* 실시간 채팅 */}
+              <div style={{...card,padding:'16px'}}>
+                <div style={{fontWeight:600,color:'#c8d8ec',marginBottom:'10px',fontSize:'13px',display:'flex',alignItems:'center',gap:'6px'}}>
+                  <span style={{width:'6px',height:'6px',borderRadius:'50%',background:chzzkConnected?'#34a853':'#5a7a9a',display:'inline-block'}}/>
+                  실시간 채팅
+                </div>
+                <div style={{height:'220px',overflowY:'auto',fontSize:'12px',lineHeight:'1.7'}}>
                   {!chzzkConnected
-                    ? <div style={{color:'#5a7a9a',textAlign:'center',padding:'20px'}}>위에서 채널을 연결하세요</div>
+                    ? <div style={{color:'#5a7a9a',textAlign:'center',padding:'30px 0',fontSize:'12px'}}>채널을 연결하세요</div>
                     : chatLog.length===0
-                      ? <div style={{color:'#5a7a9a',textAlign:'center',padding:'20px'}}>채팅 대기 중...</div>
-                      : [...chatLog].reverse().map((c,i)=>(
-                          <div key={i} style={{padding:'2px 0',borderBottom:'1px solid rgba(31,45,66,.4)'}}>
-                            <span style={{color:c.text.startsWith('!투표')?'#e8b84b':'#82b1ff',marginRight:'6px',fontWeight:500}}>{c.nickname}</span>
-                            <span style={{color:c.text.startsWith('!투표')?'#34a853':'#c8d8ec'}}>{c.text}</span>
+                      ? <div style={{color:'#5a7a9a',textAlign:'center',padding:'30px 0',fontSize:'12px'}}>채팅 대기 중...</div>
+                      : chatLog.map((c,i)=>(
+                          <div key={i} style={{padding:'2px 0',borderBottom:'1px solid rgba(31,45,66,.3)'}}>
+                            <span style={{color:c.text.startsWith('!투표')?'#e8b84b':'#82b1ff',marginRight:'5px',fontWeight:500,fontSize:'11px'}}>{c.nickname}</span>
+                            <span style={{color:c.text.startsWith('!투표')?'#34a853':'#8aa8c4',fontSize:'12px'}}>{c.text}</span>
                           </div>
                         ))
                   }
+                  <div ref={chatEndRef}/>
                 </div>
               </div>
             </div>
 
-            {/* 오른쪽: 실시간 투표 결과 */}
+            {/* 오른쪽: 투표 결과 */}
             <div style={card}>
               <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'20px'}}>
-                <div style={{fontWeight:700,fontSize:'16px'}}>{vote.title||'투표 결과'}</div>
-                {vote.active&&<span style={{fontSize:'11px',padding:'3px 10px',borderRadius:'20px',background:'rgba(52,168,83,.15)',color:'#34a853',border:'1px solid rgba(52,168,83,.3)',fontWeight:600}}>● 진행 중</span>}
-                <span style={{marginLeft:'auto',fontSize:'13px',color:'#5a7a9a'}}>총 {total}표</span>
+                <div style={{fontWeight:700,fontSize:'16px',color:'#c8d8ec'}}>{vote.title||'투표 결과'}</div>
+                {vote.active && (
+                  <span style={{fontSize:'11px',padding:'3px 10px',borderRadius:'20px',background:'rgba(52,168,83,.15)',color:'#34a853',border:'1px solid rgba(52,168,83,.3)',fontWeight:600,display:'flex',alignItems:'center',gap:'4px'}}>
+                    <span style={{width:'5px',height:'5px',borderRadius:'50%',background:'#34a853',display:'inline-block',animation:'pulse 1.2s ease-in-out infinite'}}/>
+                    진행 중
+                  </span>
+                )}
+                <span style={{marginLeft:'auto',fontSize:'13px',color:'#5a7a9a'}}>총 <b style={{color:'#c8d8ec'}}>{total}</b>표</span>
               </div>
 
               {vote.items.length===0
-                ? <div style={{textAlign:'center',padding:'60px 0',color:'#5a7a9a',fontSize:'14px'}}>투표를 시작하면 여기에 실시간으로 표시됩니다</div>
+                ? (
+                  <div style={{textAlign:'center',padding:'60px 0',color:'#5a7a9a',fontSize:'14px'}}>
+                    <div style={{fontSize:'32px',marginBottom:'12px',opacity:.4}}>📊</div>
+                    투표를 시작하면 실시간으로 표시됩니다
+                  </div>
+                )
                 : vote.items.map((item,i)=>{
                     const pct = total>0 ? Math.round(item.votes.length/total*100) : 0
+                    const isExpanded = expandedIdx === i
                     return (
-                      <div key={i} style={{display:'grid',gridTemplateColumns:'140px 1fr',gap:'12px',alignItems:'center',marginBottom:'16px'}}>
-                        {/* 왼쪽: 라벨 */}
-                        <div>
-                          <div style={{fontSize:'11px',color:item.color,fontFamily:'monospace',fontWeight:700,marginBottom:'3px'}}>!투표{i+1}</div>
-                          <div style={{fontSize:'17px',fontWeight:700,color:'#c8d8ec'}}>{item.label}</div>
-                        </div>
-                        {/* 오른쪽: 바 + 숫자 */}
-                        <div>
-                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'6px'}}>
-                            <span style={{fontSize:'13px',color:'#5a7a9a'}}>{item.votes.length}표</span>
-                            <span style={{fontSize:'20px',fontWeight:700,color:item.color}}>{pct}%</span>
+                      <div key={i} style={{
+                        marginBottom:'10px',
+                        background:'#0d1117',
+                        border:`1px solid ${isExpanded ? item.color+'66' : '#1f2d42'}`,
+                        borderRadius:'8px', overflow:'hidden',
+                        transition:'border-color .2s',
+                      }}>
+                        {/* 항목 행 - 클릭하면 투표자 목록 토글 */}
+                        <div
+                          onClick={()=>setExpandedIdx(isExpanded ? null : i)}
+                          style={{
+                            display:'grid',
+                            gridTemplateColumns:'130px 1fr auto auto auto',
+                            gap:'12px', alignItems:'center',
+                            padding:'12px 16px', cursor:'pointer',
+                            userSelect:'none',
+                            transition:'background .15s',
+                          }}
+                          onMouseEnter={e=>(e.currentTarget.style.background='#131a24')}
+                          onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
+                        >
+                          {/* 명령어 + 라벨 */}
+                          <div>
+                            <div style={{fontSize:'11px',color:item.color,fontFamily:'monospace',fontWeight:700,marginBottom:'3px',letterSpacing:'1px'}}>!투표{i+1}</div>
+                            <div style={{fontSize:'16px',fontWeight:700,color:'#c8d8ec'}}>{item.label}</div>
                           </div>
-                          <div style={{height:'14px',background:'#192030',borderRadius:'7px',overflow:'hidden'}}>
-                            <div style={{height:'100%',width:`${pct}%`,background:item.color,borderRadius:'7px',transition:'width .4s ease'}}/>
-                          </div>
-                          {item.votes.length>0&&(
-                            <div style={{marginTop:'4px',fontSize:'11px',color:'#5a7a9a'}}>
-                              {item.votes.slice(0,12).join(', ')}{item.votes.length>12?` 외 ${item.votes.length-12}명`:''}
+
+                          {/* 진행 바 */}
+                          <div>
+                            <div style={{height:'8px',background:'#131a24',borderRadius:'4px',overflow:'hidden'}}>
+                              <div style={{height:'100%',width:`${pct}%`,background:item.color,borderRadius:'4px',transition:'width .4s ease'}}/>
                             </div>
-                          )}
+                          </div>
+
+                          {/* 표수 */}
+                          <span style={{fontSize:'13px',color:'#5a7a9a',minWidth:'30px',textAlign:'right'}}>{item.votes.length}표</span>
+
+                          {/* 퍼센트 */}
+                          <span style={{fontSize:'22px',fontWeight:700,color:item.color,minWidth:'52px',textAlign:'right'}}>{pct}%</span>
+
+                          {/* 펼치기 아이콘 */}
+                          <span style={{fontSize:'12px',color:'#5a7a9a',transition:'transform .2s',transform:isExpanded?'rotate(180deg)':'none'}}>▼</span>
                         </div>
+
+                        {/* 투표자 목록 (펼쳐지면 표시) */}
+                        {isExpanded && (
+                          <div style={{padding:'10px 16px 14px',borderTop:`1px solid ${item.color}33`,background:'#0a0f16'}}>
+                            <div style={{fontSize:'11px',color:'#5a7a9a',marginBottom:'8px',letterSpacing:'.5px',textTransform:'uppercase'}}>
+                              투표자 {item.votes.length}명
+                            </div>
+                            {item.votes.length === 0
+                              ? <div style={{fontSize:'12px',color:'#5a7a9a',fontStyle:'italic'}}>아직 투표한 사람이 없습니다</div>
+                              : (
+                                <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+                                  {item.votes.map((nick,j)=>(
+                                    <span key={j} style={{
+                                      fontSize:'12px',padding:'3px 10px',
+                                      borderRadius:'20px',
+                                      background:`${item.color}18`,
+                                      color:item.color,
+                                      border:`1px solid ${item.color}44`,
+                                      fontWeight:500,
+                                    }}>{nick}</span>
+                                  ))}
+                                </div>
+                              )
+                            }
+                          </div>
+                        )}
                       </div>
                     )
                   })
@@ -296,60 +393,69 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 룰렛 섹션 (투표 결과 가져오기 누르면 펼쳐짐) */}
+          {/* 룰렛 */}
           {showRoulette && (
-            <div style={{marginTop:'20px',display:'grid',gridTemplateColumns:'420px 1fr',gap:'20px',alignItems:'start'}}>
+            <div style={{marginTop:'16px',display:'grid',gridTemplateColumns:'400px 1fr',gap:'16px',alignItems:'start'}}>
               <div style={{...card,textAlign:'center'}}>
                 <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'14px',fontSize:'14px'}}>🎡 룰렛</div>
-                <canvas ref={canvasRef} width={360} height={360} style={{maxWidth:'100%',display:'block',margin:'0 auto'}}/>
-                <div style={{marginTop:'14px'}}>
-                  <button style={{...btn(),fontSize:'14px',padding:'10px 32px',opacity:spinning||!rouletteItems.length?.5:1}} onClick={spin} disabled={spinning||!rouletteItems.length}>
-                    {spinning?'돌아가는 중...':'🎡 돌리기'}
-                  </button>
-                </div>
+                <canvas ref={canvasRef} width={340} height={340} style={{maxWidth:'100%',display:'block',margin:'0 auto'}}/>
+                <button style={{...btn(),fontSize:'14px',padding:'10px 36px',marginTop:'14px',opacity:spinning||!rouletteItems.length?.5:1}} onClick={spin} disabled={spinning||!rouletteItems.length}>
+                  {spinning?'돌아가는 중...':'🎡 돌리기'}
+                </button>
                 {winner&&(
-                  <div style={{marginTop:'14px',padding:'14px',background:'rgba(232,184,75,.1)',border:'1px solid rgba(232,184,75,.3)',borderRadius:'6px'}}>
-                    <div style={{fontSize:'12px',color:'#5a7a9a',marginBottom:'4px'}}>🎉 당첨!</div>
-                    <div style={{fontSize:'24px',fontWeight:700,color:'#e8b84b'}}>{winner}</div>
+                  <div style={{marginTop:'14px',padding:'14px',background:'rgba(232,184,75,.1)',border:'1px solid rgba(232,184,75,.3)',borderRadius:'8px'}}>
+                    <div style={{fontSize:'11px',color:'#5a7a9a',marginBottom:'4px'}}>🎉 당첨!</div>
+                    <div style={{fontSize:'26px',fontWeight:700,color:'#e8b84b'}}>{winner}</div>
                   </div>
                 )}
               </div>
               <div style={card}>
-                <div style={{fontWeight:700,color:'#e8b84b',marginBottom:'12px',fontSize:'14px'}}>항목 설정</div>
+                <div style={{fontWeight:700,color:'#c8d8ec',marginBottom:'12px',fontSize:'14px'}}>항목 설정</div>
                 <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
-                  <input style={{...inp,flex:1,minWidth:'120px'}} placeholder="항목명" value={rInput} onChange={e=>setRInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addRouletteItem()}/>
-                  <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
-                    <span style={{fontSize:'12px',color:'#5a7a9a'}}>가중치</span>
-                    <input style={{...inp,width:'56px',textAlign:'center'}} type="number" min="1" value={rWeight} onChange={e=>setRWeight(e.target.value)}/>
+                  <input style={{...inp(),flex:1,minWidth:'100px'}} placeholder="항목명" value={rInput} onChange={e=>setRInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addRouletteItem()}/>
+                  <div style={{display:'flex',alignItems:'center',gap:'6px',flexShrink:0}}>
+                    <span style={{fontSize:'11px',color:'#5a7a9a'}}>가중치</span>
+                    <input style={{...inp('52px'),textAlign:'center'}} type="number" min="1" value={rWeight} onChange={e=>setRWeight(e.target.value)}/>
                   </div>
                   <button style={btn()} onClick={addRouletteItem}>추가</button>
                 </div>
-                {rouletteItems.map((item,i)=>{
-                  const t=rouletteItems.reduce((s,it)=>s+(it.weight||1),0)
-                  return (
-                    <div key={i} style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 0',borderBottom:'1px solid #1f2d42'}}>
-                      <div style={{width:'10px',height:'10px',borderRadius:'2px',background:item.color,flexShrink:0}}/>
-                      <span style={{flex:1,fontSize:'13px'}}>{item.label}</span>
-                      <span style={{fontSize:'11px',color:'#5a7a9a'}}>가중치 {item.weight} ({Math.round((item.weight||1)/t*100)}%)</span>
-                      <button style={{background:'none',border:'none',color:'#5a7a9a',cursor:'pointer',fontSize:'15px'}} onClick={()=>removeRouletteItem(i)}>✕</button>
-                    </div>
-                  )
-                })}
-                <div style={{display:'flex',gap:'8px',marginTop:'12px'}}>
+                <div style={{maxHeight:'240px',overflowY:'auto'}}>
+                  {rouletteItems.map((item,i)=>{
+                    const t=rouletteItems.reduce((s,it)=>s+(it.weight||1),0)
+                    return (
+                      <div key={i} style={{display:'flex',alignItems:'center',gap:'8px',padding:'8px 0',borderBottom:'1px solid #1f2d42'}}>
+                        <div style={{width:'8px',height:'8px',borderRadius:'2px',background:item.color,flexShrink:0}}/>
+                        <span style={{flex:1,fontSize:'13px'}}>{item.label}</span>
+                        <span style={{fontSize:'11px',color:'#5a7a9a'}}>가중치 {item.weight} ({Math.round((item.weight||1)/t*100)}%)</span>
+                        <button style={{background:'none',border:'none',color:'#5a7a9a',cursor:'pointer',fontSize:'14px',padding:'0 4px'}} onClick={()=>removeRouletteItem(i)}>✕</button>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{display:'flex',gap:'8px',marginTop:'12px',flexWrap:'wrap'}}>
                   <button style={btn('#9c27b0','#fff')} onClick={async()=>{
                     await api('vote_to_roulette')
                     const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'get_state'})})
                     const data=await r.json()
                     if(data.roulette?.items) setRouletteItems(data.roulette.items)
                   }}>← 투표 결과 갱신</button>
-                  <button style={btn('#2a3d58','#c8d8ec')} onClick={()=>{setRouletteItems([]);api('set_roulette',{items:[]})}}>전체 삭제</button>
-                  <button style={btn('#607080','#c8d8ec')} onClick={()=>setShowRoulette(false)}>닫기</button>
+                  <button style={btn('#1e2840','#5a7a9a',true)} onClick={()=>{setRouletteItems([]);api('set_roulette',{items:[]})}}>전체 삭제</button>
+                  <button style={btn('#1e2840','#5a7a9a',true)} onClick={()=>setShowRoulette(false)}>닫기</button>
                 </div>
               </div>
             </div>
           )}
         </div>
       )}
+
+      <style>{`
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0d1117; }
+        ::-webkit-scrollbar-thumb { background: #1f2d42; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2a3d58; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+      `}</style>
     </div>
   )
 }
