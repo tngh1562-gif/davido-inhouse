@@ -379,53 +379,57 @@ export default function Home() {
         left: (tab as string)==='music' ? 'auto' : '-9999px',
         width: '100%',
         background:'#0f0f0f',
-        borderBottom:'1px solid #222',
+        borderBottom:'1px solid #1a1a1a',
         flexShrink:0,
         zIndex: (tab as string)==='music' ? 10 : -1,
       }}>
         {music.queue[music.currentIdx] ? (
-          <div style={{display:'flex',alignItems:'stretch'}}>
-            {/* 영상 */}
+          <div style={{position:'relative'}}>
+            {/* 영상 - 가로 100% */}
             <iframe
               key={`${music.queue[music.currentIdx].videoId}-${music.currentIdx}`}
               src={`https://www.youtube.com/embed/${music.queue[music.currentIdx].videoId}?autoplay=1&controls=1&rel=0&modestbranding=1`}
-              width="480" height="270"
-              style={{flexShrink:0,border:'none',display:'block'}}
+              style={{width:'100%',height:'420px',border:'none',display:'block'}}
               allow="autoplay; encrypted-media; fullscreen"
               allowFullScreen
             />
-            {/* 곡 정보 */}
-            <div style={{flex:1,padding:'20px 28px',display:'flex',flexDirection:'column',justifyContent:'center',gap:'10px',minWidth:0,background:'#111'}}>
-              <div>
-                <div style={{fontSize:'18px',fontWeight:700,color:'#fff',marginBottom:'5px',
-                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',lineHeight:1.3}}>
+            {/* 곡 정보 - 영상 아래 */}
+            <div style={{
+              background:'linear-gradient(135deg,#111 0%,#1a1a1a 100%)',
+              padding:'14px 24px',
+              display:'flex',alignItems:'center',gap:'16px',
+              borderTop:'1px solid #222',
+            }}>
+              <img src={music.queue[music.currentIdx].thumbnail}
+                style={{width:'52px',height:'36px',objectFit:'cover',borderRadius:'4px',flexShrink:0}}/>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:'14px',fontWeight:700,color:'#fff',
+                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                   {music.queue[music.currentIdx].title}
                 </div>
-                <div style={{fontSize:'13px',color:'#888',marginBottom:'4px'}}>{music.queue[music.currentIdx].channel}</div>
-                <div style={{fontSize:'12px',color:acc,fontWeight:600}}>🙋 {music.queue[music.currentIdx].requestedBy}</div>
+                <div style={{fontSize:'12px',color:'#777',marginTop:'2px'}}>
+                  {music.queue[music.currentIdx].channel}
+                  <span style={{color:acc,marginLeft:'10px',fontWeight:600}}>🙋 {music.queue[music.currentIdx].requestedBy}</span>
+                </div>
               </div>
-              <div style={{display:'flex',alignItems:'center',gap:'12px',marginTop:'4px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'8px',flexShrink:0}}>
                 <button onClick={()=>api('music_prev')}
-                  style={{background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.1)',borderRadius:'50%',
-                    width:'42px',height:'42px',cursor:'pointer',fontSize:'16px',color:'#ccc',
-                    display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}}
-                  onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,.18)')}
-                  onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,.08)')}>⏮</button>
+                  style={{background:'rgba(255,255,255,.08)',border:'none',borderRadius:'50%',
+                    width:'36px',height:'36px',cursor:'pointer',fontSize:'14px',color:'#aaa',
+                    display:'flex',alignItems:'center',justifyContent:'center'}}>⏮</button>
                 <button onClick={()=>api('music_next')}
-                  style={{background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.1)',borderRadius:'50%',
-                    width:'42px',height:'42px',cursor:'pointer',fontSize:'16px',color:'#ccc',
-                    display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}}
-                  onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,.18)')}
-                  onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,.08)')}>⏭</button>
-                <span style={{fontSize:'12px',color:'#555',padding:'4px 10px',background:'rgba(255,255,255,.05)',borderRadius:'20px'}}>
+                  style={{background:'rgba(255,255,255,.08)',border:'none',borderRadius:'50%',
+                    width:'36px',height:'36px',cursor:'pointer',fontSize:'14px',color:'#aaa',
+                    display:'flex',alignItems:'center',justifyContent:'center'}}>⏭</button>
+                <span style={{fontSize:'12px',color:'#444',marginLeft:'4px'}}>
                   {music.currentIdx+1} / {music.queue.length}
                 </span>
               </div>
             </div>
           </div>
         ) : (
-          <div style={{height:'80px',display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',color:'#444'}}>
-            <span style={{fontSize:'20px'}}>🎵</span>
+          <div style={{height:'72px',display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',color:'#333'}}>
+            <span style={{fontSize:'18px'}}>🎵</span>
             <span style={{fontSize:'13px'}}>신청곡을 추가하면 여기서 재생됩니다</span>
           </div>
         )}
