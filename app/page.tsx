@@ -396,68 +396,93 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 오른쪽: 투표 결과 */}
-            <div style={S.card()}>
-              <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'20px'}}>
-                <div style={{fontWeight:700,fontSize:'16px',color:txt}}>{vote.title||'투표 결과'}</div>
+            {/* 오른쪽: 투표 결과 - 방송화면 최적화 */}
+            <div style={S.card({padding:'24px 28px'})}>
+              {/* 헤더 */}
+              <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'24px'}}>
+                <div style={{fontWeight:800,fontSize:'22px',color:txt,letterSpacing:'-.3px'}}>{vote.title||'투표 결과'}</div>
                 {vote.active&&(
-                  <span style={{fontSize:'11px',padding:'3px 10px',borderRadius:'20px',
+                  <span style={{fontSize:'12px',padding:'4px 12px',borderRadius:'20px',
                     background:'rgba(34,197,94,.1)',color:'#16a34a',
-                    border:'1px solid rgba(34,197,94,.3)',fontWeight:600,
+                    border:'1px solid rgba(34,197,94,.3)',fontWeight:700,
                     display:'flex',alignItems:'center',gap:'5px'}}>
-                    <span style={{width:'5px',height:'5px',borderRadius:'50%',background:'#22c55e',display:'inline-block'}}/>
+                    <span style={{width:'6px',height:'6px',borderRadius:'50%',background:'#22c55e',display:'inline-block'}}/>
                     진행 중
                   </span>
                 )}
-                <span style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'12px'}}>
+                <span style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'16px'}}>
                   {vote.active&&(
                     <span style={{
-                      fontSize:'18px',fontWeight:700,color:acc,
-                      fontFamily:'monospace',letterSpacing:'2px',
+                      fontSize:'24px',fontWeight:800,color:acc,
+                      fontFamily:'monospace',letterSpacing:'3px',
                       background:`${acc}12`,border:`1px solid ${acc}30`,
-                      borderRadius:'7px',padding:'3px 12px',
+                      borderRadius:'8px',padding:'4px 14px',
                     }}>{fmtTime(elapsed)}</span>
                   )}
-                  <span style={{fontSize:'13px',color:txt2}}>총 <b style={{color:txt}}>{total}</b>표</span>
+                  <span style={{fontSize:'15px',color:txt2}}>총 <b style={{color:txt,fontSize:'18px'}}>{total}</b>표</span>
                 </span>
               </div>
 
               {vote.items.length===0 ? (
-                <div style={{textAlign:'center',padding:'70px 0',color:'#b0c0d0'}}>
-                  <div style={{fontSize:'36px',marginBottom:'12px',opacity:.4}}>📊</div>
-                  <div style={{fontSize:'14px'}}>투표를 시작하면 실시간으로 표시됩니다</div>
+                <div style={{textAlign:'center',padding:'80px 0',color:'#b0c0d0'}}>
+                  <div style={{fontSize:'48px',marginBottom:'16px',opacity:.3}}>📊</div>
+                  <div style={{fontSize:'16px'}}>투표를 시작하면 실시간으로 표시됩니다</div>
                 </div>
               ) : vote.items.map((item,i)=>{
                 const pct = total>0 ? Math.round(item.votes.length/total*100) : 0
                 const isExpanded = expandedIdx===i
                 return (
                   <div key={i} style={{
-                    marginBottom:'8px',background:'#f8fafc',
-                    border:`1px solid ${isExpanded?item.color+'88':bdr}`,
-                    borderRadius:'10px',overflow:'hidden',transition:'border-color .2s',
+                    marginBottom:'12px',
+                    background: isExpanded ? `${item.color}08` : '#f8fafc',
+                    border:`2px solid ${isExpanded?item.color+'66':bdr}`,
+                    borderRadius:'14px',overflow:'hidden',transition:'all .2s',
                   }}>
+                    {/* 메인 행 */}
                     <div onClick={()=>setExpandedIdx(isExpanded?null:i)}
-                      style={{display:'grid',gridTemplateColumns:'120px 1fr 44px 62px 20px',
-                        gap:'12px',alignItems:'center',padding:'13px 16px',
-                        cursor:'pointer',userSelect:'none',transition:'background .12s'}}
-                      onMouseEnter={e=>(e.currentTarget.style.background='#f0f4f8')}
+                      style={{padding:'16px 20px',cursor:'pointer',userSelect:'none'}}
+                      onMouseEnter={e=>(e.currentTarget.style.background=`${item.color}06`)}
                       onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
-                      <div>
-                        <div style={{fontSize:'10px',color:item.color,fontFamily:'monospace',fontWeight:700,marginBottom:'4px',letterSpacing:'1.2px'}}>!투표{i+1}</div>
-                        <div style={{fontSize:'16px',fontWeight:700,color:txt}}>{item.label}</div>
+
+                      {/* 상단: 명령어 + 이름 + 퍼센트 */}
+                      <div style={{display:'flex',alignItems:'center',gap:'14px',marginBottom:'10px'}}>
+                        <code style={{
+                          fontSize:'12px',padding:'3px 10px',borderRadius:'6px',
+                          background:`${item.color}15`,color:item.color,
+                          border:`1px solid ${item.color}40`,fontWeight:700,
+                          letterSpacing:'1px',flexShrink:0,
+                        }}>!투표{i+1}</code>
+                        <span style={{
+                          fontSize:'22px',fontWeight:800,color:txt,
+                          flex:1,letterSpacing:'-.3px',
+                        }}>{item.label}</span>
+                        <div style={{display:'flex',alignItems:'baseline',gap:'6px',flexShrink:0}}>
+                          <span style={{
+                            fontSize:'36px',fontWeight:900,color:item.color,
+                            lineHeight:1,letterSpacing:'-1px',
+                          }}>{pct}%</span>
+                          <span style={{fontSize:'14px',color:txt2,fontWeight:500}}>{item.votes.length}표</span>
+                        </div>
+                        <span style={{fontSize:'12px',color:txt2,transition:'transform .2s',
+                          transform:isExpanded?'rotate(180deg)':'none',flexShrink:0}}>▼</span>
                       </div>
-                      <div style={{height:'8px',background:'#e2e8f0',borderRadius:'4px',overflow:'hidden'}}>
-                        <div style={{height:'100%',width:`${pct}%`,background:item.color,borderRadius:'4px',transition:'width .5s ease'}}/>
+
+                      {/* 진행 바 */}
+                      <div style={{height:'14px',background:'#e2e8f0',borderRadius:'7px',overflow:'hidden'}}>
+                        <div style={{
+                          height:'100%',width:`${pct}%`,
+                          background:`linear-gradient(90deg, ${item.color}cc, ${item.color})`,
+                          borderRadius:'7px',transition:'width .6s ease',
+                          boxShadow:`0 2px 8px ${item.color}44`,
+                        }}/>
                       </div>
-                      <span style={{fontSize:'12px',color:txt2,textAlign:'right'}}>{item.votes.length}표</span>
-                      <span style={{fontSize:'20px',fontWeight:700,color:item.color,textAlign:'right'}}>{pct}%</span>
-                      <span style={{fontSize:'11px',color:txt2,transition:'transform .2s',
-                        transform:isExpanded?'rotate(180deg)':'none',display:'block',textAlign:'center'}}>▼</span>
                     </div>
+
+                    {/* 펼쳐진 투표자 목록 */}
                     {isExpanded&&(
-                      <div style={{padding:'10px 16px 14px',borderTop:`1px solid ${bdr}`,background:'#f5f7fa'}}>
-                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
-                          <div style={{fontSize:'10px',color:txt2,letterSpacing:'.6px',textTransform:'uppercase' as const}}>
+                      <div style={{padding:'12px 20px 16px',borderTop:`1px solid ${item.color}22`,background:`${item.color}05`}}>
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px'}}>
+                          <div style={{fontSize:'12px',color:txt2,fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase' as const}}>
                             투표자 {item.votes.length}명
                           </div>
                           {item.votes.length>0&&(
@@ -465,9 +490,9 @@ export default function Home() {
                               onClick={e=>{e.stopPropagation();drawItem(i)}}
                               disabled={drawingIdx===i}
                               style={{
-                                padding:'4px 12px',borderRadius:'6px',border:`1px solid ${item.color}`,
+                                padding:'5px 14px',borderRadius:'7px',border:`1.5px solid ${item.color}`,
                                 background:`${item.color}15`,color:item.color,
-                                fontSize:'12px',fontWeight:700,cursor:'pointer',
+                                fontSize:'13px',fontWeight:700,cursor:'pointer',
                                 fontFamily:'inherit',transition:'all .15s',
                                 opacity:drawingIdx===i?0.6:1,
                               }}>
@@ -476,15 +501,13 @@ export default function Home() {
                           )}
                         </div>
                         {item.votes.length===0
-                          ? <div style={{fontSize:'12px',color:'#b0c0d0',fontStyle:'italic'}}>아직 없습니다</div>
-                          : <div style={{display:'flex',flexWrap:'wrap',gap:'5px'}}>
+                          ? <div style={{fontSize:'13px',color:'#b0c0d0',fontStyle:'italic'}}>아직 없습니다</div>
+                          : <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
                               {item.votes.map((nick,j)=>(
                                 <span key={j} style={{
-                                  fontSize:'12px',padding:'3px 10px',borderRadius:'20px',
-                                  background:`${item.color}18`,color:item.color,
-                                  border:`1px solid ${item.color}44`,fontWeight:500,
-                                  textDecoration: drawWinner?.idx===i&&drawWinner.name===nick?'none':'none',
-                                  outline: drawWinner?.idx===i&&drawWinner.name===nick?`2px solid ${item.color}`:'none',
+                                  fontSize:'13px',padding:'4px 12px',borderRadius:'20px',
+                                  background:`${item.color}15`,color:item.color,
+                                  border:`1px solid ${item.color}44`,fontWeight:600,
                                 }}>{nick}</span>
                               ))}
                             </div>
