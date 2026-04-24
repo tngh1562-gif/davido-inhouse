@@ -414,9 +414,10 @@ export default function Home() {
                   {vote.active&&(
                     <span style={{
                       fontSize:'24px',fontWeight:800,color:acc,
-                      fontFamily:'monospace',letterSpacing:'3px',
+                      fontFamily:"'Pretendard','Noto Sans KR',sans-serif",
+                      fontVariantNumeric:'tabular-nums',letterSpacing:'1px',
                       background:`${acc}12`,border:`1px solid ${acc}30`,
-                      borderRadius:'8px',padding:'4px 14px',
+                      borderRadius:'8px',padding:'4px 16px',
                     }}>{fmtTime(elapsed)}</span>
                   )}
                   <span style={{fontSize:'15px',color:txt2}}>총 <b style={{color:txt,fontSize:'18px'}}>{total}</b>표</span>
@@ -446,12 +447,13 @@ export default function Home() {
 
                       {/* 상단: 명령어 + 이름 + 퍼센트 */}
                       <div style={{display:'flex',alignItems:'center',gap:'14px',marginBottom:'10px'}}>
-                        <code style={{
-                          fontSize:'12px',padding:'3px 10px',borderRadius:'6px',
-                          background:`${item.color}15`,color:item.color,
-                          border:`1px solid ${item.color}40`,fontWeight:700,
-                          letterSpacing:'1px',flexShrink:0,
-                        }}>!투표{i+1}</code>
+                        <span style={{
+                          fontSize:'12px',padding:'3px 11px',borderRadius:'6px',
+                          background:`${item.color}12`,color:item.color,
+                          border:`1px solid ${item.color}35`,fontWeight:700,
+                          letterSpacing:'.3px',flexShrink:0,
+                          fontFamily:"'Pretendard','Noto Sans KR',sans-serif",
+                        }}>!투표{i+1}</span>
                         <span style={{
                           fontSize:'22px',fontWeight:800,color:txt,
                           flex:1,letterSpacing:'-.3px',
@@ -707,7 +709,9 @@ export default function Home() {
       )}
 
       <style>{`
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, button, input, textarea, select { font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important; }
         @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
