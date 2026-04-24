@@ -104,8 +104,8 @@ export default function Home() {
       const container = document.getElementById('yt-player-container')
       if (!container) return
       playerRef.current = new (window as any).YT.Player(container, {
-        width: '320', height: '180',
-        playerVars: { autoplay: 1, controls: 1, mute: 0 },
+        width: '213', height: '120',
+        playerVars: { autoplay: 0, controls: 1, rel: 0 },
         events: {
           onStateChange: (e: any) => {
             // 영상 끝나면 다음 곡
@@ -123,15 +123,17 @@ export default function Home() {
     const cur = music.queue[music.currentIdx]
     if (!cur) return
     try {
-      if (music.playing) {
-        const curId = player.getVideoData?.()?.video_id
-        if (curId !== cur.videoId) {
-          player.loadVideoById(cur.videoId)
-        } else {
-          player.playVideo()
+      const curId = player.getVideoData?.()?.video_id
+      if (curId !== cur.videoId) {
+        // 영상 교체 - cueVideoById로 로드만 하고 사용자가 직접 재생
+        player.cueVideoById(cur.videoId)
+        // 자동재생 시도 (첫 상호작용 후엔 됨)
+        if (music.playing) {
+          setTimeout(()=>{ try{ player.playVideo() }catch{} }, 300)
         }
       } else {
-        player.pauseVideo()
+        if (music.playing) player.playVideo()
+        else player.pauseVideo()
       }
     } catch {}
   }, [music.currentIdx, music.playing, music.queue.length])
@@ -770,22 +772,45 @@ export default function Home() {
       {(tab as string)==='music' && (
         <div style={{display:'flex',flexDirection:'column',height:'calc(100vh - 49px)',background:bg}}>
 
-          {/* YouTube 플레이어 - 하단 고정 (소리 나오게 보이는 영역 유지) */}
+          {/* YouTube 플레이어 - 상단 고정 바 */}
           <div style={{
-            position:'fixed',bottom:0,right:0,zIndex:50,
-            width:'280px',background:'#000',borderRadius:'12px 0 0 0',
-            overflow:'hidden',boxShadow:'0 -4px 20px rgba(0,0,0,.15)',
-            border:`1px solid ${bdr}`,borderRight:'none',borderBottom:'none',
+            background:'#111',borderBottom:'2px solid #222',
+            padding:'8px 20px',display:'flex',alignItems:'center',gap:'14px',flexShrink:0,
           }}>
-            <div style={{background:'#111',padding:'6px 10px',display:'flex',alignItems:'center',gap:'8px'}}>
-              <span style={{fontSize:'11px',color:'#888'}}>🎵 재생 중</span>
-              {music.queue[music.currentIdx]&&(
-                <span style={{fontSize:'11px',color:'#ccc',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+            <div id="yt-player-container" style={{width:'213px',height:'120px',borderRadius:'8px',overflow:'hidden',flexShrink:0}}/>
+            <div style={{flex:1,minWidth:0}}>
+              {music.queue[music.currentIdx] ? (<>
+                <div style={{fontSize:'14px',fontWeight:700,color:'#fff',marginBottom:'4px',
+                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                   {music.queue[music.currentIdx].title}
-                </span>
+                </div>
+                <div style={{fontSize:'12px',color:'#aaa',marginBottom:'10px'}}>
+                  {music.queue[music.currentIdx].channel}
+                </div>
+                <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+                  <button onClick={()=>api('music_prev')}
+                    style={{background:'rgba(255,255,255,.1)',border:'none',borderRadius:'50%',
+                      width:'36px',height:'36px',cursor:'pointer',fontSize:'16px',color:'#fff',
+                      display:'flex',alignItems:'center',justifyContent:'center'}}>⏮</button>
+                  <button onClick={()=>api('music_set_playing',{playing:!music.playing})}
+                    style={{background:acc,border:'none',borderRadius:'50%',
+                      width:'44px',height:'44px',cursor:'pointer',fontSize:'18px',color:'#fff',
+                      display:'flex',alignItems:'center',justifyContent:'center',
+                      boxShadow:`0 2px 10px ${acc}66`}}>
+                    {music.playing?'⏸':'▶'}
+                  </button>
+                  <button onClick={()=>api('music_next')}
+                    style={{background:'rgba(255,255,255,.1)',border:'none',borderRadius:'50%',
+                      width:'36px',height:'36px',cursor:'pointer',fontSize:'16px',color:'#fff',
+                      display:'flex',alignItems:'center',justifyContent:'center'}}>⏭</button>
+                  <span style={{fontSize:'11px',color:'#666',marginLeft:'6px'}}>
+                    {music.currentIdx+1} / {music.queue.length}
+                  </span>
+                </div>
+              </>) : (
+                <div style={{color:'#555',fontSize:'13px'}}>신청곡이 없습니다</div>
               )}
             </div>
-            <div id="yt-player-container" style={{width:'280px',height:'157px'}}/>
           </div>
 
           {/* 서브 탭 */}
