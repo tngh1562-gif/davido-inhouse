@@ -93,13 +93,13 @@ export default function Home() {
     return () => es.close()
   }, [auth])
 
-  // YouTube IFrame API 로드 및 초기화
+  // YouTube IFrame API 로드 및 초기화 (항상 DOM에 있는 숨겨진 플레이어)
   useEffect(() => {
     if (!auth) return
 
     function initPlayer() {
       const container = document.getElementById('yt-player-container')
-      if (!container) return
+      if (!container) { setTimeout(initPlayer, 500); return }
       const player = new (window as any).YT.Player(container, {
         width: '320', height: '180',
         videoId: '',
@@ -147,7 +147,7 @@ export default function Home() {
     }
   }, [auth])
 
-  // 곡/재생상태 변화 → 플레이어 제어
+  // 곡/재생상태 변화 → 숨겨진 IFrame API 플레이어 제어 (오디오)
   useEffect(() => {
     if (!ytReady.current || !playerRef.current) return
     const cur = music.queue[music.currentIdx]
@@ -162,7 +162,7 @@ export default function Home() {
         if (music.playing) p.playVideo()
         else p.pauseVideo()
       }
-    } catch(e) { console.error('[YT]', e) }
+    } catch(e) { console.error('[YT audio]', e) }
   }, [music.currentIdx, music.playing, music.queue.length])
 
   // 타이머
@@ -386,6 +386,11 @@ export default function Home() {
         ))}
 
 
+      </div>
+
+      {/* YouTube 플레이어 - 항상 DOM에 존재 (탭 관계없이 재생 유지) */}
+      <div style={{position:'fixed',bottom:'-9999px',left:'-9999px',width:'1px',height:'1px',overflow:'hidden',zIndex:-1}}>
+        <div id="yt-player-container"/>
       </div>
 
       {/* ── 치지직 연결 바 (투표 탭) ── */}
@@ -806,8 +811,23 @@ export default function Home() {
           {/* YouTube 플레이어 영역 */}
           <div style={{background:'#0f0f0f',borderBottom:'1px solid #222',flexShrink:0}}>
             <div style={{display:'flex',gap:0}}>
-              {/* 유튜브 플레이어 (크게) */}
-              <div id="yt-player-container" style={{width:'320px',height:'180px',flexShrink:0}}/>
+              {/* 유튜브 영상 - iframe embed로 직접 표시 */}
+              {music.queue[music.currentIdx] ? (
+                <iframe
+                  key={music.queue[music.currentIdx].videoId}
+                  id="yt-visible-player"
+                  src={`https://www.youtube.com/embed/${music.queue[music.currentIdx].videoId}?autoplay=1&controls=1&rel=0&modestbranding=1&enablejsapi=1`}
+                  width="320" height="180"
+                  style={{flexShrink:0,borderRadius:'0',border:'none',display:'block'}}
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+              ) : (
+                <div style={{width:'320px',height:'180px',background:'#1a1a1a',flexShrink:0,
+                  display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <span style={{fontSize:'32px',opacity:.3}}>🎵</span>
+                </div>
+              )}
               {/* 컨트롤 영역 */}
               <div style={{flex:1,padding:'14px 20px',display:'flex',flexDirection:'column',justifyContent:'space-between',minWidth:0}}>
                 {/* 곡 정보 */}
