@@ -1,119 +1,82 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>다비도의 내전</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════
    RESET & ROOT
 ══════════════════════════════════════════ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* core palette */
-  --ink:    #07090f;
-  --s1:     #0d1117;
-  --s2:     #131a24;
-  --s3:     #192030;
-  --s4:     #1e2840;
-  --line:   #1f2d42;
-  --line2:  #2a3d58;
-  --txt:    #c8d8ec;
+  /* light theme */
+  --ink:    #f0f4f8;
+  --s1:     #ffffff;
+  --s2:     #f5f7fa;
+  --s3:     #edf0f4;
+  --s4:     #e2e8f0;
+  --line:   #dde3ec;
+  --line2:  #c8d3e0;
+  --txt:    #1a2433;
   --txt2:   #5a7a9a;
-  --txt3:   #8aa8c4;
+  --txt3:   #3a5a7a;
 
   /* accent */
-  --a:      #e8b84b;   /* gold */
-  --a2:     #f8d878;
-  --ad:     #6a500a;
+  --a:      #d4900a;
+  --a2:     #f0b030;
+  --ad:     #f0c060;
 
   /* teams */
-  --bl:     #2979ff;
-  --bl2:    #82b1ff;
-  --rl:     #f44336;
-  --rl2:    #ff8a80;
+  --bl:     #1a6ef0;
+  --bl2:    #1a5cd0;
+  --rl:     #e03020;
+  --rl2:    #c02010;
 
   /* tier colours */
-  --c-ch:  #f5e27a;
-  --c-gm:  #d4a0ff;
-  --c-ms:  #ff6b7a;
-  --c-di:  #56c8ff;
-  --c-em:  #00e5b0;
-  --c-pl:  #4dffaa;
-  --c-go:  #ffc837;
-  --c-si:  #b8ccdf;
-  --c-br:  #e09050;
-  --c-ir:  #607080;
+  --c-ch:  #c0900a;
+  --c-gm:  #8040c0;
+  --c-ms:  #d04060;
+  --c-di:  #0080c0;
+  --c-em:  #008060;
+  --c-pl:  #208050;
+  --c-go:  #c08010;
+  --c-si:  #607080;
+  --c-br:  #a06030;
+  --c-ir:  #506070;
 
-  --radius:4px;
-  --shadow:0 8px 32px rgba(0,0,0,.5);
+  --radius:6px;
+  --shadow:0 4px 16px rgba(0,0,0,.1);
 }
+
 
 html{scroll-behavior:smooth}
 body{
-  background:var(--ink);
+  background:#f0f4f8;
   color:var(--txt);
   font-family:'Noto Sans KR',sans-serif;
   min-height:100vh;
   overflow-x:hidden;
 }
 
-/* animated background */
-body::before{
-  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(ellipse 80% 40% at 50% 0%,rgba(232,184,75,.06) 0%,transparent 60%),
-    radial-gradient(ellipse 50% 50% at 10% 70%,rgba(41,121,255,.05) 0%,transparent 55%),
-    radial-gradient(ellipse 50% 50% at 90% 30%,rgba(244,67,54,.04) 0%,transparent 55%);
-}
-/* hex grid texture */
-body::after{
-  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.025;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M14 0 L28 8 L28 24 L14 32 L0 24 L0 8 Z' fill='none' stroke='%23e8b84b' stroke-width='0.5'/%3E%3Cpath d='M14 32 L28 40 L28 56 L14 64 L0 56 L0 40 Z' fill='none' stroke='%23e8b84b' stroke-width='0.5'/%3E%3C/svg%3E");
-}
+
 
 .page{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 16px 80px}
 
 /* ══════════════════════════════════════════
    HEADER
 ══════════════════════════════════════════ */
-header{padding:40px 0 28px;text-align:center;position:relative}
-.hdr-deco{
-  display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:8px;
-}
-.hdr-deco::before,.hdr-deco::after{
-  content:'';flex:1;max-width:160px;height:1px;
-  background:linear-gradient(90deg,transparent,var(--ad));
-}
-.hdr-deco::after{background:linear-gradient(90deg,var(--ad),transparent)}
-header h1{
-  font-family:'Rajdhani',sans-serif;font-size:clamp(1.8rem,5vw,3rem);
-  font-weight:700;letter-spacing:6px;text-transform:uppercase;
-  background:linear-gradient(170deg,var(--a2),var(--a),#a07020);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-header p{color:var(--txt2);font-size:.78rem;letter-spacing:2px;margin-top:4px}
-.hdr-line{
-  width:200px;height:1px;margin:18px auto 0;
-  background:linear-gradient(90deg,transparent,var(--a),transparent);opacity:.4;
-}
+/* header removed */
 
 /* ══════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════ */
 .nav{
-  display:flex;gap:0;
-  background:var(--s1);border:1px solid var(--line);
-  border-radius:var(--radius);overflow:hidden;
-  margin-bottom:28px;
+  display:flex;gap:6px;
+  background:transparent;
+  margin-bottom:16px;
+  flex-wrap:wrap;
 }
 .nav-btn{
-  flex:1;padding:13px 6px;background:none;border:none;
-  font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:600;
-  letter-spacing:2px;text-transform:uppercase;color:var(--txt2);
-  cursor:pointer;transition:all .2s;position:relative;
-  border-right:1px solid var(--line);
+  padding:6px 16px;background:var(--s2);border:1px solid var(--line);
+  border-radius:20px;
+  font-family:'Noto Sans KR',sans-serif;font-size:.78rem;font-weight:500;
+  letter-spacing:.3px;color:var(--txt2);
+  cursor:pointer;transition:all .15s;
 }
 .nav-btn:last-child{border-right:none}
 .nav-btn::after{
@@ -121,8 +84,7 @@ header p{color:var(--txt2);font-size:.78rem;letter-spacing:2px;margin-top:4px}
   background:var(--a);transform:scaleX(0);transition:transform .2s;
 }
 .nav-btn:hover{color:var(--txt);background:var(--s2)}
-.nav-btn.on{color:var(--a);background:var(--s2)}
-.nav-btn.on::after{transform:scaleX(1)}
+.nav-btn.on{color:var(--a);background:rgba(232,184,75,.12);border-color:rgba(232,184,75,.4);font-weight:700}
 
 .tab{display:none}
 .tab.on{display:block;animation:fadeUp .25s ease}
@@ -133,20 +95,14 @@ header p{color:var(--txt2);font-size:.78rem;letter-spacing:2px;margin-top:4px}
 ══════════════════════════════════════════ */
 .card{
   background:var(--s1);border:1px solid var(--line);
-  border-radius:var(--radius);padding:22px;margin-bottom:14px;
-  position:relative;overflow:hidden;
+  border-radius:10px;padding:16px 18px;margin-bottom:12px;
+  position:relative;
 }
-.card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--ad),transparent);
-}
-.card-title{
-  font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:600;
-  letter-spacing:2.5px;text-transform:uppercase;color:var(--a);
-  margin-bottom:18px;display:flex;align-items:center;gap:10px;
-}
-.card-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
 
+.card-title{
+  font-size:.82rem;font-weight:700;letter-spacing:.3px;
+  color:var(--txt);margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
 /* ══════════════════════════════════════════
    TIER SYSTEM  (10 tiers × 4 divisions = 40 + CH/GM/MS = 43 total)
 ══════════════════════════════════════════ */
@@ -179,7 +135,7 @@ header p{color:var(--txt2);font-size:.78rem;letter-spacing:2px;margin-top:4px}
 }
 .btn-g{
   background:linear-gradient(135deg,#9a7020,var(--a),#f0d060);
-  color:#07090f;box-shadow:0 2px 14px rgba(232,184,75,.25);
+  color:#f0f4f8;box-shadow:0 2px 14px rgba(232,184,75,.25);
 }
 .btn-g:hover{box-shadow:0 4px 20px rgba(232,184,75,.4);transform:translateY(-1px)}
 .btn-o{background:transparent;color:var(--txt2);border:1px solid var(--line)}
@@ -286,9 +242,9 @@ input::placeholder{color:var(--txt2)}
 
 .member{
   display:flex;align-items:center;gap:8px;
-  padding:7px 9px;background:var(--s1);border-radius:3px;
-  border:1px solid var(--line);margin-bottom:5px;
-  transition:background .12s, outline .12s;
+  padding:8px 10px;background:var(--s2);border-radius:6px;
+  border:1px solid transparent;margin-bottom:4px;
+  transition:background .12s;
 }
 .member:hover{background:var(--s3)}
 .swap-member:hover{border-color:var(--a);cursor:grab}
@@ -472,18 +428,125 @@ input::placeholder{color:var(--txt2)}
 /* misc */
 .empty-state{text-align:center;padding:36px 20px;color:var(--txt2)}
 .divider{border:none;border-top:1px solid var(--line);margin:16px 0}
+
+/* ── 스크린샷 디자인 오버라이드 ── */
+/* 헤더/타이틀 제거 후 여백 최소화 */
+header { display: none !important; }
+body { background: #f0f4f8; }
+
+/* nav pill 스타일 */
+.nav {
+  display: flex !important;
+  gap: 6px !important;
+  background: transparent !important;
+  border: none !important;
+  margin-bottom: 14px !important;
+  flex-wrap: wrap;
+}
+.nav-btn {
+  flex: none !important;
+  padding: 6px 14px !important;
+  background: var(--s2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 20px !important;
+  font-family: 'Noto Sans KR', sans-serif !important;
+  font-size: .78rem !important;
+  font-weight: 500 !important;
+  letter-spacing: .3px !important;
+  text-transform: none !important;
+  color: var(--txt2) !important;
+}
+.nav-btn.on {
+  color: var(--a) !important;
+  background: rgba(232,184,75,.1) !important;
+  border-color: rgba(232,184,75,.35) !important;
+  font-weight: 700 !important;
+}
+.nav-btn::after { display: none !important; }
+.nav-btn:hover:not(.on) {
+  color: var(--txt3) !important;
+  background: var(--s3) !important;
+}
+
+/* 카드 */
+.card {
+  border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0,0,0,.06) !important;
+  padding: 14px 16px !important;
+  margin-bottom: 10px !important;
+}
+.card-title {
+  font-family: 'Noto Sans KR', sans-serif !important;
+  font-size: .82rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .3px !important;
+  text-transform: none !important;
+  color: var(--txt) !important;
+  margin-bottom: 10px !important;
+}
+.card-title::before { display: none !important; }
+.card-title::after { display: none !important; }
+
+/* 참가자 행 */
+.p-row {
+  background: var(--s2) !important;
+  border-radius: 6px !important;
+  border: 1px solid transparent !important;
+  padding: 6px 10px !important;
+  margin-bottom: 3px !important;
+}
+.p-row:hover { border-color: var(--line) !important; }
+
+/* 멤버 행 */
+.member {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 7px 4px !important;
+  border-bottom: 1px solid var(--line) !important;
+  margin-bottom: 0 !important;
+}
+.member:last-child { border-bottom: none !important; }
+.member:hover { background: var(--s2) !important; }
+
+/* 팀 박스 */
+.team-box { border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0,0,0,.06) !important; }
+.team-hdr {
+  padding: 10px 14px !important;
+  background: transparent !important;
+}
+
+/* 버튼 */
+.btn {
+  border-radius: 6px !important;
+  padding: 7px 14px !important;
+  font-size: .78rem !important;
+}
+.btn-g { background: var(--a) !important; color: #ffffff !important; }
+.btn-o { background: var(--s3) !important; color: var(--txt2) !important; border: 1px solid var(--line) !important; }
+.btn-bl { background: rgba(41,121,255,.2) !important; color: var(--bl2) !important; border: 1px solid rgba(41,121,255,.3) !important; }
+.btn-rl { background: rgba(244,67,54,.2) !important; color: var(--rl2) !important; border: 1px solid rgba(244,67,54,.3) !important; }
+
+/* wrap 여백 */
+.wrap { padding: 14px 18px 40px !important; max-width: 1400px !important; }
+
+/* 티어 뱃지 */
+.tb { border-radius: 4px !important; font-size: .7rem !important; padding: 2px 7px !important; }
+
+/* 검색 바 */
+.search-bar input, #quickSearch {
+  border-radius: 6px !important;
+  font-size: .82rem !important;
+}
+
+/* 밸런스 바 */
+.bal-track { border-radius: 4px !important; height: 5px !important; }
+.bal-fill { border-radius: 4px !important; }
 </style>
 </head>
 <body>
 <div class="page">
 
 <!-- HEADER -->
-<header>
-  <div class="hdr-deco"><span style="font-size:1.4rem">⚔</span></div>
-  <h1>다비도의 내전</h1>
-  <div class="hdr-line"></div>
-</header>
-
 <!-- NAV -->
 <nav class="nav">
   <button class="nav-btn on"  onclick="goTab('main',this)">⚔ 내전 진행</button>
@@ -2442,7 +2505,7 @@ function makeRosterRow(p, i){
       oninput="updP(${p.id},'name',this.value)"
       onfocus="if(!this.value.trim()){this.blur();quickPickFromDB(${p.id})}"
       style="min-width:0;width:90px;font-size:.8rem;cursor:${isEmpty?'pointer':'text'}">
-    <select style="flex-shrink:0;width:100px;background:var(--s2);border:1px solid var(--line);color:var(--txt);border-radius:3px;padding:3px 4px;font-size:.7rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;outline:none"
+    <select style="flex-shrink:0;width:100px;background:#ffffff;border:1px solid #dde3ec;color:#1a2433;border-radius:6px;padding:4px 6px;font-size:.7rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;outline:none"
       onchange="updP(${p.id},'tier',this.value)">${buildTierOptions(p.tier)}</select>
     <div style="display:flex;gap:2px;flex-shrink:0">${posHTML}</div>
     <button style="flex-shrink:0;background:none;border:none;color:var(--txt2);cursor:pointer;font-size:.85rem;padding:2px 5px;border-radius:2px;transition:color .15s;margin-left:auto"
