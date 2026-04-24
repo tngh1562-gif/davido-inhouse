@@ -30,6 +30,10 @@ export default function Home() {
   const [winner, setWinner]     = useState<string|null>(null)
   const [angle, setAngle]       = useState(0)
   const [expandedIdx, setExpandedIdx] = useState<number|null>(null)
+  const [drawingIdx, setDrawingIdx]   = useState<number|null>(null)  // 추첨 중인 항목
+  const [drawWinner, setDrawWinner]   = useState<{idx:number,name:string}|null>(null) // 당첨자
+  const [slotNames, setSlotNames]     = useState<string[]>([]) // 슬롯 표시 이름들
+  const slotTimerRef = useRef<ReturnType<typeof setInterval>>()
   const [elapsed, setElapsed]   = useState(0)
   const canvasRef  = useRef<HTMLCanvasElement>(null)
   const animRef    = useRef<number>()
@@ -133,6 +137,39 @@ export default function Home() {
     ctx.strokeStyle='#d4900a'; ctx.lineWidth=3; ctx.stroke()
     ctx.beginPath(); ctx.moveTo(cx-10,cy-r+4); ctx.lineTo(cx+10,cy-r+4); ctx.lineTo(cx,cy-r+22)
     ctx.closePath(); ctx.fillStyle='#d4900a'; ctx.fill()
+  }
+
+  // 항목별 추첨 함수
+  function drawItem(itemIdx: number) {
+    const voters = vote.items[itemIdx]?.votes || []
+    if (!voters.length) return
+    setDrawingIdx(itemIdx)
+    setDrawWinner(null)
+    setExpandedIdx(null)
+
+    const totalFrames = 40 // 총 슬롯 프레임 수
+    let frame = 0
+    const winner = voters[Math.floor(Math.random() * voters.length)]
+
+    // 슬롯머신 효과: 처음엔 빠르게, 나중엔 느리게
+    const runSlot = () => {
+      frame++
+      const delay = frame < 20 ? 50 : frame < 30 ? 100 : frame < 36 ? 180 : frame < 39 ? 300 : 500
+
+      // 랜덤 이름 표시
+      const randomNames = Array.from({length:3}, ()=> voters[Math.floor(Math.random()*voters.length)])
+      setSlotNames(randomNames)
+
+      if (frame < totalFrames) {
+        slotTimerRef.current = setTimeout(runSlot, delay)
+      } else {
+        // 마지막: 당첨자 확정
+        setSlotNames([winner])
+        setDrawWinner({idx: itemIdx, name: winner})
+        setDrawingIdx(null)
+      }
+    }
+    slotTimerRef.current = setTimeout(runSlot, 50)
   }
 
   function spin() {
@@ -257,24 +294,7 @@ export default function Home() {
           </button>
         ))}
 
-        {/* 타이머 - 투표 진행 중일 때만 우상단 표시 */}
-        {tab==='vote' && vote.active && (
-          <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'10px'}}>
-            <div style={{
-              display:'flex',alignItems:'center',gap:'8px',
-              background:`${acc}15`,border:`1px solid ${acc}40`,
-              borderRadius:'8px',padding:'6px 14px',
-            }}>
-              <span style={{fontSize:'11px',color:acc,fontWeight:600,letterSpacing:'.5px'}}>진행 중</span>
-              <span style={{
-                fontSize:'18px',fontWeight:700,color:acc,
-                fontFamily:'\'Rajdhani\',monospace',letterSpacing:'2px',
-              }}>{fmtTime(elapsed)}</span>
-            </div>
-            <button style={{...S.btn('#e03020'),padding:'6px 14px',fontSize:'12px'}}
-              onClick={()=>api('end_vote')}>■ 종료</button>
-          </div>
-        )}
+
       </div>
 
       {/* ── 치지직 연결 바 (투표 탭) ── */}
@@ -389,8 +409,16 @@ export default function Home() {
                     진행 중
                   </span>
                 )}
-                <span style={{marginLeft:'auto',fontSize:'13px',color:txt2}}>
-                  총 <b style={{color:txt}}>{total}</b>표
+                <span style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'12px'}}>
+                  {vote.active&&(
+                    <span style={{
+                      fontSize:'18px',fontWeight:700,color:acc,
+                      fontFamily:'monospace',letterSpacing:'2px',
+                      background:`${acc}12`,border:`1px solid ${acc}30`,
+                      borderRadius:'7px',padding:'3px 12px',
+                    }}>{fmtTime(elapsed)}</span>
+                  )}
+                  <span style={{fontSize:'13px',color:txt2}}>총 <b style={{color:txt}}>{total}</b>표</span>
                 </span>
               </div>
 
@@ -428,8 +456,24 @@ export default function Home() {
                     </div>
                     {isExpanded&&(
                       <div style={{padding:'10px 16px 14px',borderTop:`1px solid ${bdr}`,background:'#f5f7fa'}}>
-                        <div style={{fontSize:'10px',color:txt2,marginBottom:'8px',letterSpacing:'.6px',textTransform:'uppercase'}}>
-                          투표자 {item.votes.length}명
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
+                          <div style={{fontSize:'10px',color:txt2,letterSpacing:'.6px',textTransform:'uppercase' as const}}>
+                            투표자 {item.votes.length}명
+                          </div>
+                          {item.votes.length>0&&(
+                            <button
+                              onClick={e=>{e.stopPropagation();drawItem(i)}}
+                              disabled={drawingIdx===i}
+                              style={{
+                                padding:'4px 12px',borderRadius:'6px',border:`1px solid ${item.color}`,
+                                background:`${item.color}15`,color:item.color,
+                                fontSize:'12px',fontWeight:700,cursor:'pointer',
+                                fontFamily:'inherit',transition:'all .15s',
+                                opacity:drawingIdx===i?0.6:1,
+                              }}>
+                              {drawingIdx===i?'추첨 중...':'🎲 추첨하기'}
+                            </button>
+                          )}
                         </div>
                         {item.votes.length===0
                           ? <div style={{fontSize:'12px',color:'#b0c0d0',fontStyle:'italic'}}>아직 없습니다</div>
@@ -439,6 +483,8 @@ export default function Home() {
                                   fontSize:'12px',padding:'3px 10px',borderRadius:'20px',
                                   background:`${item.color}18`,color:item.color,
                                   border:`1px solid ${item.color}44`,fontWeight:500,
+                                  textDecoration: drawWinner?.idx===i&&drawWinner.name===nick?'none':'none',
+                                  outline: drawWinner?.idx===i&&drawWinner.name===nick?`2px solid ${item.color}`:'none',
                                 }}>{nick}</span>
                               ))}
                             </div>
@@ -450,6 +496,92 @@ export default function Home() {
               })}
             </div>
           </div>
+
+          {/* 슬롯머신 추첨 모달 */}
+          {(drawingIdx!==null||drawWinner!==null)&&(
+            <div style={{
+              position:'fixed',inset:0,zIndex:1000,
+              background:'rgba(0,0,0,.5)',backdropFilter:'blur(4px)',
+              display:'flex',alignItems:'center',justifyContent:'center',
+            }} onClick={()=>{if(!drawingIdx)setDrawWinner(null)}}>
+              <div style={{
+                background:'#fff',borderRadius:'20px',padding:'40px 52px',
+                textAlign:'center',minWidth:'380px',
+                boxShadow:'0 24px 80px rgba(0,0,0,.25)',
+                border:`2px solid ${drawWinner?vote.items[drawWinner.idx]?.color||acc:acc}`,
+              }} onClick={e=>e.stopPropagation()}>
+                <div style={{fontSize:'13px',color:txt2,letterSpacing:'2px',textTransform:'uppercase',marginBottom:'8px'}}>
+                  {drawingIdx!==null
+                    ? `${vote.items[drawingIdx]?.label} — 추첨 중`
+                    : drawWinner ? `${vote.items[drawWinner.idx]?.label} — 당첨자` : ''
+                  }
+                </div>
+
+                {/* 슬롯 디스플레이 */}
+                <div style={{
+                  background:'#f5f7fa',border:`2px solid ${bdr}`,
+                  borderRadius:'14px',padding:'28px 20px',
+                  margin:'16px 0 24px',minHeight:'100px',
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  overflow:'hidden',position:'relative',
+                }}>
+                  {/* 상하 그라데이션 마스크 */}
+                  <div style={{position:'absolute',top:0,left:0,right:0,height:'30px',
+                    background:'linear-gradient(to bottom,#f5f7fa,transparent)',zIndex:1,pointerEvents:'none'}}/>
+                  <div style={{position:'absolute',bottom:0,left:0,right:0,height:'30px',
+                    background:'linear-gradient(to top,#f5f7fa,transparent)',zIndex:1,pointerEvents:'none'}}/>
+
+                  {drawingIdx!==null ? (
+                    // 슬롯 돌아가는 중
+                    <div style={{display:'flex',flexDirection:'column',gap:'4px',alignItems:'center'}}>
+                      {slotNames.map((name,idx)=>(
+                        <div key={idx} style={{
+                          fontSize: idx===1 ? '24px' : '16px',
+                          fontWeight: idx===1 ? 800 : 500,
+                          color: idx===1 ? acc : '#b0c0d0',
+                          opacity: idx===1 ? 1 : 0.5,
+                          transition:'all .05s',
+                          letterSpacing:'.5px',
+                        }}>{name}</div>
+                      ))}
+                    </div>
+                  ) : drawWinner ? (
+                    // 당첨자 확정
+                    <div style={{
+                      fontSize:'28px',fontWeight:800,
+                      color:vote.items[drawWinner.idx]?.color||acc,
+                      letterSpacing:'1px',
+                      animation:'popIn .3s ease',
+                    }}>{drawWinner.name}</div>
+                  ) : null}
+                </div>
+
+                {drawWinner&&(
+                  <>
+                    <div style={{fontSize:'14px',color:txt2,marginBottom:'20px'}}>
+                      🎉 <b style={{color:txt}}>{vote.items[drawWinner.idx]?.label}</b> 투표자 중 당첨!
+                    </div>
+                    <button
+                      onClick={()=>setDrawWinner(null)}
+                      style={{...S.btn(),padding:'10px 36px',fontSize:'14px',borderRadius:'8px'}}>
+                      확인
+                    </button>
+                  </>
+                )}
+
+                {drawingIdx!==null&&(
+                  <div style={{display:'flex',justifyContent:'center',gap:'6px',marginTop:'8px'}}>
+                    {[0,1,2].map(d=>(
+                      <div key={d} style={{
+                        width:'8px',height:'8px',borderRadius:'50%',background:acc,
+                        animation:`bounce 0.6s ease ${d*0.15}s infinite`,
+                      }}/>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 룰렛 */}
           {showRoulette&&(
@@ -553,6 +685,8 @@ export default function Home() {
 
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #dde3ec; border-radius: 2px; }
