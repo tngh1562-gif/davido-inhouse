@@ -23,9 +23,11 @@ export default function Home() {
   const [voteTitle, setVoteTitle] = useState('내전 투표')
   const [voteItemsText, setVoteItemsText] = useState('첫참\n선참권\n중참\n연참\n취소')
   const [showRoulette, setShowRoulette]   = useState(false)
-  const [music, setMusic]   = useState<MusicState>({ queue: [], currentIdx: 0, playing: false })
-  const [manualSearch, setManualSearch] = useState('')
-  const [searching, setSearching]       = useState(false)
+  const [music, setMusic]       = useState<MusicState>({ queue: [], currentIdx: 0, playing: false })
+  const [musicSubTab, setMusicSubTab] = useState<'search'|'queue'>('search')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searching, setSearching]     = useState(false)
   const playerRef = useRef<any>(null)
   const ytReady   = useRef(false)
   const [rouletteItems, setRouletteItems] = useState<RouletteItem[]>([])
@@ -102,8 +104,8 @@ export default function Home() {
       const container = document.getElementById('yt-player-container')
       if (!container) return
       playerRef.current = new (window as any).YT.Player(container, {
-        width: '1',height: '1',
-        playerVars: { autoplay: 1, controls: 0 },
+        width: '320', height: '180',
+        playerVars: { autoplay: 1, controls: 1, mute: 0 },
         events: {
           onStateChange: (e: any) => {
             // 영상 끝나면 다음 곡
@@ -766,170 +768,248 @@ export default function Home() {
 
       {/* ── 음악 플레이어 탭 ── */}
       {(tab as string)==='music' && (
-        <div style={{display:'flex',flexDirection:'column',height:'calc(100vh - 49px)',overflow:'hidden',background:bg}}>
+        <div style={{display:'flex',flexDirection:'column',height:'calc(100vh - 49px)',background:bg}}>
 
-          {/* YouTube IFrame (숨김 - 탭 바꿔도 재생 유지) */}
-          <div style={{display:'none'}}>
-            <div id="yt-player-container"/>
+          {/* YouTube 플레이어 - 하단 고정 (소리 나오게 보이는 영역 유지) */}
+          <div style={{
+            position:'fixed',bottom:0,right:0,zIndex:50,
+            width:'280px',background:'#000',borderRadius:'12px 0 0 0',
+            overflow:'hidden',boxShadow:'0 -4px 20px rgba(0,0,0,.15)',
+            border:`1px solid ${bdr}`,borderRight:'none',borderBottom:'none',
+          }}>
+            <div style={{background:'#111',padding:'6px 10px',display:'flex',alignItems:'center',gap:'8px'}}>
+              <span style={{fontSize:'11px',color:'#888'}}>🎵 재생 중</span>
+              {music.queue[music.currentIdx]&&(
+                <span style={{fontSize:'11px',color:'#ccc',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                  {music.queue[music.currentIdx].title}
+                </span>
+              )}
+            </div>
+            <div id="yt-player-container" style={{width:'280px',height:'157px'}}/>
           </div>
 
-          <div style={{flex:1,overflow:'auto',padding:'20px 28px'}}>
-            <div style={{display:'grid',gridTemplateColumns:'360px 1fr',gap:'16px',maxWidth:'1200px',margin:'0 auto',alignItems:'start'}}>
+          {/* 서브 탭 */}
+          <div style={{background:card,borderBottom:`1px solid ${bdr}`,padding:'0 28px',display:'flex',gap:0,flexShrink:0}}>
+            {(['search','queue'] as const).map(st=>(
+              <button key={st} onClick={()=>setMusicSubTab(st)} style={{
+                padding:'12px 20px',border:'none',
+                borderBottom: musicSubTab===st?`2px solid ${acc}`:'2px solid transparent',
+                borderTop:'2px solid transparent',
+                background:'none',color:musicSubTab===st?acc:txt2,
+                cursor:'pointer',fontSize:'13px',fontFamily:'inherit',fontWeight:musicSubTab===st?700:400,
+              }}>
+                {st==='search'?'🔍 검색':'📋 대기열'+(music.queue.length>0?` (${music.queue.length})`:'') }
+              </button>
+            ))}
+          </div>
 
-              {/* 왼쪽: 현재 재생 중 + 컨트롤 */}
-              <div>
-                <div style={S.card()}>
-                  <div style={{fontWeight:700,fontSize:'14px',color:txt,marginBottom:'16px',display:'flex',alignItems:'center',gap:'8px'}}>
-                    <span>🎵</span> 현재 재생 중
+          <div style={{flex:1,overflow:'auto',padding:'20px 28px',paddingBottom:'80px'}}>
+            <div style={{maxWidth:'1100px',margin:'0 auto'}}>
+
+              {/* ── 검색 탭 ── */}
+              {musicSubTab==='search'&&(
+                <div>
+                  {/* 검색 바 */}
+                  <div style={{display:'flex',gap:'10px',marginBottom:'20px'}}>
+                    <input style={{...S.inp(),fontSize:'15px',padding:'12px 16px',borderRadius:'10px',flex:1}}
+                      placeholder="노래 제목, 아티스트 검색..."
+                      value={searchQuery}
+                      onChange={e=>setSearchQuery(e.target.value)}
+                      onKeyDown={async e=>{
+                        if(e.key==='Enter'&&searchQuery.trim()){
+                          setSearching(true)
+                          const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'music_search',query:searchQuery.trim()})})
+                          const data=await r.json()
+                          setSearchResults(data.results||[])
+                          setSearching(false)
+                        }
+                      }}/>
+                    <button style={{...S.btn(),padding:'12px 24px',fontSize:'14px',borderRadius:'10px',opacity:searching?0.6:1}}
+                      disabled={searching}
+                      onClick={async()=>{
+                        if(!searchQuery.trim()) return
+                        setSearching(true)
+                        const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'music_search',query:searchQuery.trim()})})
+                        const data=await r.json()
+                        setSearchResults(data.results||[])
+                        setSearching(false)
+                      }}>
+                      {searching?'검색 중...':'🔍 검색'}
+                    </button>
+                  </div>
+
+                  {/* 검색 결과 */}
+                  {searching&&(
+                    <div style={{textAlign:'center',padding:'40px',color:txt2}}>
+                      <div style={{fontSize:'24px',marginBottom:'8px'}}>🔍</div>
+                      검색 중...
+                    </div>
+                  )}
+                  {!searching&&searchResults.length===0&&searchQuery&&(
+                    <div style={{textAlign:'center',padding:'40px',color:'#b0c0d0'}}>검색 결과가 없습니다</div>
+                  )}
+                  {!searching&&searchResults.length===0&&!searchQuery&&(
+                    <div style={{textAlign:'center',padding:'60px',color:'#b0c0d0'}}>
+                      <div style={{fontSize:'48px',marginBottom:'12px',opacity:.3}}>🎵</div>
+                      <div style={{fontSize:'15px',marginBottom:'6px'}}>노래를 검색하거나</div>
+                      <div style={{fontSize:'13px',opacity:.7}}>채팅에서 <code style={{background:'#f0f4f8',padding:'2px 8px',borderRadius:'5px',color:acc,fontWeight:700}}>!신청곡 노래제목</code> 으로 추가하세요</div>
+                    </div>
+                  )}
+                  {!searching&&searchResults.length>0&&(
+                    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                      {searchResults.map((track:any,i:number)=>{
+                        const inQueue=music.queue.some((q:any)=>q.videoId===track.videoId)
+                        return (
+                          <div key={i} style={{
+                            display:'flex',gap:'14px',alignItems:'center',
+                            padding:'12px 16px',borderRadius:'12px',
+                            background:card,border:`1px solid ${bdr}`,
+                            transition:'all .15s',
+                          }}
+                          onMouseEnter={e=>(e.currentTarget.style.borderColor=acc+'50')}
+                          onMouseLeave={e=>(e.currentTarget.style.borderColor=bdr)}>
+                            {/* 썸네일 */}
+                            <div style={{position:'relative',flexShrink:0,cursor:'pointer'}}
+                              onClick={()=>{
+                                api('music_add_track',{track,requestedBy:'방장'})
+                                api('music_play_idx',{idx:music.queue.length})
+                              }}>
+                              <img src={track.thumbnail} alt={track.title}
+                                style={{width:'120px',height:'68px',objectFit:'cover',borderRadius:'8px',display:'block'}}/>
+                              <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.0)',borderRadius:'8px',
+                                display:'flex',alignItems:'center',justifyContent:'center',
+                                transition:'background .15s'}}
+                                onMouseEnter={e=>(e.currentTarget.style.background='rgba(0,0,0,.35)')}
+                                onMouseLeave={e=>(e.currentTarget.style.background='rgba(0,0,0,0)')}>
+                                <span style={{fontSize:'24px',opacity:0,transition:'opacity .15s'}}
+                                  onMouseEnter={e=>(e.currentTarget.style.opacity='1')}
+                                  onMouseLeave={e=>(e.currentTarget.style.opacity='0')}>▶</span>
+                              </div>
+                              {track.duration&&(
+                                <div style={{position:'absolute',bottom:4,right:4,background:'rgba(0,0,0,.75)',
+                                  color:'#fff',fontSize:'10px',fontWeight:600,padding:'1px 5px',borderRadius:'3px'}}>
+                                  {track.duration}
+                                </div>
+                              )}
+                            </div>
+                            {/* 정보 */}
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:'14px',fontWeight:600,color:txt,marginBottom:'4px',
+                                overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{track.title}</div>
+                              <div style={{fontSize:'12px',color:txt2}}>{track.channel}</div>
+                            </div>
+                            {/* 추가 버튼 */}
+                            <div style={{display:'flex',gap:'8px',flexShrink:0}}>
+                              <button
+                                disabled={inQueue}
+                                onClick={()=>api('music_add_track',{track,requestedBy:'방장'})}
+                                style={{
+                                  padding:'7px 16px',borderRadius:'8px',
+                                  border: inQueue?`1px solid ${bdr}`:`1px solid ${acc}`,
+                                  background: inQueue?'#f8fafc':`${acc}15`,
+                                  color: inQueue?txt2:acc,
+                                  fontSize:'12px',fontWeight:700,cursor:inQueue?'default':'pointer',
+                                  fontFamily:'inherit',whiteSpace:'nowrap' as const,
+                                }}>
+                                {inQueue?'✓ 추가됨':'+ 대기열'}
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── 대기열 탭 ── */}
+              {musicSubTab==='queue'&&(
+                <div>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
+                    <div style={{fontWeight:700,fontSize:'16px',color:txt}}>
+                      신청곡 대기열 <span style={{fontSize:'13px',fontWeight:400,color:txt2}}>({music.queue.length}곡)</span>
+                    </div>
+                    {music.queue.length>0&&(
+                      <button style={{...S.btn('#fff','#e03020',true),padding:'7px 14px',fontSize:'12px'}}
+                        onClick={()=>{if(confirm('전체 삭제할까요?'))api('music_clear')}}>전체 삭제</button>
+                    )}
                   </div>
 
                   {music.queue.length===0 ? (
-                    <div style={{textAlign:'center',padding:'32px 0',color:'#b0c0d0'}}>
-                      <div style={{fontSize:'36px',marginBottom:'8px',opacity:.3}}>🎵</div>
-                      <div style={{fontSize:'13px'}}>신청곡이 없습니다</div>
-                      <div style={{fontSize:'12px',marginTop:'4px',opacity:.6}}>채팅에서 !신청곡 노래제목</div>
+                    <div style={{textAlign:'center',padding:'80px',color:'#b0c0d0'}}>
+                      <div style={{fontSize:'48px',marginBottom:'12px',opacity:.3}}>🎵</div>
+                      <div style={{fontSize:'15px'}}>대기열이 비어있습니다</div>
                     </div>
-                  ) : (()=>{
-                    const cur = music.queue[music.currentIdx]
-                    return cur ? (
-                      <div>
-                        <img src={cur.thumbnail} alt={cur.title}
-                          style={{width:'100%',borderRadius:'10px',marginBottom:'12px',aspectRatio:'16/9',objectFit:'cover'}}/>
-                        <div style={{fontSize:'15px',fontWeight:700,color:txt,lineHeight:1.4,marginBottom:'4px'}}>{cur.title}</div>
-                        <div style={{fontSize:'12px',color:txt2,marginBottom:'2px'}}>{cur.channel}</div>
-                        <div style={{fontSize:'12px',color:acc,fontWeight:600}}>신청: {cur.requestedBy}</div>
-                      </div>
-                    ) : null
-                  })()}
-
-                  {/* 컨트롤 버튼 */}
-                  {music.queue.length>0&&(
-                    <div style={{display:'flex',justifyContent:'center',gap:'10px',marginTop:'16px',alignItems:'center'}}>
-                      <button onClick={()=>api('music_prev')}
-                        style={{background:'none',border:`1px solid ${bdr}`,borderRadius:'50%',width:'40px',height:'40px',
-                          cursor:'pointer',fontSize:'16px',color:txt,display:'flex',alignItems:'center',justifyContent:'center'}}>⏮</button>
-                      <button onClick={()=>api('music_set_playing',{playing:!music.playing})}
-                        style={{background:acc,border:'none',borderRadius:'50%',width:'52px',height:'52px',
-                          cursor:'pointer',fontSize:'20px',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',
-                          boxShadow:`0 4px 12px ${acc}44`}}>
-                        {music.playing?'⏸':'▶'}
-                      </button>
-                      <button onClick={()=>api('music_next')}
-                        style={{background:'none',border:`1px solid ${bdr}`,borderRadius:'50%',width:'40px',height:'40px',
-                          cursor:'pointer',fontSize:'16px',color:txt,display:'flex',alignItems:'center',justifyContent:'center'}}>⏭</button>
-                    </div>
-                  )}
-                </div>
-
-                {/* 수동 검색 추가 */}
-                <div style={S.card()}>
-                  <div style={{fontWeight:700,fontSize:'13px',color:txt,marginBottom:'12px'}}>🔍 직접 추가</div>
-                  <div style={{display:'flex',gap:'8px'}}>
-                    <input style={{...S.inp(),flex:1}} placeholder="노래 제목 검색..."
-                      value={manualSearch} onChange={e=>setManualSearch(e.target.value)}
-                      onKeyDown={async e=>{
-                        if(e.key==='Enter'&&manualSearch.trim()){
-                          setSearching(true)
-                          await api('music_manual_add',{query:manualSearch.trim(),requestedBy:'방장'})
-                          setManualSearch(''); setSearching(false)
-                        }
-                      }}/>
-                    <button style={{...S.btn(),padding:'8px 14px',opacity:searching?0.5:1}}
-                      disabled={searching}
-                      onClick={async()=>{
-                        if(!manualSearch.trim()) return
-                        setSearching(true)
-                        await api('music_manual_add',{query:manualSearch.trim(),requestedBy:'방장'})
-                        setManualSearch(''); setSearching(false)
-                      }}>
-                      {searching?'검색 중...':'추가'}
-                    </button>
-                  </div>
-                  <div style={{fontSize:'11px',color:txt2,marginTop:'8px'}}>
-                    채팅 명령어: <code style={{background:'#f0f4f8',padding:'1px 6px',borderRadius:'4px',color:acc,fontWeight:700}}>!신청곡 노래제목</code>
-                  </div>
-                </div>
-              </div>
-
-              {/* 오른쪽: 대기열 */}
-              <div style={S.card()}>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
-                  <div style={{fontWeight:700,fontSize:'14px',color:txt,display:'flex',alignItems:'center',gap:'8px'}}>
-                    <span>📋</span> 신청곡 대기열
-                    <span style={{fontSize:'12px',fontWeight:500,color:txt2}}>({music.queue.length}곡)</span>
-                  </div>
-                  {music.queue.length>0&&(
-                    <button style={{...S.btn('#fff','#e03020',true),padding:'5px 12px',fontSize:'12px'}}
-                      onClick={()=>{if(confirm('대기열을 전부 삭제할까요?'))api('music_clear')}}>전체 삭제</button>
-                  )}
-                </div>
-
-                {music.queue.length===0 ? (
-                  <div style={{textAlign:'center',padding:'60px 0',color:'#b0c0d0'}}>
-                    <div style={{fontSize:'40px',marginBottom:'12px',opacity:.3}}>🎵</div>
-                    <div style={{fontSize:'14px'}}>신청곡이 없습니다</div>
-                    <div style={{fontSize:'12px',marginTop:'6px',opacity:.6}}>시청자가 !신청곡 명령어로 추가할 수 있어요</div>
-                  </div>
-                ) : (
-                  <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-                    {music.queue.map((track,i)=>{
-                      const isCurrent = i===music.currentIdx
-                      return (
-                        <div key={i} style={{
-                          display:'flex',gap:'12px',padding:'10px 12px',
-                          borderRadius:'10px',alignItems:'center',
-                          background: isCurrent ? `${acc}10` : '#f8fafc',
-                          border: `1.5px solid ${isCurrent ? acc+'50' : bdr}`,
-                          transition:'all .15s',cursor:'pointer',
-                        }} onClick={()=>api('music_play_idx',{idx:i})}>
-                          <div style={{position:'relative',flexShrink:0}}>
-                            <img src={track.thumbnail} alt={track.title}
-                              style={{width:'72px',height:'50px',objectFit:'cover',borderRadius:'6px'}}/>
-                            {isCurrent&&(
-                              <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.4)',borderRadius:'6px',
-                                display:'flex',alignItems:'center',justifyContent:'center',fontSize:'18px'}}>
-                                {music.playing?'🔊':'⏸'}
+                  ) : (
+                    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                      {music.queue.map((track:any,i:number)=>{
+                        const isCurrent=i===music.currentIdx
+                        return (
+                          <div key={i} style={{
+                            display:'flex',gap:'12px',padding:'12px 16px',
+                            borderRadius:'12px',alignItems:'center',
+                            background:isCurrent?`${acc}08`:card,
+                            border:`1.5px solid ${isCurrent?acc+'55':bdr}`,
+                            cursor:'pointer',transition:'all .15s',
+                          }} onClick={()=>api('music_play_idx',{idx:i})}>
+                            <div style={{position:'relative',flexShrink:0}}>
+                              <img src={track.thumbnail} alt={track.title}
+                                style={{width:'90px',height:'56px',objectFit:'cover',borderRadius:'8px'}}/>
+                              {isCurrent&&(
+                                <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.45)',borderRadius:'8px',
+                                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px'}}>
+                                  {music.playing?'🔊':'⏸'}
+                                </div>
+                              )}
+                              <div style={{position:'absolute',top:3,left:3,background:'rgba(0,0,0,.65)',
+                                color:'#fff',fontSize:'10px',fontWeight:700,padding:'1px 5px',borderRadius:'3px'}}>
+                                {i+1}
                               </div>
-                            )}
-                            <div style={{position:'absolute',top:2,left:2,background:'rgba(0,0,0,.6)',
-                              color:'#fff',fontSize:'10px',fontWeight:700,padding:'1px 5px',borderRadius:'3px'}}>
-                              {i+1}
+                            </div>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:'13px',fontWeight:isCurrent?700:500,
+                                color:isCurrent?acc:txt,overflow:'hidden',textOverflow:'ellipsis',
+                                whiteSpace:'nowrap',marginBottom:'3px'}}>{track.title}</div>
+                              <div style={{fontSize:'11px',color:txt2,marginBottom:'2px'}}>{track.channel}</div>
+                              <div style={{fontSize:'11px',color:acc,fontWeight:600}}>🙋 {track.requestedBy}</div>
+                            </div>
+                            <div style={{display:'flex',gap:'6px',flexShrink:0,alignItems:'center'}}>
+                              {isCurrent&&(
+                                <button onClick={e=>{e.stopPropagation();api('music_set_playing',{playing:!music.playing})}}
+                                  style={{background:acc,border:'none',borderRadius:'50%',width:'36px',height:'36px',
+                                    cursor:'pointer',fontSize:'14px',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                                  {music.playing?'⏸':'▶'}
+                                </button>
+                              )}
+                              <button onClick={e=>{e.stopPropagation();api('music_remove',{idx:i})}}
+                                style={{background:'none',border:'none',color:'#b0c0d0',cursor:'pointer',
+                                  fontSize:'18px',padding:'4px',lineHeight:1}}
+                                onMouseEnter={e=>(e.currentTarget.style.color='#e03020')}
+                                onMouseLeave={e=>(e.currentTarget.style.color='#b0c0d0')}>✕</button>
                             </div>
                           </div>
-                          <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontSize:'13px',fontWeight:isCurrent?700:500,color:isCurrent?acc:txt,
-                              overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:'3px'}}>{track.title}</div>
-                            <div style={{fontSize:'11px',color:txt2,marginBottom:'2px'}}>{track.channel}</div>
-                            <div style={{fontSize:'11px',color:acc,fontWeight:600}}>🙋 {track.requestedBy}</div>
-                          </div>
-                          <button onClick={e=>{e.stopPropagation();api('music_remove',{idx:i})}}
-                            style={{background:'none',border:'none',color:'#b0c0d0',cursor:'pointer',
-                              fontSize:'16px',padding:'4px',flexShrink:0,lineHeight:1}}
-                            onMouseEnter={e=>(e.currentTarget.style.color='#e03020')}
-                            onMouseLeave={e=>(e.currentTarget.style.color='#b0c0d0')}>✕</button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
         </div>
       )}
 
-            <style>{`
-        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+      <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body, button, input, textarea, select { font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important; }
-        @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
-        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #dde3ec; border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: #c8d3e0; }
         input:focus, textarea:focus { border-color: #a0b8d0 !important; box-shadow: 0 0 0 3px rgba(212,144,10,.1); }
-        button:active { opacity: 0.8; }
+        @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
       `}</style>
     </div>
   )

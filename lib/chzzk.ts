@@ -2,7 +2,7 @@
 // 참고: https://github.com/kimcore/chzzk
 
 import { getState, setState } from './state'
-import { searchYouTube } from './youtube'
+import { searchYouTube, YTTrack } from './youtube'
 
 declare global {
   var __chzzkWs: any | undefined
@@ -135,7 +135,8 @@ function handleMessage(msg: any) {
 }
 
 async function handleMusicRequest(nickname: string, query: string) {
-  const track = await searchYouTube(query)
+  const results = await searchYouTube(query, 1)
+  const track = results[0]
   if (!track) {
     broadcastSSE('music_error', { message: `"${query}" 검색 실패`, nickname })
     return

@@ -102,10 +102,27 @@ export async function POST(req: NextRequest) {
       broadcastSSE('music_state', getState().music)
       return NextResponse.json({ ok: true })
     }
+    case 'music_search': {
+      const results = await searchYouTube(body.query, 8)
+      return NextResponse.json({ ok: true, results })
+    }
+    case 'music_add_track': {
+      const track = body.track
+      if (!track?.videoId) return NextResponse.json({ ok: false })
+      setState(s => {
+        if (s.music.queue.some((t: any) => t.videoId === track.videoId)) return
+        s.music.queue.push({ ...track, requestedBy: body.requestedBy || '방장', addedAt: Date.now() })
+        if (s.music.queue.length === 1) { s.music.currentIdx = 0; s.music.playing = true }
+      })
+      broadcastSSE('music_state', getState().music)
+      return NextResponse.json({ ok: true })
+    }
     case 'music_manual_add': {
-      const track = await searchYouTube(body.query)
+      const results = await searchYouTube(body.query, 1)
+      const track = results[0]
       if (!track) return NextResponse.json({ ok: false, error: '검색 실패' })
       setState(s => {
+        if (s.music.queue.some((t: any) => t.videoId === track.videoId)) return
         s.music.queue.push({ ...track, requestedBy: body.requestedBy || '방장', addedAt: Date.now() })
         if (s.music.queue.length === 1) { s.music.currentIdx = 0; s.music.playing = true }
       })
