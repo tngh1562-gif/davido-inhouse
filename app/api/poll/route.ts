@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getState } from '@/lib/state'
-import { isChzzkConnected, getChatLog } from '@/lib/chzzk'
+import { isChzzkConnected } from '@/lib/chzzk'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -19,6 +19,6 @@ export async function GET(req: NextRequest) {
     music: state.music,
     channelId: state.channelId,
     chzzkConnected: isChzzkConnected(),
-    chatLog: getChatLog(),
+    chatLog: state.chatLog || [],
   })
 }

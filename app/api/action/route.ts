@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getState, setState } from '@/lib/state'
 import { searchYouTube } from '@/lib/youtube'
-import { connectChzzk, disconnectChzzk, broadcastSSE, isChzzkConnected } from '@/lib/chzzk'
+import { connectChzzk, disconnectChzzk, isChzzkConnected } from '@/lib/chzzk'
 
 export const runtime = 'nodejs'
 
 const COLORS = ['#4285f4','#ea4335','#34a853','#fbbc04','#9c27b0','#00bcd4','#ff5722','#607d8b']
+// Polling 방식에서는 broadcastSSE 불필요 - 파일 상태로 공유
+const broadcastSSE = (_type: string, _data: any) => {}
 const PASSWORD = process.env.APP_PASSWORD || '09870987'
 
 export async function POST(req: NextRequest) {
@@ -58,7 +60,6 @@ export async function POST(req: NextRequest) {
 
     case 'reset_vote':
       setState(s => { s.vote = { active: false, title: '', items: [], startedAt: null } })
-      broadcastSSE('vote_reset', {})
       return NextResponse.json({ ok: true })
 
     // ── 룰렛 ──────────────────────

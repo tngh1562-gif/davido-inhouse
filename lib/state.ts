@@ -1,3 +1,6 @@
+import { existsSync, readFileSync, writeFileSync } from 'fs'
+import { join } from 'path'
+
 export interface VoteItem {
   label: string
   votes: string[]
@@ -37,28 +40,36 @@ export interface AppState {
   roulette: { items: RouletteItem[] }
   music: MusicState
   channelId: string | null
+  chatLog: { nickname: string; text: string; isSystem?: boolean }[]
 }
 
-declare global {
-  var __appState: AppState | undefined
+const STATE_FILE = join(process.cwd(), '.state.json')
+
+const DEFAULT_STATE: AppState = {
+  vote: { active: false, title: '', items: [], startedAt: null },
+  roulette: { items: [] },
+  music: { queue: [], currentIdx: 0, playing: false },
+  channelId: null,
+  chatLog: [],
 }
 
 export function getState(): AppState {
-  if (!global.__appState) {
-    global.__appState = {
-      vote: { active: false, title: '', items: [], startedAt: null },
-      roulette: { items: [] },
-      music: { queue: [], currentIdx: 0, playing: false },
-      channelId: null,
+  try {
+    if (existsSync(STATE_FILE)) {
+      const raw = readFileSync(STATE_FILE, 'utf8')
+      const parsed = JSON.parse(raw)
+      return { ...DEFAULT_STATE, ...parsed }
     }
-  }
-  if (!global.__appState.music) {
-    global.__appState.music = { queue: [], currentIdx: 0, playing: false }
-  }
-  return global.__appState
+  } catch {}
+  return { ...DEFAULT_STATE }
 }
 
 export function setState(updater: (s: AppState) => void) {
   const s = getState()
   updater(s)
+  try {
+    writeFileSync(STATE_FILE, JSON.stringify(s), 'utf8')
+  } catch(e: any) {
+    console.error('[STATE] write error:', e.message)
+  }
 }
