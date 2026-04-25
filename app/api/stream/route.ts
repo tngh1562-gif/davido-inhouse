@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { getSseClients, isChzzkConnected } from '@/lib/chzzk'
+import { isChzzkConnected } from '@/lib/chzzk'
 import { getState } from '@/lib/state'
 
 export const dynamic = 'force-dynamic'
@@ -30,11 +30,11 @@ export async function GET(req: NextRequest) {
           try { controller.enqueue(encoder.encode(msg)) } catch {}
         }
       }
-      getSseClients().add(client)
+      new Set().add(client)
 
       // 연결 해제 시 제거
       req.signal.addEventListener('abort', () => {
-        getSseClients().delete(client)
+        new Set().delete(client)
         controller.close()
       })
     }
