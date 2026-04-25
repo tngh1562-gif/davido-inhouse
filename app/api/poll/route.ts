@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getState } from '@/lib/state'
+import { getStore } from '@/lib/store'
 import { isChzzkConnected } from '@/lib/chzzk'
 
 export const dynamic = 'force-dynamic'
@@ -12,13 +12,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
-  const state = getState()
+  const store = getStore()
   return NextResponse.json({
-    vote: state.vote,
-    roulette: state.roulette,
-    music: state.music,
-    channelId: state.channelId,
+    vote: store.vote,
+    roulette: store.roulette,
+    music: store.music,
+    channelId: store.channelId,
     chzzkConnected: isChzzkConnected(),
-    chatLog: state.chatLog || [],
+    chatLog: store.chatLog,
   })
 }
