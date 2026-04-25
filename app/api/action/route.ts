@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
   // login/logout은 인증 불필요
   if (type !== 'login' && type !== 'logout') {
     const auth = req.cookies.get('auth')?.value
-    if (auth !== 'ok') {
+    const isDev = process.env.NODE_ENV === 'development'
+    if (!isDev && auth !== 'ok') {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
     }
   }
@@ -153,7 +154,7 @@ export async function POST(req: NextRequest) {
       const ok = body.password === PASSWORD
       if (ok) {
         const res = NextResponse.json({ ok: true })
-        res.cookies.set('auth', 'ok', { httpOnly: true, maxAge: 60*60*24*30, sameSite: 'strict' })
+        res.cookies.set('auth', 'ok', { httpOnly: true, maxAge: 60*60*24*30, sameSite: 'lax', path: '/' })
         return res
       }
       return NextResponse.json({ ok: false }, { status: 401 })
