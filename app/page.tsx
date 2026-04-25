@@ -47,11 +47,10 @@ export default function Home() {
   const timerRef   = useRef<ReturnType<typeof setInterval>>()
 
   const api = async (type: string, extra?: object) => {
-    const r = await fetch('/api/action', {
+    await fetch('/api/action', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ type, ...extra }),
     })
-    return r.json().catch(()=>({}))
   }
 
   // 초기 인증 상태 확인
@@ -96,66 +95,7 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [auth])
 
-  // 치지직 채팅 - 브라우저에서 직접 WebSocket 연결
-  useEffect(() => {
-    if (!auth || !chzzkConnected || !channelId) return
-    let ws: WebSocket | null = null
-    let pingInterval: ReturnType<typeof setInterval>
-    let reconnectTimeout: ReturnType<typeof setTimeout>
-
-    async function connect() {
-      try {
-        // 서버 프록시로 chatChannelId + accessToken 가져오기 (CORS 우회)
-        const r = await fetch(`/api/chzzk-proxy?channelId=${channelId}`)
-        const { chatChannelId, accessToken } = await r.json()
-
-        const serverNum = Math.floor(Math.random()*4)+1
-        ws = new WebSocket(`wss://kr-ss${serverNum}.chat.naver.com/chat`)
-
-        ws.onopen = () => {
-          ws?.send(JSON.stringify({
-            ver:'3', cmd:100, svcid:'game', cid:chatChannelId,
-            bdy:{ uid:null, devType:2001, accTkn:accessToken, auth:'READ',
-              libVer:'4.9.1', osVer:'Windows/10', devName:'Chrome/120.0.0.0', locale:'ko', chzzkTk:null },
-            tid:1,
-          }))
-          pingInterval = setInterval(()=>{ ws?.send(JSON.stringify({ver:'3',cmd:0})) }, 20000)
-        }
-
-        ws.onmessage = async (e) => {
-          try {
-            const msg = JSON.parse(e.data)
-            if (msg.cmd === 0) { ws?.send(JSON.stringify({ver:'3',cmd:10000})); return }
-            if (msg.cmd !== 93101) return
-            const chats = msg.bdy?.messageList || []
-            for (const chat of chats) {
-              const nickname = chat.profile?.nickname || '익명'
-              const text = (chat.msg || '').trim()
-              if (!text) continue
-              // 서버로 채팅 전달
-              await fetch('/api/chat', {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({nickname, text})
-              })
-            }
-          } catch {}
-        }
-
-        ws.onclose = () => {
-          clearInterval(pingInterval)
-          if (chzzkConnected) reconnectTimeout = setTimeout(connect, 5000)
-        }
-      } catch(e) { console.error('[Chat]', e) }
-    }
-
-    connect()
-    return () => {
-      clearInterval(pingInterval)
-      clearTimeout(reconnectTimeout)
-      ws?.close()
-    }
-  }, [auth, chzzkConnected, channelId])
+  // 치지직 채팅은 서버(chzzk.ts)에서 처리됨
 
   // 곡 변경 → music.playing 자동 true
   useEffect(() => {
@@ -410,14 +350,14 @@ export default function Home() {
           </div>
           {chzzkConnected ? <>
             <span style={{fontSize:'12px',color:'#22c55e',fontWeight:600}}>{channelId.slice(0,24)}...</span>
-            <button style={{...S.btn('#e03020'),padding:'5px 12px',fontSize:'12px'}} onClick={()=>{api('disconnect_chzzk');setChzzkConnected(false);setChannelId('')}}>해제</button>
+            <button style={{...S.btn('#e03020'),padding:'5px 12px',fontSize:'12px'}} onClick={()=>api('disconnect_chzzk')}>해제</button>
           </> : <>
             <input style={{...S.inp('220px'),padding:'5px 10px',fontSize:'12px'}}
               placeholder="채널 ID" value={inputCid}
               onChange={e=>setInputCid(e.target.value)}
-              onKeyDown={e=>{if(e.key==='Enter'&&inputCid){api('connect_chzzk',{channelId:inputCid});setChannelId(inputCid);setChzzkConnected(true)}}}/>
+              onKeyDown={e=>e.key==='Enter'&&api('connect_chzzk',{channelId:inputCid})}/>
             <button style={{...S.btn(),padding:'5px 14px',fontSize:'12px'}}
-              onClick={()=>{if(inputCid){api('connect_chzzk',{channelId:inputCid});setChannelId(inputCid);setChzzkConnected(true)}}}>연결</button>
+              onClick={()=>api('connect_chzzk',{channelId:inputCid})}>연결</button>
             <span style={{fontSize:'11px',color:'#b0c0d0'}}>chzzk.naver.com/<b style={{color:acc}}>채널ID</b></span>
           </>}
           <div style={{marginLeft:'auto',display:'flex',gap:'4px',alignItems:'center'}}>

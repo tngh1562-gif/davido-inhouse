@@ -3,7 +3,7 @@ import { searchYouTube } from './youtube'
 
 export async function connectChzzk(channelId: string) {
   const store = getStore()
-  
+
   if (store.chzzkWs) {
     try { store.chzzkWs.terminate() } catch {}
     store.chzzkWs = null
@@ -15,6 +15,7 @@ export async function connectChzzk(channelId: string) {
 
   store.channelId = channelId
 
+  // 1) chatChannelId
   let chatChannelId = channelId
   try {
     const res = await fetch(
@@ -24,14 +25,25 @@ export async function connectChzzk(channelId: string) {
     const json = await res.json()
     chatChannelId = json?.content?.chatChannelId || channelId
     console.log('[CHZZK] chatChannelId:', chatChannelId)
-  } catch { console.log('[CHZZK] using channelId directly') }
+  } catch { console.log('[CHZZK] chatChannelId fallback') }
 
-  // 액세스 토큰은 브라우저에서만 가능 - null로 연결 시도
-  console.log('[CHZZK] connecting without token...')
-  connectChatWs(chatChannelId, channelId, null)
+  // 2) 액세스 토큰 (서버에서 직접 요청)
+  let accessToken: string | null = null
+  try {
+    const res = await fetch(
+      `https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
+      { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://chzzk.naver.com/' } }
+    )
+    const json = await res.json()
+    accessToken = json?.content?.accessToken || null
+    console.log('[CHZZK] accessToken:', accessToken ? '획득' : '없음')
+  } catch (e) { console.log('[CHZZK] token fetch failed:', e) }
+
+  connectChatWs(chatChannelId, channelId, accessToken)
 }
 
 function connectChatWs(chatChannelId: string, originalChannelId: string, accessToken: string | null) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const WS = require('ws')
   const serverNum = Math.floor(Math.random() * 4) + 1
   const serverUrl = `wss://kr-ss${serverNum}.chat.naver.com/chat`
@@ -51,7 +63,7 @@ function connectChatWs(chatChannelId: string, originalChannelId: string, accessT
   store.chzzkWs = ws
 
   ws.on('open', () => {
-    console.log('[CHZZK] open!')
+    console.log('[CHZZK] WS open')
     ws.send(JSON.stringify({
       ver: '3', cmd: 100, svcid: 'game', cid: chatChannelId,
       bdy: {
@@ -71,6 +83,7 @@ function connectChatWs(chatChannelId: string, originalChannelId: string, accessT
     try {
       const str = Buffer.isBuffer(raw) ? raw.toString('utf8') : String(raw)
       const msg = JSON.parse(str)
+      console.log('[CHZZK] cmd:', msg.cmd)
       if (msg.cmd === 0) { ws.send(JSON.stringify({ ver: '3', cmd: 10000 })); return }
       if (msg.cmd === 10000) return
       if (msg.cmd === 93101) handleChatMessage(msg)
@@ -78,11 +91,22 @@ function connectChatWs(chatChannelId: string, originalChannelId: string, accessT
   })
 
   ws.on('close', (code: number) => {
-    console.log('[CHZZK] closed, code:', code)
+    console.log('[CHZZK] closed:', code)
     const s = getStore()
     if (s.chzzkPing) { clearInterval(s.chzzkPing); s.chzzkPing = null }
     if (s.channelId === originalChannelId) {
-      setTimeout(() => connectChatWs(chatChannelId, originalChannelId, accessToken), 5000)
+      setTimeout(async () => {
+        let newToken: string | null = null
+        try {
+          const res = await fetch(
+            `https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
+            { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://chzzk.naver.com/' } }
+          )
+          const json = await res.json()
+          newToken = json?.content?.accessToken || null
+        } catch {}
+        connectChatWs(chatChannelId, originalChannelId, newToken)
+      }, 5000)
     }
   })
 
@@ -92,7 +116,7 @@ function connectChatWs(chatChannelId: string, originalChannelId: string, accessT
 function handleChatMessage(msg: any) {
   const store = getStore()
   const chats = msg.bdy?.messageList || []
-  
+
   chats.forEach((chat: any) => {
     const nickname: string = chat.profile?.nickname || '익명'
     const text: string = (chat.msg || '').trim()
@@ -100,26 +124,21 @@ function handleChatMessage(msg: any) {
 
     console.log('[CHZZK] chat:', nickname, ':', text)
 
-    // 채팅 로그 저장
     store.chatLog.push({ nickname, text })
     if (store.chatLog.length > 200) store.chatLog.shift()
 
-    // 투표 처리
     if (store.vote.active) {
       const m = text.match(/^!투표(\d+)$/)
       if (m) {
         const idx = parseInt(m[1]) - 1
         if (idx >= 0 && idx < store.vote.items.length) {
-          store.vote.items.forEach(it => {
-            it.votes = it.votes.filter(v => v !== nickname)
-          })
+          store.vote.items.forEach(it => { it.votes = it.votes.filter(v => v !== nickname) })
           store.vote.items[idx].votes.push(nickname)
           console.log('[CHZZK] vote:', nickname, '->', store.vote.items[idx].label)
         }
       }
     }
 
-    // 신청곡 처리
     if (text.startsWith('!신청곡 ')) {
       const query = text.slice(5).trim()
       if (query) handleMusicRequest(nickname, query)
