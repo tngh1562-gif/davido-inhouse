@@ -32,7 +32,7 @@ export async function connectChzzk(channelId: string) {
 }
 
 function connectChatWs(chatChannelId: string, originalChannelId: string, accessToken: string | null) {
-  const WS = eval("require")('ws')
+  const WS = require('ws')
   const serverNum = Math.floor(Math.random() * 4) + 1
   const serverUrl = `wss://kr-ss${serverNum}.chat.naver.com/chat`
   console.log('[CHZZK] connecting to', serverUrl)

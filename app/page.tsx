@@ -47,10 +47,11 @@ export default function Home() {
   const timerRef   = useRef<ReturnType<typeof setInterval>>()
 
   const api = async (type: string, extra?: object) => {
-    await fetch('/api/action', {
+    const r = await fetch('/api/action', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ type, ...extra }),
     })
+    return r.json().catch(()=>({}))
   }
 
   // 초기 인증 상태 확인
@@ -409,14 +410,14 @@ export default function Home() {
           </div>
           {chzzkConnected ? <>
             <span style={{fontSize:'12px',color:'#22c55e',fontWeight:600}}>{channelId.slice(0,24)}...</span>
-            <button style={{...S.btn('#e03020'),padding:'5px 12px',fontSize:'12px'}} onClick={()=>api('disconnect_chzzk')}>해제</button>
+            <button style={{...S.btn('#e03020'),padding:'5px 12px',fontSize:'12px'}} onClick={()=>{api('disconnect_chzzk');setChzzkConnected(false);setChannelId('')}}>해제</button>
           </> : <>
             <input style={{...S.inp('220px'),padding:'5px 10px',fontSize:'12px'}}
               placeholder="채널 ID" value={inputCid}
               onChange={e=>setInputCid(e.target.value)}
-              onKeyDown={e=>e.key==='Enter'&&api('connect_chzzk',{channelId:inputCid})}/>
+              onKeyDown={e=>{if(e.key==='Enter'&&inputCid){api('connect_chzzk',{channelId:inputCid});setChannelId(inputCid);setChzzkConnected(true)}}}/>
             <button style={{...S.btn(),padding:'5px 14px',fontSize:'12px'}}
-              onClick={()=>api('connect_chzzk',{channelId:inputCid})}>연결</button>
+              onClick={()=>{if(inputCid){api('connect_chzzk',{channelId:inputCid});setChannelId(inputCid);setChzzkConnected(true)}}}>연결</button>
             <span style={{fontSize:'11px',color:'#b0c0d0'}}>chzzk.naver.com/<b style={{color:acc}}>채널ID</b></span>
           </>}
           <div style={{marginLeft:'auto',display:'flex',gap:'4px',alignItems:'center'}}>
