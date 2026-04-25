@@ -104,18 +104,9 @@ export default function Home() {
 
     async function connect() {
       try {
-        // chatChannelId 가져오기
-        const r = await fetch(`https://api.chzzk.naver.com/service/v2/channels/${channelId}/live-detail`)
-        const json = await r.json()
-        const chatChannelId = json?.content?.chatChannelId || channelId
-
-        // 액세스 토큰
-        let accessToken = null
-        try {
-          const tr = await fetch(`https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`)
-          const tj = await tr.json()
-          accessToken = tj?.content?.accessToken || null
-        } catch {}
+        // 서버 프록시로 chatChannelId + accessToken 가져오기 (CORS 우회)
+        const r = await fetch(`/api/chzzk-proxy?channelId=${channelId}`)
+        const { chatChannelId, accessToken } = await r.json()
 
         const serverNum = Math.floor(Math.random()*4)+1
         ws = new WebSocket(`wss://kr-ss${serverNum}.chat.naver.com/chat`)
