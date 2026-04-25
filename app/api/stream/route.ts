@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
         data: {
           vote: state.vote,
           roulette: state.roulette,
+          music: state.music,
           channelId: state.channelId,
           chzzkConnected: isChzzkConnected(),
         }
