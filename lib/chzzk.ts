@@ -16,8 +16,6 @@ export async function connectChzzk(channelId: string) {
   store.channelId = channelId
 
   let chatChannelId = channelId
-  let accessToken = null
-
   try {
     const res = await fetch(
       `https://api.chzzk.naver.com/service/v2/channels/${channelId}/live-detail`,
@@ -28,17 +26,9 @@ export async function connectChzzk(channelId: string) {
     console.log('[CHZZK] chatChannelId:', chatChannelId)
   } catch { console.log('[CHZZK] using channelId directly') }
 
-  try {
-    const res = await fetch(
-      `https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
-      { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://chzzk.naver.com/' } }
-    )
-    const json = await res.json()
-    accessToken = json?.content?.accessToken || null
-    console.log('[CHZZK] accessToken:', accessToken ? 'OK' : 'null')
-  } catch { console.log('[CHZZK] token failed') }
-
-  connectChatWs(chatChannelId, channelId, accessToken)
+  // 액세스 토큰은 브라우저에서만 가능 - null로 연결 시도
+  console.log('[CHZZK] connecting without token...')
+  connectChatWs(chatChannelId, channelId, null)
 }
 
 function connectChatWs(chatChannelId: string, originalChannelId: string, accessToken: string | null) {
