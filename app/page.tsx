@@ -64,41 +64,35 @@ export default function Home() {
     }).catch(()=>setAuth(false))
   }, [])
 
+  // Polling - 1초마다 상태 확인
   useEffect(() => {
     if (!auth) return
-    const es = new EventSource('/api/stream')
-    es.onmessage = (e) => {
+    let lastChatLen = 0
+
+    const poll = async () => {
       try {
-        const msg = JSON.parse(e.data)
-        switch(msg.type) {
-          case 'full_state':
-            setVote(msg.data.vote)
-            setRouletteItems(msg.data.roulette?.items || [])
-            if (msg.data.music) setMusic(msg.data.music)
-            setChzzkConnected(msg.data.chzzkConnected)
-            if (msg.data.channelId) setChannelId(msg.data.channelId)
-            break
-          case 'vote_started': case 'vote_update': case 'vote_ended':
-            setVote(msg.data); break
-          case 'vote_reset':
-            setVote({ active:false, title:'', items:[], startedAt:null }); break
-          case 'roulette_updated':
-            setRouletteItems(msg.data.items || []); break
-          case 'chzzk_connected':
-            setChzzkConnected(true); setChannelId(msg.data.channelId); break
-          case 'chzzk_disconnected':
-            setChzzkConnected(false); setChannelId(''); break
-          case 'chat':
-            setChatLog(p => [...p.slice(-199), msg.data]); break
-          case 'music_queued':
-            setMusic(msg.data.queue ? {...msg.data, queue: msg.data.queue} : (p:MusicState) => ({...p, queue:[...p.queue, msg.data.track]}))
-            break
-          case 'music_state':
-            setMusic(msg.data); break
+        const r = await fetch('/api/poll')
+        if (!r.ok) return
+        const data = await r.json()
+        
+        setVote(data.vote)
+        setRouletteItems(data.roulette?.items || [])
+        if (data.music) setMusic(data.music)
+        setChzzkConnected(data.chzzkConnected)
+        if (data.channelId) setChannelId(data.channelId)
+        
+        // 새 채팅만 추가
+        if (data.chatLog && data.chatLog.length > lastChatLen) {
+          const newChats = data.chatLog.slice(lastChatLen)
+          setChatLog(p => [...p, ...newChats].slice(-200))
+          lastChatLen = data.chatLog.length
         }
       } catch {}
     }
-    return () => es.close()
+
+    poll() // 즉시 실행
+    const interval = setInterval(poll, 1000)
+    return () => clearInterval(interval)
   }, [auth])
 
   // 곡 변경 → music.playing 자동 true

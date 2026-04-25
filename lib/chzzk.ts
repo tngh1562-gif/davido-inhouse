@@ -5,11 +5,17 @@ declare global {
   var __chzzkWs: any | undefined
   var __chzzkPing: any | undefined
   var __sseClients: Set<any> | undefined
+  var __chatLog: {nickname:string,text:string,isSystem?:boolean}[] | undefined
 }
 
 export function getSseClients(): Set<any> {
   if (!global.__sseClients) global.__sseClients = new Set()
   return global.__sseClients
+}
+
+export function getChatLog() {
+  if (!global.__chatLog) global.__chatLog = []
+  return global.__chatLog
 }
 
 export function broadcastSSE(type: string, data: any) {
@@ -158,6 +164,10 @@ function handleMessage(msg: any) {
       const text: string = (chat.msg || '').trim()
       if (!text) return
 
+      // chatLog에 저장 (최대 200개)
+      if (!global.__chatLog) global.__chatLog = []
+      global.__chatLog.push({ nickname, text })
+      if (global.__chatLog.length > 200) global.__chatLog.shift()
       broadcastSSE('chat', { nickname, text })
 
       const state = getState()
@@ -190,7 +200,9 @@ async function handleMusicRequest(nickname: string, query: string) {
 
   const state = getState()
   if (state.music.queue.some((t: any) => t.videoId === track.videoId)) {
-    broadcastSSE('chat', { nickname: '🎵 신청곡', text: `이미 대기열에 있습니다`, isSystem: true })
+    if (!global.__chatLog) global.__chatLog = []
+  global.__chatLog.push({ nickname: '🎵 신청곡', text: '이미 대기열에 있습니다', isSystem: true })
+  broadcastSSE('chat', { nickname: '🎵 신청곡', text: `이미 대기열에 있습니다`, isSystem: true })
     return
   }
 
@@ -198,11 +210,10 @@ async function handleMusicRequest(nickname: string, query: string) {
     s.music.queue.push({ ...track, requestedBy: nickname, addedAt: Date.now() })
   })
 
-  broadcastSSE('chat', {
-    nickname: '🎵 신청곡',
-    text: `[${nickname}] "${track.title}" 추가! (${getState().music.queue.length}번째)`,
-    isSystem: true,
-  })
+  const sysMsg = { nickname: '🎵 신청곡', text: `[${nickname}] "${track.title}" 추가! (${getState().music.queue.length}번째)`, isSystem: true }
+  if (!global.__chatLog) global.__chatLog = []
+  global.__chatLog.push(sysMsg)
+  broadcastSSE('chat', sysMsg)
   broadcastSSE('music_state', getState().music)
 }
 
