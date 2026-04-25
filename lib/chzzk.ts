@@ -1,8 +1,5 @@
-// 치지직 채팅 연결 (비공식 WebSocket API)
-// 참고: https://github.com/kimcore/chzzk
-
 import { getState, setState } from './state'
-import { searchYouTube, YTTrack } from './youtube'
+import { searchYouTube } from './youtube'
 
 declare global {
   var __chzzkWs: any | undefined
@@ -22,7 +19,6 @@ export function broadcastSSE(type: string, data: any) {
 }
 
 export async function connectChzzk(channelId: string) {
-  // 기존 연결 종료
   if (global.__chzzkWs) {
     try { global.__chzzkWs.close() } catch {}
     global.__chzzkWs = null
@@ -30,12 +26,12 @@ export async function connectChzzk(channelId: string) {
 
   setState(s => { s.channelId = channelId })
 
-  // 채팅 채널 정보 가져오기 (비공식 API)
   let chatChannelId = channelId
   try {
     const res = await fetch(`https://api.chzzk.naver.com/service/v1/channels/${channelId}/live-detail`)
     const json = await res.json()
     chatChannelId = json?.content?.chatChannelId || channelId
+    console.log('[CHZZK] chatChannelId:', chatChannelId)
   } catch (e) {
     console.error('[CHZZK] failed to get chatChannelId, using channelId directly')
   }
@@ -43,42 +39,57 @@ export async function connectChzzk(channelId: string) {
   connectChatWs(chatChannelId, channelId)
 }
 
-function connectChatWs(chatChannelId: string, originalChannelId: string) {
-  // Node.js 환경에서 ws 패키지 사용
-  let WebSocket: any
+function sendWs(ws: any, data: object) {
   try {
-    WebSocket = require('ws')
+    const str = JSON.stringify(data)
+    // ws 패키지에서 mask 옵션 명시
+    ws.send(str, { mask: true, binary: false }, (err: any) => {
+      if (err) console.error('[CHZZK] send error:', err.message)
+    })
+  } catch (e: any) {
+    console.error('[CHZZK] send exception:', e.message)
+  }
+}
+
+function connectChatWs(chatChannelId: string, originalChannelId: string) {
+  let WS: any
+  try {
+    WS = require('ws')
   } catch {
     console.error('[CHZZK] ws package not found')
-    broadcastSSE('error', { message: 'ws 패키지가 필요합니다: npm install ws' })
+    broadcastSSE('error', { message: 'ws 패키지 없음' })
     return
   }
 
-  const ws = new WebSocket('wss://kr-ss1.chat.naver.com/chat')
+  console.log('[CHZZK] connecting to chat server...')
+  const ws = new WS('wss://kr-ss1.chat.naver.com/chat', {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    }
+  })
   global.__chzzkWs = ws
 
   ws.on('open', () => {
-    console.log('[CHZZK] connected to chat server')
-    ws.send(JSON.stringify({
+    console.log('[CHZZK] connected!')
+    sendWs(ws, {
       ver: '2', cmd: 100, svcid: 'game',
       cid: chatChannelId,
       bdy: { uid: null, devType: 2001, accTkn: null, auth: 'READ' },
       tid: 1,
-    }))
+    })
     broadcastSSE('chzzk_connected', { channelId: originalChannelId })
   })
 
   ws.on('message', (raw: Buffer) => {
     try {
       const msg = JSON.parse(raw.toString())
-      handleMessage(msg)
+      handleMessage(msg, ws)
     } catch {}
   })
 
   ws.on('close', () => {
     console.log('[CHZZK] disconnected')
     broadcastSSE('chzzk_disconnected', {})
-    // 5초 후 재연결
     if (getState().channelId === originalChannelId) {
       setTimeout(() => connectChatWs(chatChannelId, originalChannelId), 5000)
     }
@@ -86,20 +97,16 @@ function connectChatWs(chatChannelId: string, originalChannelId: string) {
 
   ws.on('error', (err: Error) => {
     console.error('[CHZZK] error:', err.message)
-    broadcastSSE('error', { message: err.message })
   })
 }
 
-function handleMessage(msg: any) {
+function handleMessage(msg: any, ws: any) {
   // PING → PONG
   if (msg.cmd === 0) {
-    if (global.__chzzkWs?.readyState === 1) {
-      global.__chzzkWs.send(JSON.stringify({ ver: '2', cmd: 10000 }))
-    }
+    sendWs(ws, { ver: '2', cmd: 10000 })
     return
   }
 
-  // 채팅 메시지
   if (msg.cmd === 93101) {
     const chats = msg.bdy?.messageList || []
     chats.forEach((chat: any) => {
@@ -115,20 +122,21 @@ function handleMessage(msg: any) {
         if (m) {
           const idx = parseInt(m[1]) - 1
           if (idx >= 0 && idx < state.vote.items.length) {
-            const alreadyVoted = state.vote.items.some(it => it.votes.includes(nickname))
-            if (!alreadyVoted) {
-              setState(s => { s.vote.items[idx].votes.push(nickname) })
-              broadcastSSE('vote_update', getState().vote)
-            }
+            setState(s => {
+              s.vote.items.forEach(it => {
+                it.votes = it.votes.filter(v => v !== nickname)
+              })
+              s.vote.items[idx].votes.push(nickname)
+            })
+            broadcastSSE('vote_update', getState().vote)
           }
         }
       }
+
       // !신청곡 처리
-      if (text.startsWith('!신청곡 ') || text.startsWith('!신청곡 ')) {
-        const query = text.replace(/^!신청곡\s*/, '').trim()
-        if (query) {
-          handleMusicRequest(nickname, query)
-        }
+      if (text.startsWith('!신청곡 ')) {
+        const query = text.slice(5).trim()
+        if (query) handleMusicRequest(nickname, query)
       }
     })
   }
@@ -137,33 +145,24 @@ function handleMessage(msg: any) {
 async function handleMusicRequest(nickname: string, query: string) {
   const results = await searchYouTube(query, 1)
   const track = results[0]
-  if (!track) {
-    broadcastSSE('music_error', { message: `"${query}" 검색 실패`, nickname })
-    return
-  }
+  if (!track) return
+
   const state = getState()
-  // 중복 체크
-  if (state.music.queue.some(t => t.videoId === track.videoId)) {
-    broadcastSSE('music_duplicate', { title: track.title, nickname })
+  if (state.music.queue.some((t: any) => t.videoId === track.videoId)) {
+    broadcastSSE('chat', { nickname: '🎵 신청곡', text: `이미 대기열에 있는 곡입니다`, isSystem: true })
     return
   }
+
   setState(s => {
-    s.music.queue.push({
-      ...track,
-      requestedBy: nickname,
-      addedAt: Date.now(),
-    })
+    s.music.queue.push({ ...track, requestedBy: nickname, addedAt: Date.now() })
   })
-  // 채팅창에 추가 알림
+
   broadcastSSE('chat', {
     nickname: '🎵 신청곡',
-    text: `[${nickname}] "${track.title}" 대기열에 추가됨 (${getState().music.queue.length}번째)`,
+    text: `[${nickname}] "${track.title}" 대기열 추가! (${getState().music.queue.length}번째)`,
     isSystem: true,
   })
-  broadcastSSE('music_queued', {
-    track: { ...track, requestedBy: nickname, addedAt: Date.now() },
-    queue: getState().music.queue,
-  })
+  broadcastSSE('music_state', getState().music)
 }
 
 export function disconnectChzzk() {
