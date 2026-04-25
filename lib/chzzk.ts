@@ -3,6 +3,7 @@ import { searchYouTube } from './youtube'
 
 declare global {
   var __chzzkWs: any | undefined
+  var __chzzkPing: any | undefined
   var __sseClients: Set<any> | undefined
 }
 
@@ -20,96 +21,137 @@ export function broadcastSSE(type: string, data: any) {
 
 export async function connectChzzk(channelId: string) {
   if (global.__chzzkWs) {
-    try { global.__chzzkWs.terminate?.() || global.__chzzkWs.close() } catch {}
+    try { global.__chzzkWs.terminate() } catch {}
     global.__chzzkWs = null
+  }
+  if (global.__chzzkPing) {
+    clearInterval(global.__chzzkPing)
+    global.__chzzkPing = null
   }
 
   setState(s => { s.channelId = channelId })
 
+  // 채팅 채널 ID 가져오기
   let chatChannelId = channelId
   try {
-    const res = await fetch(`https://api.chzzk.naver.com/service/v1/channels/${channelId}/live-detail`)
+    const res = await fetch(`https://api.chzzk.naver.com/service/v2/channels/${channelId}/live-detail`, {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    })
     const json = await res.json()
     chatChannelId = json?.content?.chatChannelId || channelId
     console.log('[CHZZK] chatChannelId:', chatChannelId)
   } catch {
-    console.log('[CHZZK] using channelId directly')
+    console.log('[CHZZK] using channelId directly:', channelId)
   }
 
   connectChatWs(chatChannelId, channelId)
 }
 
 function connectChatWs(chatChannelId: string, originalChannelId: string) {
-  // Next.js 번들링 우회: require를 동적으로
-  let WS: any
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    WS = eval("require")('ws')
-    console.log('[CHZZK] ws loaded, version:', eval("require")('ws/package.json').version)
-  } catch(e: any) {
-    console.error('[CHZZK] ws load failed:', e.message)
-    broadcastSSE('error', { message: 'ws 패키지 로드 실패' })
-    return
-  }
+  const WS = eval("require")('ws')
 
-  console.log('[CHZZK] connecting...')
+  // 치지직 채팅 서버 - 여러 서버 중 하나 선택
+  const servers = [
+    'wss://kr-ss1.chat.naver.com/chat',
+    'wss://kr-ss2.chat.naver.com/chat',
+    'wss://kr-ss3.chat.naver.com/chat',
+  ]
+  const serverUrl = servers[Math.floor(Math.random() * servers.length)]
   
-  const ws = new WS('wss://kr-ss1.chat.naver.com/chat', {
+  console.log('[CHZZK] connecting to', serverUrl)
+
+  const ws = new WS(serverUrl, {
     perMessageDeflate: false,
+    handshakeTimeout: 10000,
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+      'Origin': 'https://chzzk.naver.com',
+      'Referer': 'https://chzzk.naver.com/',
     }
   })
-  
+
   global.__chzzkWs = ws
 
   ws.on('open', () => {
-    console.log('[CHZZK] open! sending auth...')
-    const payload = JSON.stringify({
-      ver: '2', cmd: 100, svcid: 'game',
+    console.log('[CHZZK] open, sending connect packet...')
+    
+    // 치지직 공식 연결 패킷
+    const connectPacket = {
+      ver: '3',
+      cmd: 100,
+      svcid: 'game',
       cid: chatChannelId,
-      bdy: { uid: null, devType: 2001, accTkn: null, auth: 'READ' },
+      bdy: {
+        uid: null,
+        devType: 2001,
+        accTkn: null,
+        auth: 'READ',
+        libVer: '4.9.1',
+        osVer: 'Windows/10',
+        devName: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        locale: 'ko',
+        chzzkTk: null,
+      },
       tid: 1,
-    })
-    ws.send(payload)
+    }
+    ws.send(JSON.stringify(connectPacket))
+    
+    // PING 30초마다
+    global.__chzzkPing = setInterval(() => {
+      if (ws.readyState === 1) {
+        ws.send(JSON.stringify({ ver: '3', cmd: 0 }))
+      }
+    }, 20000)
+    
     broadcastSSE('chzzk_connected', { channelId: originalChannelId })
   })
 
   ws.on('message', (raw: any) => {
     try {
-      const str = typeof raw === 'string' ? raw : raw.toString('utf8')
+      const str = Buffer.isBuffer(raw) ? raw.toString('utf8') : String(raw)
       const msg = JSON.parse(str)
-      handleMessage(msg, ws)
+      
+      // PONG 응답
+      if (msg.cmd === 10000 || msg.cmd === 0) {
+        ws.send(JSON.stringify({ ver: '3', cmd: 10000 }))
+        return
+      }
+      
+      handleMessage(msg)
     } catch {}
   })
 
-  ws.on('close', (code: number) => {
-    console.log('[CHZZK] closed, code:', code)
+  ws.on('close', (code: number, reason: any) => {
+    console.log('[CHZZK] closed, code:', code, 'reason:', reason?.toString())
+    if (global.__chzzkPing) {
+      clearInterval(global.__chzzkPing)
+      global.__chzzkPing = null
+    }
     broadcastSSE('chzzk_disconnected', {})
+    // 재연결
     if (getState().channelId === originalChannelId) {
+      console.log('[CHZZK] reconnecting in 5s...')
       setTimeout(() => connectChatWs(chatChannelId, originalChannelId), 5000)
     }
   })
 
   ws.on('error', (err: Error) => {
-    console.error('[CHZZK] ws error:', err.message)
+    console.error('[CHZZK] error:', err.message)
   })
 }
 
-function handleMessage(msg: any, ws: any) {
-  if (msg.cmd === 0) {
-    ws.send(JSON.stringify({ ver: '2', cmd: 10000 }))
-    return
-  }
-
+function handleMessage(msg: any) {
+  // 채팅 메시지 (cmd 93101)
   if (msg.cmd === 93101) {
     const chats = msg.bdy?.messageList || []
     chats.forEach((chat: any) => {
       const nickname: string = chat.profile?.nickname || '익명'
       const text: string = (chat.msg || '').trim()
+      if (!text) return
 
       broadcastSSE('chat', { nickname, text })
 
+      // 투표 처리
       const state = getState()
       if (state.vote.active) {
         const m = text.match(/^!투표(\d+)$/)
@@ -125,6 +167,7 @@ function handleMessage(msg: any, ws: any) {
         }
       }
 
+      // 신청곡 처리
       if (text.startsWith('!신청곡 ')) {
         const query = text.slice(5).trim()
         if (query) handleMusicRequest(nickname, query)
@@ -157,9 +200,10 @@ async function handleMusicRequest(nickname: string, query: string) {
 }
 
 export function disconnectChzzk() {
+  if (global.__chzzkPing) { clearInterval(global.__chzzkPing); global.__chzzkPing = null }
   if (global.__chzzkWs) {
     setState(s => { s.channelId = null })
-    try { global.__chzzkWs.terminate?.() || global.__chzzkWs.close() } catch {}
+    try { global.__chzzkWs.terminate() } catch {}
     global.__chzzkWs = null
     broadcastSSE('chzzk_disconnected', {})
   }
