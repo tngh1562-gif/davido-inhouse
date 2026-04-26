@@ -151,7 +151,9 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
 function handleChat(msg) {
   const chats = Array.isArray(msg.bdy) ? msg.bdy : (msg.bdy?.messageList || []);
   chats.forEach(chat => {
-    const nickname = chat.profile?.nickname || chat.nickname || 'unknown';
+    const rawProfile = chat.profile;
+    const profile = typeof rawProfile === "string" ? JSON.parse(rawProfile || "{}") : (rawProfile || {});
+    const nickname = profile.nickname || chat.nickname || "unknown";
     const text = (chat.msg || chat.message || chat.content || '').trim();
     if (!text) return;
     console.log('[CHAT] keys:', Object.keys(chat).join(','), 'nick:', nickname, 'text:', text);
