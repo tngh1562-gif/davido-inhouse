@@ -582,7 +582,7 @@ function renderMusic() {
   const ytb = document.getElementById('music-ytb-wrap');
   if (track && track.videoId !== currentVideoId) {
     currentVideoId = track.videoId;
-    ytb.innerHTML = `<iframe src="https://www.youtube.com/embed/${track.videoId}?autoplay=1&controls=1&rel=0&modestbranding=1" allow="autoplay;encrypted-media" allowfullscreen style="width:100%;height:100%;border:none;display:block"></iframe>`;
+    ytb.innerHTML = `<iframe src="https://www.youtube.com/embed/${track.videoId}?autoplay=1&controls=1&rel=0&modestbranding=1&origin=${location.hostname}" allow="autoplay;encrypted-media;fullscreen" allowfullscreen style="width:100%;height:100%;border:none;display:block"></iframe>`;
   } else if (!track) {
     currentVideoId = null;
     ytb.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--txt2);font-size:14px">신청곡을 추가하면 여기서 재생됩니다</div>`;
@@ -683,16 +683,32 @@ function clearManualRoulette() {
   renderManualList();
 }
 
-// ── 투표자 → 내전 추가 ──
+// ── 투표자 → 내전 추가 (시청자 DB 연동) ──
 function addToInhouse(nickname, voteIdx) {
+  // 내전 탭으로 먼저 이동
+  const inhouseTab = document.querySelector('[data-tab="inhouse"]');
   const iframe = document.getElementById('inhouse-frame');
-  if (!iframe) return alert('내전 탭으로 이동 후 다시 시도해주세요');
-  iframe.contentWindow.postMessage({
-    type: 'add_player',
-    name: nickname,
-  }, '*');
-  // 시각 피드백
-  alert(`"${nickname}" 내전에 추가됐어요!`);
+  
+  if (!iframe) {
+    alert('잠시 후 다시 시도해주세요');
+    return;
+  }
+
+  // inhouse iframe이 로드됐는지 확인 후 postMessage
+  function sendMsg() {
+    iframe.contentWindow.postMessage({
+      type: 'add_player_by_chzzk',
+      chzzkNick: nickname,  // 치지직 닉네임으로 DB 검색
+    }, '*');
+  }
+
+  // 내전 탭이 활성화 안됐으면 전환 후 전송
+  if (!document.getElementById('panel-inhouse').classList.contains('active')) {
+    inhouseTab.click();
+    setTimeout(sendMsg, 300);
+  } else {
+    sendMsg();
+  }
 }
 </script>
 </body>

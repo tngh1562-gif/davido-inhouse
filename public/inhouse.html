@@ -2664,6 +2664,20 @@ updateSummary();
 if(curBlue.length&&curRed.length) renderAutoResult();
 // 메인 탭은 기본 탭이므로 DOM 로드 후 바로 렌더링
 setTimeout(()=>renderMainAll(), 50);
+
+// ── 외부에서 플레이어 추가 (투표 연동) ──
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'add_player_by_chzzk') {
+    const chzzkNick = e.data.chzzkNick;
+    if (!chzzkNick) return;
+    const viewer = viewers.find(v => v.chzzk && v.chzzk.trim().toLowerCase() === chzzkNick.trim().toLowerCase());
+    if (!viewer) return; // DB에 없으면 추가 안 함
+    const already = players.find(p => p.name.toLowerCase() === viewer.name.toLowerCase());
+    if (already) { alert(viewer.name + ' 이미 추가됨'); return; }
+    addPlayer({ id: ++pid, name: viewer.name, chzzk: viewer.chzzk, tier: viewer.tier, positions: [...viewer.positions], added: Date.now() });
+    alert(viewer.name + ' 내전에 추가됐어요!');
+  }
+});
 </script>
 </body>
 </html>
