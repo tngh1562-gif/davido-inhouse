@@ -2657,6 +2657,17 @@ updateSummary();
 if(curBlue.length&&curRed.length) renderAutoResult();
 // 메인 탭은 기본 탭이므로 DOM 로드 후 바로 렌더링
 setTimeout(()=>renderMainAll(), 50);
+
+// ── 외부에서 플레이어 추가 (투표 연동) ──
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'add_player') {
+    const name = e.data.name;
+    if (!name) return;
+    const already = players.find(p => p.name.toLowerCase() === name.toLowerCase());
+    if (already) return;
+    addPlayer({ id: ++pid, name, tier: 'GO4', positions: ['무관','무관','무관'], added: Date.now() });
+  }
+});
 </script>
 </body>
 </html>

@@ -251,6 +251,21 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
           </div>
           <div class="roulette-items-list" id="roulette-chips"></div>
         </div>
+
+        <!-- 룰렛 직접 입력 -->
+        <div class="roulette-wrap" style="margin-top:12px">
+          <div class="roulette-title">✏️ 룰렛 직접 설정</div>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <input class="inp" id="roulette-name-input" placeholder="이름" style="flex:2" onkeydown="if(event.key==='Enter')addRouletteItem()">
+            <input class="inp" id="roulette-weight-input" placeholder="가중치" type="number" min="1" value="1" style="flex:1;width:70px">
+            <button class="btn primary" onclick="addRouletteItem()" style="white-space:nowrap">추가</button>
+          </div>
+          <div id="roulette-manual-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn success" onclick="applyManualRoulette()" style="flex:1">🎡 룰렛 적용</button>
+            <button class="btn danger" onclick="clearManualRoulette()">전체삭제</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -433,7 +448,7 @@ function renderVote() {
       </div>
       <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:${pct}%;background:${col}"></div></div>
       <div class="vote-voters ${isOpen?'open':''}">
-        ${it.votes.length ? it.votes.map(n=>`<span class="voter-chip">${esc(n)}</span>`).join('') : '<span style="font-size:12px;color:var(--txt2)">투표자 없음</span>'}
+        ${it.votes.length ? it.votes.map(n=>`<span class="voter-chip" onclick="addToInhouse('${n.replace(/'/g,"\'")}',${i})" title="내전에 추가" style="cursor:pointer">${esc(n)} <span style="color:var(--acc2);font-size:10px">+</span></span>`).join('') : '<span style="font-size:12px;color(var(--txt2)">투표자 없음</span>'}
       </div>
     </div>`;
   }).join('');
@@ -628,6 +643,57 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── 룰렛 직접 입력 ──
+let manualRouletteItems = [];
+const RCOLORS = ['#4285f4','#ea4335','#34a853','#fbbc04','#9c27b0','#00bcd4','#ff5722','#e91e63'];
+
+function addRouletteItem() {
+  const name = document.getElementById('roulette-name-input').value.trim();
+  const weight = parseInt(document.getElementById('roulette-weight-input').value) || 1;
+  if (!name) return;
+  manualRouletteItems.push({ label: name, weight, color: RCOLORS[manualRouletteItems.length % RCOLORS.length] });
+  document.getElementById('roulette-name-input').value = '';
+  document.getElementById('roulette-weight-input').value = '1';
+  renderManualList();
+}
+
+function renderManualList() {
+  const el = document.getElementById('roulette-manual-list');
+  el.innerHTML = manualRouletteItems.map((it, i) => `
+    <div class="roulette-chip">
+      <div class="color-dot" style="background:${it.color}"></div>
+      ${esc(it.label)} (${it.weight})
+      <span onclick="removeManualItem(${i})" style="cursor:pointer;color:var(--red);margin-left:4px;font-size:11px">✕</span>
+    </div>`).join('');
+}
+
+function removeManualItem(i) {
+  manualRouletteItems.splice(i, 1);
+  renderManualList();
+}
+
+function applyManualRoulette() {
+  if (!manualRouletteItems.length) return alert('항목을 추가하세요');
+  api('set_roulette', { items: manualRouletteItems });
+}
+
+function clearManualRoulette() {
+  manualRouletteItems = [];
+  renderManualList();
+}
+
+// ── 투표자 → 내전 추가 ──
+function addToInhouse(nickname, voteIdx) {
+  const iframe = document.getElementById('inhouse-frame');
+  if (!iframe) return alert('내전 탭으로 이동 후 다시 시도해주세요');
+  iframe.contentWindow.postMessage({
+    type: 'add_player',
+    name: nickname,
+  }, '*');
+  // 시각 피드백
+  alert(`"${nickname}" 내전에 추가됐어요!`);
+}
 </script>
 </body>
 </html>
