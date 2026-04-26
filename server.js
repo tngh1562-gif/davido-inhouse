@@ -142,7 +142,7 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
 }
 
 function handleChat(msg) {
-  const chats = msg.bdy?.messageList || [];
+  const chats = Array.isArray(msg.bdy) ? msg.bdy : (msg.bdy?.messageList || []);
   chats.forEach(chat => {
     const nickname = chat.profile?.nickname || '익명';
     const text = (chat.msg || '').trim();
