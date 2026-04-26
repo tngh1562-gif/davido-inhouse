@@ -163,7 +163,7 @@ function handleChat(msg) {
 
     // 투표
     if (state.vote.active) {
-      const m = text.match(/^!투표(\d+)$/);
+      const m = text.match(/^!투표\s*(\d+)$/);
       if (m) {
         const idx = parseInt(m[1]) - 1;
         if (idx >= 0 && idx < state.vote.items.length) {
