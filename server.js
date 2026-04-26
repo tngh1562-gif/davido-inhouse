@@ -75,7 +75,7 @@ async function connectChzzk(channelId) {
 
 function connectChatWs(chatChannelId, originalChannelId, accessToken) {
   const WS = require('ws');
-  const serverNum = Math.floor(Math.random() * 4) + 1;
+  const serverNum = Math.floor(Math.random() * 9) + 1;
   const url = `wss://kr-ss${serverNum}.chat.naver.com/chat`;
   console.log('[CHZZK] connecting to', url);
 
@@ -83,7 +83,7 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
     perMessageDeflate: false,
     handshakeTimeout: 10000,
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       'Origin': 'https://chzzk.naver.com',
       'Referer': 'https://chzzk.naver.com/',
     }
@@ -92,13 +92,16 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
 
   ws.on('open', () => {
     console.log('[CHZZK] open!');
-    ws.send(JSON.stringify({
-      ver: '3', cmd: 100, svcid: 'game', cid: chatChannelId,
-      bdy: { uid: null, devType: 2001, accTkn: accessToken, auth: 'READ',
-             libVer: '4.9.1', osVer: 'Windows/10', devName: 'Chrome/120.0.0.0',
-             locale: 'ko', chzzkTk: null },
-      tid: 1,
-    }));
+    // 연결 확인 패킷 먼저 대기
+    setTimeout(() => {
+      ws.send(JSON.stringify({
+        ver: '3', cmd: 100, svcid: 'game', cid: chatChannelId,
+        bdy: { uid: null, devType: 2001, accTkn: accessToken, auth: 'READ',
+               libVer: '4.9.1', osVer: 'Windows/10', devName: 'Chrome/120.0.0.0',
+               locale: 'ko', chzzkTk: null },
+        tid: 1,
+      }));
+    }, 500);
     chzzkPing = setInterval(() => {
       if (ws.readyState === 1) ws.send(JSON.stringify({ ver: '3', cmd: 0 }));
     }, 20000);
