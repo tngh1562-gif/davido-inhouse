@@ -151,10 +151,10 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
 function handleChat(msg) {
   const chats = Array.isArray(msg.bdy) ? msg.bdy : (msg.bdy?.messageList || []);
   chats.forEach(chat => {
-    const nickname = chat.profile?.nickname || '익명';
-    const text = (chat.msg || '').trim();
+    const nickname = chat.profile?.nickname || chat.nickname || 'unknown';
+    const text = (chat.msg || chat.message || chat.content || '').trim();
     if (!text) return;
-    console.log('[CHAT]', nickname, ':', text);
+    console.log('[CHAT] keys:', Object.keys(chat).join(','), 'nick:', nickname, 'text:', text);
 
     state.chatLog.push({ nickname, text, ts: Date.now() });
     if (state.chatLog.length > 300) state.chatLog.shift();
@@ -207,6 +207,8 @@ async function searchYouTube(query, max = 8) {
     for (const item of contents) {
       const v = item?.videoRenderer;
       if (!v?.videoId) continue;
+      // 임베드 불가 영상 제외
+      if (v.badges?.some(b => b?.metadataBadgeRenderer?.label === 'Unlicensed')) continue;
       results.push({
         videoId: v.videoId,
         title: v.title?.runs?.[0]?.text || '',
