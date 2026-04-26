@@ -2675,6 +2675,7 @@ window.addEventListener('message', (e) => {
     const already = players.find(p => p.name.toLowerCase() === viewer.name.toLowerCase());
     if (already) { alert(viewer.name + ' 이미 추가됨'); return; }
     addPlayer({ id: ++pid, name: viewer.name, chzzk: viewer.chzzk, tier: viewer.tier, positions: [...viewer.positions], added: Date.now() });
+    renderMainAll();
     alert(viewer.name + ' 내전에 추가됐어요!');
   }
 });
