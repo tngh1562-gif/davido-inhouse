@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>다비도의 내전</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090f;--bg2:#0d1018;--bg3:#141824;--bg4:#1a2030;
+  --border:#1e2535;--border2:#2a3548;
+  --txt:#c8d8ec;--txt2:#6a7f99;--txt3:#9ab0c8;
+  --acc:#4d9fff;--acc2:#00e5a0;--red:#ff4e6a;--gold:#ffc94d;--purple:#a78bfa;
+  --shadow:0 4px 24px rgba(0,0,0,.5);
+}
+body{background:var(--bg);color:var(--txt);font-family:'Noto Sans KR',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 40% at 20% -10%,rgba(77,159,255,.06),transparent),
+             radial-gradient(ellipse 60% 50% at 80% 100%,rgba(0,229,160,.04),transparent)}
+
+/* ── LAYOUT ── */
+#app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:0;background:var(--bg2);border-bottom:1px solid var(--border);height:49px;flex-shrink:0;padding:0 16px}
+.logo{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--acc);margin-right:20px;white-space:nowrap}
+.logo span{color:var(--txt)}
+.tabs{display:flex;gap:0;height:100%}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--txt2);font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;cursor:pointer;padding:0 16px;height:100%;transition:all .15s;white-space:nowrap}
+.tab-btn.active{color:var(--acc);border-bottom-color:var(--acc);font-weight:700}
+.tab-btn:hover:not(.active){color:var(--txt);border-bottom-color:var(--border2)}
+.conn-bar{margin-left:auto;display:flex;align-items:center;gap:8px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--txt2);flex-shrink:0;transition:all .3s}
+.dot.on{background:var(--acc2);box-shadow:0 0 6px var(--acc2);animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.conn-id{font-size:12px;color:var(--txt2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conn-id.on{color:var(--acc2)}
+input.cid-input{background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:5px 10px;color:var(--txt);font-family:'Noto Sans KR',sans-serif;font-size:12px;width:180px;outline:none}
+input.cid-input:focus{border-color:var(--acc)}
+.btn{padding:6px 14px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--txt);font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{background:var(--bg3);border-color:var(--acc);color:var(--acc)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700}
+.btn.primary:hover{opacity:.85}
+.btn.danger{border-color:rgba(255,78,106,.3);color:var(--red)}
+.btn.danger:hover{background:rgba(255,78,106,.1);border-color:var(--red)}
+.btn.success{background:var(--acc2);border-color:var(--acc2);color:#000;font-weight:700}
+.btn.success:hover{opacity:.85}
+.content{flex:1;overflow:hidden;display:flex}
+
+/* ── PANELS ── */
+.panel{display:none;flex:1;overflow:hidden}
+.panel.active{display:flex}
+
+/* ── INHOUSE PANEL ── */
+#panel-inhouse{overflow:auto}
+iframe#inhouse-frame{width:100%;height:100%;border:none;display:block}
+
+/* ── VOTE PANEL ── */
+#panel-vote{gap:0}
+.vote-left{width:280px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.vote-right{flex:1;overflow:auto;padding:20px 24px}
+.section{padding:16px;border-bottom:1px solid var(--border)}
+.section-title{font-size:12px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+label.lbl{font-size:12px;color:var(--txt2);display:block;margin-bottom:5px}
+input.inp,textarea.inp{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;color:var(--txt);font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none;resize:vertical}
+input.inp:focus,textarea.inp:focus{border-color:var(--acc)}
+.gap{height:8px}
+.chat-section{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0}
+.chat-title{padding:12px 16px;font-size:12px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.chat-log{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:1px}
+.chat-log::-webkit-scrollbar{width:3px}
+.chat-log::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.chat-item{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;line-height:1.6}
+.chat-item.system{background:rgba(77,159,255,.06);border-radius:4px;padding:3px 6px;border:none}
+.chat-nick{color:var(--acc);font-weight:600;margin-right:5px}
+.chat-nick.system{color:var(--gold)}
+.chat-txt{color:var(--txt3)}
+.chat-txt.vote{color:var(--acc2);font-weight:600}
+
+/* vote results */
+.vote-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.vote-header h2{font-size:20px;font-weight:800;color:var(--txt)}
+.vote-badge{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700}
+.vote-badge.active{background:rgba(0,229,160,.15);color:var(--acc2);border:1px solid rgba(0,229,160,.3)}
+.vote-badge.inactive{background:rgba(255,255,255,.06);color:var(--txt2);border:1px solid var(--border2)}
+.timer{margin-left:auto;font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--gold);background:rgba(255,201,77,.08);border:1px solid rgba(255,201,77,.2);border-radius:8px;padding:4px 14px}
+.total-count{font-size:13px;color:var(--txt2);margin-bottom:16px}
+.total-count b{color:var(--gold);font-size:18px}
+.vote-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:border-color .2s}
+.vote-item:hover{border-color:var(--border2)}
+.vote-item-top{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+.vote-cmd{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;flex-shrink:0}
+.vote-label{font-size:16px;font-weight:700;flex:1}
+.vote-pct{font-size:22px;font-weight:900;font-family:'Rajdhani',sans-serif;margin-left:auto}
+.vote-cnt{font-size:12px;color:var(--txt2);margin-left:4px}
+.vote-bar-bg{height:4px;background:rgba(255,255,255,.07);margin:0 16px 14px}
+.vote-bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+.vote-voters{padding:8px 16px 12px;border-top:1px solid var(--border);display:none}
+.vote-voters.open{display:block}
+.voter-chip{display:inline-block;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--txt3);margin:2px}
+.empty-msg{text-align:center;padding:60px 20px;color:var(--txt2);font-size:14px}
+
+/* ── ROULETTE ── */
+.roulette-wrap{margin-top:24px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px}
+.roulette-title{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.roulette-canvas-wrap{display:flex;justify-content:center;margin-bottom:16px;position:relative}
+canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15)}
+.spin-btn{width:100%;padding:10px;border-radius:8px;background:var(--acc);border:none;color:#000;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.spin-btn:hover{opacity:.85}
+.spin-btn:disabled{opacity:.5;cursor:not-allowed}
+.winner-banner{margin-top:14px;background:rgba(255,201,77,.1);border:1px solid rgba(255,201,77,.3);border-radius:10px;padding:14px;text-align:center}
+.winner-name{font-size:22px;font-weight:900;color:var(--gold)}
+.winner-sub{font-size:12px;color:var(--txt2);margin-top:4px}
+.roulette-items-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.roulette-chip{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:12px}
+.roulette-chip .color-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ── MUSIC PANEL ── */
+#panel-music{flex-direction:column;overflow:hidden}
+.music-player{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+.music-thumb{width:56px;height:42px;border-radius:6px;object-fit:cover;background:var(--bg3);flex-shrink:0}
+.music-info{flex:1;min-width:0}
+.music-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.music-channel{font-size:11px;color:var(--txt2);margin-top:2px}
+.music-requester{font-size:11px;color:var(--acc);margin-top:1px}
+.music-controls{display:flex;align-items:center;gap:8px}
+.music-ctrl-btn{background:none;border:1px solid var(--border2);border-radius:6px;color:var(--txt);padding:6px 10px;cursor:pointer;font-size:14px;transition:all .15s}
+.music-ctrl-btn:hover{background:var(--bg3);border-color:var(--acc)}
+.music-body{flex:1;overflow:hidden;display:flex}
+.music-left{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.music-ytb{flex:1;overflow:hidden}
+.music-ytb iframe{width:100%;height:100%;border:none;display:block}
+.music-right{width:320px;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.music-subtabs{display:flex;border-bottom:1px solid var(--border)}
+.music-subtab{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--txt2);font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:500;cursor:pointer;padding:10px;transition:all .15s}
+.music-subtab.active{color:var(--acc);border-bottom-color:var(--acc);font-weight:700}
+.music-search-wrap{padding:12px;border-bottom:1px solid var(--border);display:flex;gap:6px}
+.music-search-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;color:var(--txt);font-family:'Noto Sans KR',sans-serif;font-size:12px;outline:none}
+.music-search-input:focus{border-color:var(--acc)}
+.music-results{flex:1;overflow-y:auto}
+.music-results::-webkit-scrollbar{width:3px}
+.music-results::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.music-track{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.music-track:hover{background:var(--bg3)}
+.music-track-thumb{width:48px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0}
+.music-track-info{flex:1;min-width:0}
+.music-track-title{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.music-track-ch{font-size:11px;color:var(--txt2);margin-top:2px}
+.music-track-dur{font-size:11px;color:var(--txt2);flex-shrink:0}
+.music-queue-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.music-queue-item.playing{background:rgba(77,159,255,.08)}
+.music-queue-num{width:20px;font-size:12px;color:var(--txt2);text-align:center;flex-shrink:0}
+.music-queue-num.playing-icon{color:var(--acc)}
+.music-queue-info{flex:1;min-width:0}
+.music-queue-title{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.music-queue-req{font-size:11px;color:var(--txt2);margin-top:2px}
+.music-queue-del{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;transition:all .15s}
+.music-queue-del:hover{background:rgba(255,78,106,.1);color:var(--red)}
+.music-empty{padding:40px 20px;text-align:center;color:var(--txt2);font-size:13px}
+
+@media(max-width:700px){
+  .vote-left{width:100%;max-width:none;border-right:none;border-bottom:1px solid var(--border);max-height:300px}
+  #panel-vote{flex-direction:column}
+  .music-right{width:100%;border-left:none;border-top:1px solid var(--border)}
+  .music-body{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">다비도의 <span>내전</span></div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="inhouse">⚔ 내전 진행</button>
+      <button class="tab-btn" data-tab="vote">📊 채팅 투표</button>
+      <button class="tab-btn" data-tab="music">🎵 음악 플레이어</button>
+    </div>
+    <div class="conn-bar" id="conn-bar">
+      <div class="dot" id="conn-dot"></div>
+      <span class="conn-id" id="conn-id-text">연결 안 됨</span>
+      <input class="cid-input" id="cid-input" placeholder="채널 ID" />
+      <button class="btn primary" id="conn-btn" onclick="doConnect()">연결</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- 내전 탭 -->
+    <div class="panel active" id="panel-inhouse">
+      <iframe id="inhouse-frame" src="/inhouse.html" title="내전 진행"></iframe>
+    </div>
+
+    <!-- 투표 탭 -->
+    <div class="panel" id="panel-vote">
+      <!-- 왼쪽 설정 -->
+      <div class="vote-left">
+        <div class="section">
+          <div class="section-title">📊 투표 설정</div>
+          <label class="lbl">제목</label>
+          <input class="inp" id="vote-title" value="내전 투표" />
+          <div class="gap"></div>
+          <label class="lbl">항목 (한 줄에 하나)</label>
+          <textarea class="inp" id="vote-items" rows="5" style="min-height:90px">첫참
+선참권
+중참
+연참
+취소</textarea>
+          <div class="gap"></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn success" id="vote-start-btn" onclick="startVote()" style="flex:1">▶ 투표 시작</button>
+            <button class="btn danger" id="vote-end-btn" onclick="endVote()" style="flex:1;display:none">■ 투표 종료</button>
+          </div>
+          <div class="gap"></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn" onclick="voteToRoulette()" style="flex:1">🎡 룰렛으로</button>
+            <button class="btn danger" onclick="resetVote()" style="flex:1">초기화</button>
+          </div>
+        </div>
+        <div class="chat-section">
+          <div class="chat-title">
+            <div class="dot" id="chat-dot"></div>
+            실시간 채팅
+          </div>
+          <div class="chat-log" id="chat-log">
+            <div class="empty-msg" id="chat-empty">채널을 연결하세요</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 오른쪽 결과 -->
+      <div class="vote-right">
+        <div class="vote-header">
+          <h2 id="vote-result-title">투표 결과</h2>
+          <span class="vote-badge inactive" id="vote-status-badge">대기 중</span>
+          <div class="timer" id="vote-timer" style="display:none">00:00</div>
+        </div>
+        <div class="total-count">총 <b id="vote-total">0</b>표</div>
+        <div id="vote-items-list"><div class="empty-msg">투표를 시작하면 결과가 표시됩니다</div></div>
+
+        <!-- 룰렛 -->
+        <div class="roulette-wrap" id="roulette-wrap" style="display:none">
+          <div class="roulette-title">🎡 룰렛</div>
+          <div class="roulette-canvas-wrap">
+            <canvas id="roulette-canvas" width="300" height="300"></canvas>
+          </div>
+          <button class="spin-btn" id="spin-btn" onclick="spinRoulette()">🎰 돌리기</button>
+          <div class="winner-banner" id="winner-banner" style="display:none">
+            <div class="winner-sub">🎉 당첨!</div>
+            <div class="winner-name" id="winner-name"></div>
+          </div>
+          <div class="roulette-items-list" id="roulette-chips"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 음악 탭 -->
+    <div class="panel" id="panel-music">
+      <!-- 플레이어 바 -->
+      <div class="music-player" id="music-player-bar">
+        <img class="music-thumb" id="music-thumb" src="" alt="" style="display:none">
+        <div class="music-info" id="music-info-area">
+          <div style="color:var(--txt2);font-size:13px">재생 중인 곡이 없습니다</div>
+        </div>
+        <div class="music-controls">
+          <button class="music-ctrl-btn" onclick="api('music_prev')">⏮</button>
+          <button class="music-ctrl-btn" onclick="api('music_next')">⏭</button>
+        </div>
+      </div>
+      <div class="music-body">
+        <!-- 유튜브 플레이어 -->
+        <div class="music-left">
+          <div class="music-ytb" id="music-ytb-wrap">
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--txt2);font-size:14px">신청곡을 추가하면 여기서 재생됩니다</div>
+          </div>
+        </div>
+        <!-- 사이드 -->
+        <div class="music-right">
+          <div class="music-subtabs">
+            <button class="music-subtab active" data-subtab="search" onclick="setMusicSubtab('search')">🔍 검색</button>
+            <button class="music-subtab" data-subtab="queue" onclick="setMusicSubtab('queue')">📋 대기열</button>
+          </div>
+          <!-- 검색 -->
+          <div id="music-search-panel">
+            <div class="music-search-wrap">
+              <input class="music-search-input" id="music-search-input" placeholder="곡 제목 검색..." onkeydown="if(event.key==='Enter')searchMusic()">
+              <button class="btn" onclick="searchMusic()">검색</button>
+            </div>
+            <div class="music-results" id="music-search-results">
+              <div class="music-empty">검색어를 입력하세요<br><small style="color:var(--txt2);font-size:11px">채팅에서 !신청곡 제목 으로도 추가 가능</small></div>
+            </div>
+          </div>
+          <!-- 대기열 -->
+          <div id="music-queue-panel" style="display:none;flex:1;overflow:hidden;display:none;flex-direction:column">
+            <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:12px;color:var(--txt2)">대기열 <span id="queue-count">0</span>곡</span>
+              <button class="btn danger" onclick="api('music_clear')" style="font-size:11px;padding:4px 10px">전체삭제</button>
+            </div>
+            <div class="music-results" id="music-queue-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 상태 ──
+let state = { channelId: null, chzzkConnected: false, vote: { active: false, title: '', items: [], startedAt: null }, roulette: { items: [] }, music: { queue: [], currentIdx: 0, playing: false }, chatLog: [] };
+let timerInterval = null;
+let rouletteAngle = 0;
+let spinning = false;
+let currentVideoId = null;
+let expandedVoteIdx = null;
+
+// ── WebSocket ──
+let ws = null;
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen = () => console.log('[WS] connected');
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'state') { state = msg.data; renderAll(); }
+    else if (msg.type === 'chat') addChatItem(msg);
+    else if (msg.type === 'vote_update') { state.vote = msg.vote; renderVote(); }
+    else if (msg.type === 'roulette_update') { state.roulette = msg.roulette; renderRoulette(); }
+    else if (msg.type === 'music_update') { state.music = msg.music; renderMusic(); }
+  };
+  ws.onclose = () => { setTimeout(connectWS, 3000); };
+}
+connectWS();
+
+// ── API ──
+async function api(type, extra = {}) {
+  const r = await fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, ...extra }) });
+  return r.json();
+}
+
+// ── 연결 ──
+function doConnect() {
+  const cid = document.getElementById('cid-input').value.trim();
+  if (!cid) return;
+  api('connect_chzzk', { channelId: cid });
+}
+function doDisconnect() {
+  api('disconnect_chzzk');
+}
+
+// ── 렌더 전체 ──
+function renderAll() {
+  renderConnBar();
+  renderVote();
+  renderRoulette();
+  renderMusic();
+}
+
+function renderConnBar() {
+  const connected = state.chzzkConnected;
+  const dot = document.getElementById('conn-dot');
+  const txt = document.getElementById('conn-id-text');
+  const bar = document.getElementById('conn-bar');
+  dot.className = 'dot' + (connected ? ' on' : '');
+  if (connected) {
+    txt.textContent = state.channelId?.slice(0, 20) + '...';
+    txt.className = 'conn-id on';
+    bar.innerHTML = `
+      <div class="dot on"></div>
+      <span class="conn-id on">${(state.channelId||'').slice(0,20)}...</span>
+      <button class="btn danger" onclick="doDisconnect()">해제</button>
+    `;
+  } else {
+    bar.innerHTML = `
+      <div class="dot"></div>
+      <span class="conn-id">연결 안 됨</span>
+      <input class="cid-input" id="cid-input" placeholder="채널 ID" />
+      <button class="btn primary" onclick="doConnect()">연결</button>
+    `;
+    // Enter key
+    document.getElementById('cid-input')?.addEventListener('keydown', e => { if(e.key==='Enter') doConnect(); });
+  }
+  // chat dot
+  const cd = document.getElementById('chat-dot');
+  if (cd) { cd.className = 'dot' + (connected ? ' on' : ''); }
+}
+
+// ── 투표 렌더 ──
+const COLORS = ['#4285f4','#ea4335','#34a853','#fbbc04','#9c27b0','#00bcd4','#ff5722','#e91e63'];
+function renderVote() {
+  const v = state.vote;
+  const total = v.items.reduce((s, it) => s + it.votes.length, 0);
+  document.getElementById('vote-total').textContent = total;
+  document.getElementById('vote-result-title').textContent = v.title || '투표 결과';
+
+  const badge = document.getElementById('vote-status-badge');
+  badge.textContent = v.active ? '진행 중' : '대기 중';
+  badge.className = 'vote-badge ' + (v.active ? 'active' : 'inactive');
+
+  const timer = document.getElementById('vote-timer');
+  timer.style.display = v.active ? '' : 'none';
+  if (v.active) {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      const sec = Math.floor((Date.now() - v.startedAt) / 1000);
+      const m = String(Math.floor(sec/60)).padStart(2,'0');
+      const s = String(sec%60).padStart(2,'0');
+      timer.textContent = `${m}:${s}`;
+    }, 500);
+  } else {
+    clearInterval(timerInterval);
+  }
+
+  const startBtn = document.getElementById('vote-start-btn');
+  const endBtn = document.getElementById('vote-end-btn');
+  if (startBtn) startBtn.style.display = v.active ? 'none' : '';
+  if (endBtn) endBtn.style.display = v.active ? '' : 'none';
+
+  const list = document.getElementById('vote-items-list');
+  if (!v.items.length) { list.innerHTML = '<div class="empty-msg">투표를 시작하면 결과가 표시됩니다</div>'; return; }
+
+  list.innerHTML = v.items.map((it, i) => {
+    const pct = total > 0 ? Math.round(it.votes.length / total * 100) : 0;
+    const col = COLORS[i % COLORS.length];
+    const isOpen = expandedVoteIdx === i;
+    return `
+    <div class="vote-item">
+      <div class="vote-item-top" onclick="toggleVoter(${i})">
+        <span class="vote-cmd" style="background:${col}22;color:${col};border:1px solid ${col}44">!투표${i+1}</span>
+        <span class="vote-label">${esc(it.label)}</span>
+        <span class="vote-pct" style="color:${col}">${pct}%</span>
+        <span class="vote-cnt">${it.votes.length}표</span>
+        <span style="color:var(--txt2);font-size:12px;margin-left:4px">${isOpen?'▾':'▸'}</span>
+      </div>
+      <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+      <div class="vote-voters ${isOpen?'open':''}">
+        ${it.votes.length ? it.votes.map(n=>`<span class="voter-chip">${esc(n)}</span>`).join('') : '<span style="font-size:12px;color:var(--txt2)">투표자 없음</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleVoter(i) { expandedVoteIdx = expandedVoteIdx === i ? null : i; renderVote(); }
+
+// ── 투표 액션 ──
+function startVote() {
+  const title = document.getElementById('vote-title').value.trim() || '내전 투표';
+  const items = document.getElementById('vote-items').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if (!items.length) return alert('항목을 입력하세요');
+  api('start_vote', { title, items });
+}
+function endVote() { api('end_vote'); }
+function resetVote() { if(confirm('초기화할까요?')) api('reset_vote'); }
+function voteToRoulette() { api('vote_to_roulette'); }
+
+// ── 채팅 렌더 ──
+function addChatItem(msg) {
+  const log = document.getElementById('chat-log');
+  const empty = document.getElementById('chat-empty');
+  if (empty) empty.remove();
+  const div = document.createElement('div');
+  div.className = 'chat-item' + (msg.isSystem ? ' system' : '');
+  const isVote = (msg.text||'').match(/^!투표\d+$/);
+  div.innerHTML = `<span class="chat-nick${msg.isSystem?' system':''}">${esc(msg.nickname)}</span><span class="chat-txt${isVote?' vote':''}">${esc(msg.text)}</span>`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  // 300개 초과 시 오래된 것 제거
+  while (log.children.length > 300) log.removeChild(log.firstChild);
+}
+
+// ── 룰렛 렌더 ──
+function renderRoulette() {
+  const items = state.roulette.items;
+  const wrap = document.getElementById('roulette-wrap');
+  const chips = document.getElementById('roulette-chips');
+  wrap.style.display = items.length ? '' : 'none';
+  if (!items.length) return;
+  chips.innerHTML = items.map(it=>`<div class="roulette-chip"><div class="color-dot" style="background:${it.color}"></div>${esc(it.label)} (${it.weight})</div>`).join('');
+  drawWheel(rouletteAngle);
+}
+
+function drawWheel(rot) {
+  const canvas = document.getElementById('roulette-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const items = state.roulette.items;
+  if (!items.length) return;
+  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, r = Math.min(cx,cy)-10;
+  ctx.clearRect(0,0,W,H);
+  const totalW = items.reduce((s,it)=>s+it.weight,0);
+  let angle = rot;
+  items.forEach(it => {
+    const arc = (it.weight / totalW) * Math.PI * 2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,angle,angle+arc); ctx.closePath();
+    ctx.fillStyle = it.color; ctx.fill();
+    ctx.strokeStyle = '#07090f'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle + arc/2);
+    ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.min(14,r*0.13)}px Noto Sans KR`;
+    ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=4;
+    const label = it.label.length > 6 ? it.label.slice(0,6)+'…' : it.label;
+    ctx.fillText(label, r-12, 5); ctx.restore();
+    angle += arc;
+  });
+  // 포인터
+  ctx.beginPath(); ctx.moveTo(cx+r-4,cy); ctx.lineTo(cx+r+14,cy-8); ctx.lineTo(cx+r+14,cy+8); ctx.closePath();
+  ctx.fillStyle='#fff'; ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=6; ctx.fill();
+}
+
+function spinRoulette() {
+  if (spinning) return;
+  const items = state.roulette.items;
+  if (!items.length) return;
+  spinning = true;
+  document.getElementById('spin-btn').disabled = true;
+  document.getElementById('winner-banner').style.display = 'none';
+
+  const totalW = items.reduce((s,it)=>s+it.weight,0);
+  const rand = Math.random() * totalW;
+  let acc = 0, winIdx = 0;
+  for (let i = 0; i < items.length; i++) {
+    acc += items[i].weight;
+    if (rand < acc) { winIdx = i; break; }
+  }
+
+  // 당첨 각도 계산
+  let startAngle = 0;
+  for (let i = 0; i < winIdx; i++) startAngle += (items[i].weight / totalW) * Math.PI * 2;
+  const midAngle = startAngle + (items[winIdx].weight / totalW) * Math.PI * 2 / 2;
+  const targetAngle = Math.PI * 2 * 8 - midAngle; // 8바퀴
+  const start = rouletteAngle;
+  const end = start + targetAngle;
+  const duration = 4000;
+  const startTime = Date.now();
+
+  function animate() {
+    const elapsed = Date.now() - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    const ease = 1 - Math.pow(1-t, 4);
+    rouletteAngle = start + (end - start) * ease;
+    drawWheel(rouletteAngle);
+    if (t < 1) { requestAnimationFrame(animate); return; }
+    rouletteAngle = end % (Math.PI * 2);
+    spinning = false;
+    document.getElementById('spin-btn').disabled = false;
+    document.getElementById('winner-name').textContent = items[winIdx].label;
+    document.getElementById('winner-banner').style.display = '';
+  }
+  requestAnimationFrame(animate);
+}
+
+// ── 음악 렌더 ──
+function renderMusic() {
+  const m = state.music;
+  const track = m.queue[m.currentIdx];
+
+  // 플레이어 바
+  const thumb = document.getElementById('music-thumb');
+  const info = document.getElementById('music-info-area');
+  if (track) {
+    thumb.src = track.thumbnail; thumb.style.display = '';
+    info.innerHTML = `<div class="music-title">${esc(track.title)}</div><div class="music-channel">${esc(track.channel)}</div><div class="music-requester">🙋 ${esc(track.requestedBy)}</div>`;
+  } else {
+    thumb.style.display = 'none';
+    info.innerHTML = `<div style="color:var(--txt2);font-size:13px">재생 중인 곡이 없습니다</div>`;
+  }
+
+  // 유튜브 iframe
+  const ytb = document.getElementById('music-ytb-wrap');
+  if (track && track.videoId !== currentVideoId) {
+    currentVideoId = track.videoId;
+    ytb.innerHTML = `<iframe src="https://www.youtube.com/embed/${track.videoId}?autoplay=1&controls=1&rel=0&modestbranding=1" allow="autoplay;encrypted-media" allowfullscreen style="width:100%;height:100%;border:none;display:block"></iframe>`;
+  } else if (!track) {
+    currentVideoId = null;
+    ytb.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--txt2);font-size:14px">신청곡을 추가하면 여기서 재생됩니다</div>`;
+  }
+
+  // 대기열
+  document.getElementById('queue-count').textContent = m.queue.length;
+  const qlist = document.getElementById('music-queue-list');
+  if (!m.queue.length) { qlist.innerHTML = '<div class="music-empty">대기열이 비어있습니다</div>'; return; }
+  qlist.innerHTML = m.queue.map((t,i)=>`
+    <div class="music-queue-item ${i===m.currentIdx?'playing':''}">
+      <span class="music-queue-num ${i===m.currentIdx?'playing-icon':''}">${i===m.currentIdx?'▶':i+1}</span>
+      <div class="music-queue-info" onclick="api('music_play_idx',{idx:${i}})" style="cursor:pointer">
+        <div class="music-queue-title">${esc(t.title)}</div>
+        <div class="music-queue-req">🙋 ${esc(t.requestedBy)}</div>
+      </div>
+      <button class="music-queue-del" onclick="api('music_remove',{idx:${i}})">✕</button>
+    </div>`).join('');
+}
+
+async function searchMusic() {
+  const q = document.getElementById('music-search-input').value.trim();
+  if (!q) return;
+  const res = document.getElementById('music-search-results');
+  res.innerHTML = '<div class="music-empty">검색 중...</div>';
+  const data = await api('music_search', { query: q });
+  if (!data.results?.length) { res.innerHTML = '<div class="music-empty">결과 없음</div>'; return; }
+  res.innerHTML = data.results.map(t=>`
+    <div class="music-track" onclick='addTrack(${JSON.stringify(t)})'>
+      <img class="music-track-thumb" src="${t.thumbnail}" alt="">
+      <div class="music-track-info">
+        <div class="music-track-title">${esc(t.title)}</div>
+        <div class="music-track-ch">${esc(t.channel)}</div>
+      </div>
+      <span class="music-track-dur">${esc(t.duration||'')}</span>
+    </div>`).join('');
+}
+
+function addTrack(track) { api('music_add', { track, requestedBy: '방장' }); }
+
+function setMusicSubtab(tab) {
+  document.querySelectorAll('.music-subtab').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`[data-subtab="${tab}"]`).classList.add('active');
+  document.getElementById('music-search-panel').style.display = tab==='search' ? '' : 'none';
+  const qp = document.getElementById('music-queue-panel');
+  qp.style.display = tab==='queue' ? 'flex' : 'none';
+}
+
+// ── 탭 전환 ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`panel-${tab}`).classList.add('active');
+  });
+});
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
