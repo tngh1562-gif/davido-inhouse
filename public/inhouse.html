@@ -2672,11 +2672,7 @@ window.addEventListener('message', (e) => {
     if (!chzzkNick) return;
     const viewer = viewers.find(v => v.chzzk && v.chzzk.trim().toLowerCase() === chzzkNick.trim().toLowerCase());
     if (!viewer) return; // DB에 없으면 추가 안 함
-    const already = players.find(p => p.name.toLowerCase() === viewer.name.toLowerCase());
-    if (already) { alert(viewer.name + ' 이미 추가됨'); return; }
-    addPlayer({ id: ++pid, name: viewer.name, chzzk: viewer.chzzk, tier: viewer.tier, positions: [...viewer.positions], added: Date.now() });
-    renderMainAll();
-    alert(viewer.name + ' 내전에 추가됐어요!');
+    quickAddPlayer(viewer.id);
   }
 });
 </script>
