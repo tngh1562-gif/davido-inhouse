@@ -111,10 +111,12 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
   ws.on('message', (raw) => {
     try {
       const msg = JSON.parse(Buffer.isBuffer(raw) ? raw.toString('utf8') : String(raw));
+      console.log('[CHZZK] recv cmd:', msg.cmd);
       if (msg.cmd === 0) { ws.send(JSON.stringify({ ver: '3', cmd: 10000 })); return; }
       if (msg.cmd === 10000) return;
+      if (msg.cmd === 100) { console.log('[CHZZK] 인증 응답:', JSON.stringify(msg.bdy)); return; }
       if (msg.cmd === 93101) handleChat(msg);
-    } catch {}
+    } catch (e) { console.log('[CHZZK] parse error:', e.message); }
   });
 
   ws.on('close', (code) => {
