@@ -47,8 +47,15 @@ wss.on('connection', (ws) => {
 
 // ── 치지직 연결 ──
 async function connectChzzk(channelId) {
-  if (chzzkWs) { try { chzzkWs.terminate(); } catch {} chzzkWs = null; }
+  // 기존 연결 완전히 종료
   if (chzzkPing) { clearInterval(chzzkPing); chzzkPing = null; }
+  if (chzzkWs) {
+    chzzkWs.removeAllListeners();
+    try { chzzkWs.terminate(); } catch {}
+    chzzkWs = null;
+  }
+  // 잠시 대기 후 연결 (이전 연결 정리 시간)
+  await new Promise(r => setTimeout(r, 500));
 
   state.channelId = channelId;
 
