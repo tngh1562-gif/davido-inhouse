@@ -115,7 +115,7 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
       if (msg.cmd === 0) { ws.send(JSON.stringify({ ver: '3', cmd: 10000 })); return; }
       if (msg.cmd === 10000) return;
       if (msg.cmd === 100) { console.log('[CHZZK] 인증 응답:', JSON.stringify(msg.bdy)); return; }
-      if (msg.cmd === 93101) handleChat(msg);
+      if (msg.cmd === 93101) { console.log('[CHZZK] chat raw:', JSON.stringify(msg.bdy).slice(0,200)); handleChat(msg); }
     } catch (e) { console.log('[CHZZK] parse error:', e.message); }
   });
 
