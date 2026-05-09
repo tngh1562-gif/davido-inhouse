@@ -957,6 +957,49 @@ let players=[],history=[],viewers=[];
 let curBlue=[],curRed=[];
 let pid=0,vid=0;
 
+function normalizeStoredData(){
+  const usedViewerIds = new Set();
+  const viewerIdByKey = new Map();
+  const viewerById = new Map();
+  let maxViewerId = Number.isFinite(vid) ? vid : 0;
+
+  viewers.forEach(v=>{
+    const oldId = Number(v.id);
+    let nextId = Number.isInteger(oldId) && oldId > 0 && !usedViewerIds.has(oldId) ? oldId : ++maxViewerId;
+
+    while(usedViewerIds.has(nextId)) nextId = ++maxViewerId;
+    v.id = nextId;
+    usedViewerIds.add(nextId);
+    viewerById.set(nextId, v);
+    [v.chzzk, v.name].forEach(value=>{
+      const key = (value || '').trim().toLowerCase();
+      if(key) viewerIdByKey.set(key, nextId);
+    });
+  });
+
+  vid = Math.max(maxViewerId, ...usedViewerIds, 0);
+
+  const syncPlayerViewerId = p=>{
+    if(!p || !p.name) return;
+    const current = Number(p.viewerId);
+    const linkedViewer = viewerById.get(current);
+    const playerKeys = [p.chzzk, p.name].map(value=>(value || '').trim().toLowerCase()).filter(Boolean);
+
+    if(linkedViewer && playerKeys.some(key=>
+      key === (linkedViewer.chzzk || '').trim().toLowerCase() ||
+      key === (linkedViewer.name || '').trim().toLowerCase()
+    )) return;
+
+    const matchedKey = playerKeys.find(key=>viewerIdByKey.has(key));
+    if(matchedKey) p.viewerId = viewerIdByKey.get(matchedKey);
+    else if(p.viewerId) delete p.viewerId;
+  };
+
+  players.forEach(syncPlayerViewerId);
+  curBlue.forEach(syncPlayerViewerId);
+  curRed.forEach(syncPlayerViewerId);
+}
+
 function save(){
   try{
     localStorage.setItem('lol2_p',   JSON.stringify(players));
@@ -989,6 +1032,8 @@ function load(){
     viewers.forEach(v=>{ v.tier=compatTierKey(v.tier); });
     curBlue.forEach(p=>{ p.tier=compatTierKey(p.tier); });
     curRed.forEach(p=>{  p.tier=compatTierKey(p.tier); });
+    normalizeStoredData();
+    save();
   }catch(e){}
 }
 
