@@ -411,6 +411,11 @@ input::placeholder{color:var(--txt2)}
   border-radius:2px;padding:4px 7px;font-size:.8rem;font-family:'Noto Sans KR',sans-serif;
   outline:none;width:100%;
 }
+.vdb-memo{
+  font-size:.74rem;color:var(--txt2);line-height:1.35;
+  max-width:220px;white-space:pre-wrap;word-break:break-word;
+}
+.vdb-memo-empty{opacity:.3}
 
 /* ══════════════════════════════════════════
    TOAST
@@ -783,6 +788,7 @@ body { background: #f0f4f8; }
       <div style="display:flex;flex-direction:column;gap:4px">
         <input type="text" id="vName" placeholder="롤 닉네임#태그 (예: 닉#KR1)">
         <input type="text" id="vChzzk" placeholder="치지직 닉네임 (선택)" style="background:var(--s2);border:1px solid var(--line);color:var(--txt);border-radius:var(--radius);padding:8px 10px;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;outline:none">
+        <textarea id="vMemo" rows="2" placeholder="메모 (선택)" style="background:var(--s2);border:1px solid var(--line);color:var(--txt);border-radius:var(--radius);padding:8px 10px;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;outline:none;resize:vertical"></textarea>
       </div>
       <select id="vTier" style="width:100%"></select>
       <div style="display:flex;flex-direction:column;gap:2px">
@@ -836,6 +842,7 @@ body { background: #f0f4f8; }
             <th style="width:40px">#</th>
             <th class="sortable" onclick="toggleSort('name')">닉네임 <span id="sh-name"></span></th>
             <th>치지직 닉네임</th>
+            <th>메모</th>
             <th>선참권</th>
             <th class="sortable" onclick="toggleSort('tier')">티어 <span id="sh-tier"></span></th>
             <th>점수</th>
@@ -1590,6 +1597,7 @@ function addViewerPaste(){
     const name=parts[0], tierRaw=parts[1]||'';
     const pos0raw=parts[2]||'무관', pos1raw=parts[3]||'무관', pos2raw=parts[4]||'무관';
     const chzzk=(parts[5]||'').trim();
+    const memo=(parts[9]||'').trim();
     const pt0=parseTierText((parts[6]||'').trim());
     const pt1=parseTierText((parts[7]||'').trim());
     const pt2=parseTierText((parts[8]||'').trim());
@@ -1599,7 +1607,7 @@ function addViewerPaste(){
     const positions=[parsePosText(pos0raw),parsePosText(pos1raw),parsePosText(pos2raw)];
     const posTiers=(pt0||pt1||pt2)?[pt0||null,pt1||null,pt2||null]:null;
     if(viewers.find(v=>v.name.toLowerCase()===name.toLowerCase())){skipped++;return}
-    viewers.push({id:++vid,name,chzzk,tier,positions,posTiers,added:Date.now()});
+    viewers.push({id:++vid,name,chzzk,tier,positions,posTiers,memo,added:Date.now()});
     added++;
   });
   save();renderViewers();
@@ -1614,6 +1622,7 @@ function addViewerPaste(){
 function addViewer(){
   const name=(document.getElementById('vName')||{}).value?.trim()||'';
   const chzzk=(document.getElementById('vChzzk')||{}).value?.trim()||'';
+  const memo=(document.getElementById('vMemo')||{}).value?.trim()||'';
   const tier=(document.getElementById('vTier')||{}).value||'GO4';
   const p0=(document.getElementById('vPos0')||{}).value||'무관';
   const p1=(document.getElementById('vPos1')||{}).value||'무관';
@@ -1623,10 +1632,11 @@ function addViewer(){
   if(viewers.find(v=>v.name.toLowerCase()===name.toLowerCase())){
     toast('이미 존재하는 닉네임입니다');return;
   }
-  viewers.push({id:++vid,name,chzzk,tier,positions,added:Date.now()});
+  viewers.push({id:++vid,name,chzzk,tier,positions,memo,added:Date.now()});
   save(); renderViewers();
   document.getElementById('vName').value='';
   const chzzkEl=document.getElementById('vChzzk'); if(chzzkEl) chzzkEl.value='';
+  const memoEl=document.getElementById('vMemo'); if(memoEl) memoEl.value='';
   ['vPos0','vPos1','vPos2'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value='무관'; });
   syncVPos();
   toast(`${name} 추가됨!`);
@@ -1649,6 +1659,7 @@ function saveEdit(id){
 
   const nameEl  = document.getElementById('en-'+id);
   const chzzkEl = document.getElementById('ec-'+id);
+  const memoEl  = document.getElementById('em-'+id);
   const tierEl  = document.getElementById('et-'+id);
   const p0el    = document.getElementById('ep0-'+id);
   const p1el    = document.getElementById('ep1-'+id);
@@ -1656,6 +1667,7 @@ function saveEdit(id){
 
   if(nameEl  && nameEl.value.trim())  v.name  = nameEl.value.trim();
   if(chzzkEl) v.chzzk = chzzkEl.value.trim();
+  if(memoEl) v.memo = memoEl.value.trim();
   const pasEl = document.getElementById('epas-'+id);
   if(pasEl) v.pass = Math.max(0, parseInt(pasEl.value)||0);
   if(tierEl)  v.tier  = tierEl.value;
@@ -1721,7 +1733,7 @@ function getFiltered(){
   const so=document.getElementById('vSort').value;
 
   let list=[...viewers];
-  if(q) list=list.filter(v=>v.name.toLowerCase().includes(q)||(v.chzzk||'').toLowerCase().includes(q));
+  if(q) list=list.filter(v=>v.name.toLowerCase().includes(q)||(v.chzzk||'').toLowerCase().includes(q)||(v.memo||'').toLowerCase().includes(q));
   if(tf) list=list.filter(v=>tierObj(v.tier).cls===tf);
   if(pf) list=list.filter(v=>{
     const pos=Array.isArray(v.positions)?v.positions:normPositions(v);
@@ -1784,6 +1796,9 @@ function renderViewers(){
             <input class="edit-inp" id="ec-${v.id}" value="${esc(v.chzzk||'')}" placeholder="치지직 닉네임" style="width:100%;min-width:100px">
           </td>
           <td>
+            <textarea class="edit-inp" id="em-${v.id}" rows="3" placeholder="메모" style="width:100%;min-width:150px;resize:vertical">${esc(v.memo||'')}</textarea>
+          </td>
+          <td>
             <input class="edit-inp" id="epas-${v.id}" type="number" min="0" value="${v.pass||0}" style="width:60px;text-align:center">
           </td>
           <td><select class="edit-inp" id="et-${v.id}" style="width:100%">${buildTierOptions(v.tier)}</select></td>
@@ -1829,6 +1844,7 @@ function renderViewers(){
         <td class="vdb-rank ${rankCls}">${rankCls?'🥇🥈🥉'[rank-1]:rank}</td>
         <td><b>${esc(v.name)}</b></td>
         <td style="font-size:.78rem;color:var(--txt2)">${v.chzzk?`<span style="display:inline-flex;align-items:center;gap:4px"><span style="color:#00c73c;font-size:.7rem">▶</span>${esc(v.chzzk)}</span>`:'<span style="opacity:.3">-</span>'}</td>
+        <td><div class="vdb-memo ${v.memo?'':'vdb-memo-empty'}">${v.memo?esc(v.memo):'-'}</div></td>
         <td style="white-space:nowrap">
           <div style="display:flex;align-items:center;gap:5px">
             <button onclick="changePass(${v.id},-1)" style="background:none;border:1px solid var(--line);color:var(--txt2);border-radius:3px;width:20px;height:20px;cursor:pointer;font-size:.8rem;line-height:1;transition:all .15s" onmouseover="this.style.borderColor='var(--rl2)';this.style.color='var(--rl2)'" onmouseout="this.style.borderColor='var(--line)';this.style.color='var(--txt2)'">-</button>
