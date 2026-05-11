@@ -8,13 +8,72 @@ const express = require('express');
 const { WebSocketServer } = require('ws');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const INHOUSE_DB_FILE = path.join(DATA_DIR, 'inhouse-db.json');
+
+function defaultInhouseDB() {
+  return {
+    players: [],
+    history: [],
+    viewers: [],
+    curBlue: [],
+    curRed: [],
+    pid: 0,
+    vid: 0,
+    updatedAt: null,
+  };
+}
+
+function readInhouseDB() {
+  try {
+    if (!fs.existsSync(INHOUSE_DB_FILE)) return defaultInhouseDB();
+    const parsed = JSON.parse(fs.readFileSync(INHOUSE_DB_FILE, 'utf8'));
+    return { ...defaultInhouseDB(), ...parsed };
+  } catch (err) {
+    console.error('[INHOUSE_DB] read failed:', err.message);
+    return defaultInhouseDB();
+  }
+}
+
+function writeInhouseDB(data) {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const payload = {
+    players: Array.isArray(data.players) ? data.players : [],
+    history: Array.isArray(data.history) ? data.history : [],
+    viewers: Array.isArray(data.viewers) ? data.viewers : [],
+    curBlue: Array.isArray(data.curBlue) ? data.curBlue : [],
+    curRed: Array.isArray(data.curRed) ? data.curRed : [],
+    pid: Number.isFinite(Number(data.pid)) ? Number(data.pid) : 0,
+    vid: Number.isFinite(Number(data.vid)) ? Number(data.vid) : 0,
+    updatedAt: new Date().toISOString(),
+  };
+  const tmp = INHOUSE_DB_FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(payload), 'utf8');
+  fs.renameSync(tmp, INHOUSE_DB_FILE);
+  return payload;
+}
+
+app.get('/api/inhouse-db', (req, res) => {
+  res.json(readInhouseDB());
+});
+
+app.post('/api/inhouse-db', (req, res) => {
+  try {
+    res.json({ ok: true, data: writeInhouseDB(req.body || {}) });
+  } catch (err) {
+    console.error('[INHOUSE_DB] write failed:', err.message);
+    res.status(500).json({ ok: false, error: 'write_failed' });
+  }
+});
 
 // ── 상태 ──
 const state = {

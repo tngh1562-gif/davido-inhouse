@@ -956,6 +956,7 @@ const INITIAL_VIEWERS = [{"id":1,"name":"사랑해요 모두#KR1","chzzk":"덕�
 let players=[],history=[],viewers=[];
 let curBlue=[],curRed=[];
 let pid=0,vid=0;
+let remoteSaveTimer=null;
 
 function normalizeStoredData(){
   const usedViewerIds = new Set();
@@ -1000,7 +1001,21 @@ function normalizeStoredData(){
   curRed.forEach(syncPlayerViewerId);
 }
 
-function save(){
+function snapshotData(){
+  return { players, history, viewers, curBlue, curRed, pid, vid };
+}
+
+function applyData(data){
+  players = Array.isArray(data?.players) ? data.players : [];
+  history = Array.isArray(data?.history) ? data.history : [];
+  viewers = Array.isArray(data?.viewers) ? data.viewers : [];
+  curBlue = Array.isArray(data?.curBlue) ? data.curBlue : [];
+  curRed = Array.isArray(data?.curRed) ? data.curRed : [];
+  pid = parseInt(data?.pid || '0');
+  vid = parseInt(data?.vid || '0');
+}
+
+function saveLocal(){
   try{
     localStorage.setItem('lol2_p',   JSON.stringify(players));
     localStorage.setItem('lol2_h',   JSON.stringify(history));
@@ -1012,29 +1027,70 @@ function save(){
   }catch(e){}
 }
 
-function load(){
+function saveRemoteNow(){
+  return fetch('/api/inhouse-db', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(snapshotData()),
+  }).catch(()=>{});
+}
+
+function queueRemoteSave(){
+  clearTimeout(remoteSaveTimer);
+  remoteSaveTimer = setTimeout(saveRemoteNow, 250);
+}
+
+function save(){
+  saveLocal();
+  queueRemoteSave();
+}
+
+function loadLocal(){
+  const savedViewers = localStorage.getItem('lol2_v');
+  players = JSON.parse(localStorage.getItem('lol2_p') ||'[]');
+  history = JSON.parse(localStorage.getItem('lol2_h') ||'[]');
+  viewers = savedViewers && JSON.parse(savedViewers).length > 0
+    ? JSON.parse(savedViewers)
+    : JSON.parse(JSON.stringify(INITIAL_VIEWERS));
+  curBlue = JSON.parse(localStorage.getItem('lol2_bl')||'[]');
+  curRed = JSON.parse(localStorage.getItem('lol2_rl')||'[]');
+  pid = parseInt(localStorage.getItem('lol2_pid')||'0');
+  vid = parseInt(localStorage.getItem('lol2_vid')||'138');
+}
+
+function normalizeLoadedData(){
+  players.forEach(p=>{ p.tier=compatTierKey(p.tier); });
+  viewers.forEach(v=>{ v.tier=compatTierKey(v.tier); });
+  curBlue.forEach(p=>{ p.tier=compatTierKey(p.tier); });
+  curRed.forEach(p=>{  p.tier=compatTierKey(p.tier); });
+  normalizeStoredData();
+}
+
+async function load(){
+  let loadedFromServer = false;
   try{
-    players   = JSON.parse(localStorage.getItem('lol2_p') ||'[]');
-    history   = JSON.parse(localStorage.getItem('lol2_h') ||'[]');
-    const savedViewers = localStorage.getItem('lol2_v');
-    if (savedViewers && JSON.parse(savedViewers).length > 0) {
-      viewers = JSON.parse(savedViewers);
-    } else {
-      viewers = JSON.parse(JSON.stringify(INITIAL_VIEWERS));
-      save();
+    const r = await fetch('/api/inhouse-db', { cache:'no-store' });
+    if(r.ok){
+      const data = await r.json();
+      if(Array.isArray(data.viewers) && data.viewers.length > 0){
+        applyData(data);
+        loadedFromServer = true;
+      }
     }
-    curBlue   = JSON.parse(localStorage.getItem('lol2_bl')||'[]');
-    curRed    = JSON.parse(localStorage.getItem('lol2_rl')||'[]');
-    pid       = parseInt(localStorage.getItem('lol2_pid')||'0');
-    vid       = parseInt(localStorage.getItem('lol2_vid')||'138');
-    // 구버전 tier key 호환 변환 (load 이후 ALL_TIERS 기준으로 fix)
-    players.forEach(p=>{ p.tier=compatTierKey(p.tier); });
-    viewers.forEach(v=>{ v.tier=compatTierKey(v.tier); });
-    curBlue.forEach(p=>{ p.tier=compatTierKey(p.tier); });
-    curRed.forEach(p=>{  p.tier=compatTierKey(p.tier); });
-    normalizeStoredData();
-    save();
   }catch(e){}
+
+  if(!loadedFromServer){
+    try{ loadLocal(); }
+    catch(e){ viewers = JSON.parse(JSON.stringify(INITIAL_VIEWERS)); vid = 138; }
+  }
+
+  normalizeLoadedData();
+
+  if(!loadedFromServer){
+    save();
+  } else {
+    saveLocal();
+  }
 }
 
 /* ══════════════════════════════════════
@@ -2702,13 +2758,15 @@ function mainImportFromDB(){ importFromDB(); setTimeout(()=>renderMainRoster(),3
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-load();
-initViewerSelects();
-renderRoster();
-updateSummary();
-if(curBlue.length&&curRed.length) renderAutoResult();
-// 메인 탭은 기본 탭이므로 DOM 로드 후 바로 렌더링
-setTimeout(()=>renderMainAll(), 50);
+async function initApp(){
+  await load();
+  initViewerSelects();
+  renderRoster();
+  updateSummary();
+  if(curBlue.length&&curRed.length) renderAutoResult();
+  setTimeout(()=>renderMainAll(), 50);
+}
+initApp();
 
 // ── 외부에서 플레이어 추가 (투표 연동) ──
 window.addEventListener('message', (e) => {
