@@ -82,6 +82,7 @@ const state = {
   vote: { active: false, title: '내전 투표', items: [], startedAt: null },
   roulette: { items: [] },
   music: { queue: [], currentIdx: 0, playing: false },
+  inhouseTeams: { blue: [], red: [], updatedAt: null },
   chatLog: [],
 };
 
@@ -326,6 +327,15 @@ app.post('/api/action', async (req, res) => {
     case 'set_roulette':
       state.roulette.items = body.items || [];
       broadcast({ type: 'roulette_update', roulette: state.roulette });
+      return res.json({ ok: true });
+
+    case 'set_inhouse_teams':
+      state.inhouseTeams = {
+        blue: Array.isArray(body.blue) ? body.blue : [],
+        red: Array.isArray(body.red) ? body.red : [],
+        updatedAt: Date.now(),
+      };
+      broadcast({ type: 'inhouse_teams_update', inhouseTeams: state.inhouseTeams });
       return res.json({ ok: true });
 
     case 'vote_to_roulette':

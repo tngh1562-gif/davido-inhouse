@@ -1031,7 +1031,37 @@ function saveLocal(){
     localStorage.setItem('lol2_rl',  JSON.stringify(curRed));
     localStorage.setItem('lol2_pid', pid);
     localStorage.setItem('lol2_vid', vid);
+    syncOverlayTeams();
   }catch(e){}
+}
+
+let overlaySyncTimer=null;
+function overlayPlayer(p){
+  return {
+    id: p.id,
+    name: p.name || '',
+    chzzk: p.chzzk || '',
+    tier: p.tier || 'GO4',
+    tierLabel: (ALL_TIERS.find(t=>t.key===p.tier)||{}).label || p.tier || '',
+    positions: Array.isArray(p.positions) ? p.positions : normPositions(p),
+    assignedPos: p.assignedPos || '',
+    posSlot: Number.isInteger(p.posSlot) ? p.posSlot : null,
+    score: effectiveScore(p),
+  };
+}
+function syncOverlayTeams(){
+  clearTimeout(overlaySyncTimer);
+  overlaySyncTimer=setTimeout(()=>{
+    fetch('/api/action', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        type:'set_inhouse_teams',
+        blue:curBlue.map(overlayPlayer),
+        red:curRed.map(overlayPlayer),
+      })
+    }).catch(()=>{});
+  }, 120);
 }
 
 function saveRemoteNow(){

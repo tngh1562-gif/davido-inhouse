@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Team Overlay</title>
+<style>
+  :root{
+    --blue:#2f7df6;
+    --blue-soft:rgba(47,125,246,.20);
+    --red:#f04b55;
+    --red-soft:rgba(240,75,85,.20);
+    --panel:rgba(7,12,20,.74);
+    --line:rgba(255,255,255,.16);
+    --text:#f5f8ff;
+    --muted:#aeb9cc;
+    --gold:#f2c766;
+  }
+  *{box-sizing:border-box}
+  html,body{
+    width:100%;
+    height:100%;
+    margin:0;
+    overflow:hidden;
+    background:transparent;
+    font-family:"Pretendard","Noto Sans KR","Segoe UI",sans-serif;
+    color:var(--text);
+  }
+  body{
+    padding:28px;
+  }
+  .overlay{
+    width:100%;
+    height:100%;
+    display:grid;
+    grid-template-columns:minmax(300px,420px) 1fr minmax(300px,420px);
+    align-items:center;
+    gap:24px;
+    transform:scale(var(--scale,1));
+    transform-origin:center;
+  }
+  .team{
+    border:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(15,22,35,.82),var(--panel));
+    box-shadow:0 18px 48px rgba(0,0,0,.34);
+    backdrop-filter:blur(10px);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .team.blue{border-color:rgba(47,125,246,.45)}
+  .team.red{border-color:rgba(240,75,85,.45)}
+  .head{
+    height:58px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 18px;
+    border-bottom:1px solid var(--line);
+    letter-spacing:0;
+  }
+  .blue .head{background:linear-gradient(90deg,var(--blue-soft),rgba(255,255,255,.03))}
+  .red .head{background:linear-gradient(270deg,var(--red-soft),rgba(255,255,255,.03))}
+  .label{
+    font-size:22px;
+    font-weight:900;
+    line-height:1;
+  }
+  .blue .label{color:#7fb0ff}
+  .red .label{color:#ff8d94}
+  .meta{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    color:var(--muted);
+    font-weight:800;
+  }
+  .score{
+    color:var(--gold);
+    font-size:18px;
+  }
+  .list{
+    display:grid;
+    grid-template-rows:repeat(5,54px);
+  }
+  .player{
+    display:grid;
+    grid-template-columns:56px 1fr auto;
+    align-items:center;
+    gap:10px;
+    padding:0 14px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+    min-width:0;
+  }
+  .player:last-child{border-bottom:0}
+  .pos{
+    height:28px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:4px;
+    font-size:13px;
+    font-weight:900;
+    background:rgba(255,255,255,.08);
+    color:#dbe6ff;
+    border:1px solid rgba(255,255,255,.10);
+  }
+  .name{
+    min-width:0;
+    font-size:18px;
+    font-weight:900;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    text-shadow:0 1px 8px rgba(0,0,0,.35);
+  }
+  .sub{
+    margin-top:2px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:700;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .tier{
+    max-width:92px;
+    padding:5px 8px;
+    border-radius:4px;
+    font-size:12px;
+    font-weight:900;
+    color:#0c1018;
+    background:#e8eef8;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .empty{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:rgba(255,255,255,.58);
+    font-weight:800;
+    font-size:22px;
+    text-shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+  body.compact{padding:16px}
+  body.compact .overlay{
+    grid-template-columns:1fr 1fr;
+    align-items:end;
+  }
+  body.compact .spacer{display:none}
+  body.compact .team{align-self:end}
+  body.compact .head{height:46px;padding:0 14px}
+  body.compact .label{font-size:18px}
+  body.compact .list{grid-template-rows:repeat(5,44px)}
+  body.compact .player{grid-template-columns:48px 1fr auto;padding:0 10px}
+  body.compact .name{font-size:15px}
+  body.compact .tier{font-size:10px;max-width:76px}
+  @media(max-width:900px){
+    body{padding:14px}
+    .overlay{
+      grid-template-columns:1fr 1fr;
+      align-items:end;
+      gap:14px;
+    }
+    .spacer{display:none}
+    .head{height:46px}
+    .label{font-size:17px}
+    .list{grid-template-rows:repeat(5,42px)}
+    .player{grid-template-columns:44px 1fr auto;padding:0 9px}
+    .name{font-size:14px}
+    .tier{font-size:10px;max-width:70px}
+  }
+</style>
+</head>
+<body>
+<main class="overlay">
+  <section class="team blue" id="blueTeam"></section>
+  <div class="spacer"></div>
+  <section class="team red" id="redTeam"></section>
+</main>
+<script>
+const params = new URLSearchParams(location.search);
+const scale = Number(params.get('scale') || '1');
+if(Number.isFinite(scale) && scale > 0) document.documentElement.style.setProperty('--scale', String(scale));
+if(params.get('compact') === '1') document.body.classList.add('compact');
+
+let teams = { blue: [], red: [], updatedAt: null };
+let ws = null;
+
+const POS_LABEL = { '탑':'TOP', '정글':'JUG', '미드':'MID', '원딜':'ADC', '서포터':'SUP', '무관':'FILL' };
+const TIER_BASE = { IR:0, BR:400, SI:800, GO:1200, PL:1600, EM:2000, DI:2400, MS:2800, GM:3800, CH:4200 };
+function esc(value){
+  return String(value || '').replace(/[&<>"']/g, c=>({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+function tierScore(key){
+  key = String(key || '');
+  if(key === 'CH') return TIER_BASE.CH;
+  if(key === 'GM') return TIER_BASE.GM;
+  if(key.startsWith('MS')) return TIER_BASE.MS + (parseInt(key.slice(2),10) || 0);
+  const match = key.match(/^([A-Z]{2})([1-4])$/);
+  if(!match) return 0;
+  return (TIER_BASE[match[1]] || 0) + (parseInt(match[2],10)-1) * 100;
+}
+function normalizePlayer(p){
+  return {
+    ...p,
+    tierLabel: p.tierLabel || p.tier || '',
+    score: Number(p.score) || tierScore(p.tier),
+  };
+}
+function hasTeams(value){
+  return !!((value.blue && value.blue.length) || (value.red && value.red.length));
+}
+function totalScore(team){
+  return team.reduce((sum,p)=>sum+(Number(p.score)||0),0);
+}
+function posLabel(p, fallback){
+  return POS_LABEL[p.assignedPos] || POS_LABEL[(p.positions||[])[0]] || fallback;
+}
+function tierLabel(p){
+  return p.tierLabel || p.tier || '';
+}
+function renderTeam(id, side, label){
+  const team = Array.isArray(teams[side]) ? teams[side] : [];
+  const box = document.getElementById(id);
+  const score = totalScore(team);
+  const rows = Array.from({ length:5 }, (_,idx)=>{
+    const p = team[idx];
+    if(!p){
+      return `<div class="player" style="opacity:.34">
+        <span class="pos">${idx+1}</span>
+        <div><div class="name">빈 슬롯</div><div class="sub">대기 중</div></div>
+        <span class="tier">-</span>
+      </div>`;
+    }
+    const sub = [p.chzzk, (p.positions||[]).filter(Boolean).join(' / ')].filter(Boolean).join(' · ');
+    return `<div class="player">
+      <span class="pos">${esc(posLabel(p, idx+1))}</span>
+      <div style="min-width:0">
+        <div class="name">${esc(p.name || '?')}</div>
+        <div class="sub">${esc(sub || ' ')}</div>
+      </div>
+      <span class="tier">${esc(tierLabel(p))}</span>
+    </div>`;
+  }).join('');
+  box.innerHTML = `<div class="head">
+    <div class="label">${label}</div>
+    <div class="meta"><span class="score">${score}</span><span>PTS</span></div>
+  </div><div class="list">${rows}</div>`;
+}
+function render(){
+  const hasTeams = (teams.blue&&teams.blue.length) || (teams.red&&teams.red.length);
+  if(!hasTeams){
+    document.getElementById('blueTeam').innerHTML = '<div class="empty">BLUE</div>';
+    document.getElementById('redTeam').innerHTML = '<div class="empty">RED</div>';
+    return;
+  }
+  renderTeam('blueTeam', 'blue', 'BLUE');
+  renderTeam('redTeam', 'red', 'RED');
+}
+async function fetchState(){
+  try{
+    const res = await fetch('/api/action', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({type:'get_state'})
+    });
+    const data = await res.json();
+    if(data.inhouseTeams) teams = data.inhouseTeams;
+    if(!hasTeams(teams)){
+      const dbRes = await fetch('/api/inhouse-db', { cache:'no-store' });
+      if(dbRes.ok){
+        const db = await dbRes.json();
+        teams = {
+          blue: Array.isArray(db.curBlue) ? db.curBlue.map(normalizePlayer) : [],
+          red: Array.isArray(db.curRed) ? db.curRed.map(normalizePlayer) : [],
+          updatedAt: db.updatedAt || null,
+        };
+      }
+    }
+    render();
+  }catch(e){ render(); }
+}
+function connect(){
+  try{
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${location.host}`);
+    ws.onmessage = event=>{
+      try{
+        const msg = JSON.parse(event.data);
+        if(msg.type === 'state' && msg.data && msg.data.inhouseTeams) teams = msg.data.inhouseTeams;
+        if(msg.type === 'inhouse_teams_update' && msg.inhouseTeams) teams = msg.inhouseTeams;
+        render();
+      }catch(e){}
+    };
+    ws.onclose = ()=>setTimeout(connect, 1500);
+  }catch(e){
+    setTimeout(connect, 1500);
+  }
+}
+fetchState();
+connect();
+</script>
+</body>
+</html>
