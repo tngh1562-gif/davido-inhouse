@@ -546,6 +546,130 @@ body { background: #f0f4f8; }
 /* 밸런스 바 */
 .bal-track { border-radius: 4px !important; height: 5px !important; }
 .bal-fill { border-radius: 4px !important; }
+
+/* ══════════════════════════════════════════
+   2026 방송 콘솔 리디자인
+   기존 기능/정보는 유지하고 시각 스타일만 덮어쓴다.
+══════════════════════════════════════════ */
+:root{
+  --ink:#edf2f7;
+  --s1:#ffffff;
+  --s2:#f7f9fc;
+  --s3:#eef3f8;
+  --s4:#e3ebf4;
+  --line:#d8e1ec;
+  --line2:#aebfd4;
+  --txt:#101828;
+  --txt2:#667a92;
+  --txt3:#344765;
+  --a:#d89216;
+  --a2:#f2b94b;
+  --ad:#fff5dc;
+  --bl:#2268e8;
+  --bl2:#1556cf;
+  --rl:#e13f43;
+  --rl2:#c8212b;
+  --radius:10px;
+  --shadow:0 12px 30px rgba(35,55,85,.10);
+}
+body{
+  background:
+    linear-gradient(180deg,#f7fbff 0%,#edf3f9 42%,#e9eff6 100%);
+  color:var(--txt);
+}
+.page,.wrap{max-width:1480px !important;padding:14px 18px 70px !important}
+.nav{
+  position:sticky;top:0;z-index:300;
+  gap:8px;margin:0 0 14px !important;padding:10px;
+  background:rgba(255,255,255,.84);
+  border:1px solid rgba(180,195,216,.65);
+  border-radius:14px;
+  box-shadow:0 10px 28px rgba(36,54,82,.10);
+  backdrop-filter:blur(14px);
+}
+.nav-btn{
+  position:relative;border:0 !important;border-radius:10px !important;
+  padding:9px 15px !important;background:transparent !important;
+  color:#5b6d83 !important;font-size:.82rem !important;font-weight:800 !important;
+}
+.nav-btn:hover{background:#eef4fb !important;color:#142033 !important}
+.nav-btn.on{
+  color:#101828 !important;background:#fff !important;
+  box-shadow:inset 0 0 0 1px rgba(30,75,130,.12),0 6px 18px rgba(31,61,95,.10);
+}
+.nav-btn.on::before{
+  content:"";position:absolute;left:10px;right:10px;bottom:5px;height:2px;
+  border-radius:99px;background:linear-gradient(90deg,var(--bl),var(--a));
+}
+.card{
+  border:1px solid rgba(182,196,214,.72) !important;
+  border-radius:12px !important;background:rgba(255,255,255,.94) !important;
+  box-shadow:var(--shadow) !important;
+}
+.card-title{
+  color:#142033 !important;font-weight:900 !important;font-size:.9rem !important;
+  letter-spacing:0 !important;
+}
+input[type=text],input[type=number],select,textarea,#quickSearch{
+  border-radius:8px !important;border-color:#d4dfeb !important;
+  background:#f8fbff !important;color:#111827 !important;
+}
+input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#quickSearch:focus{
+  border-color:#7ca7e8 !important;box-shadow:0 0 0 3px rgba(34,104,232,.12) !important;
+}
+.btn{
+  border-radius:9px !important;font-weight:900 !important;
+  box-shadow:0 4px 12px rgba(31,50,75,.08);
+}
+.btn-g{
+  background:linear-gradient(135deg,#d58a10,#f0bd45) !important;
+  color:#172033 !important;border:1px solid rgba(184,122,20,.25) !important;
+}
+.btn-o{
+  background:#fff !important;color:#30445e !important;border:1px solid #d6e0eb !important;
+}
+.btn-o:hover{background:#f2f7fd !important;border-color:#b8c9dc !important}
+.btn-bl{background:#eaf2ff !important;color:var(--bl2) !important;border:1px solid #b9d1ff !important}
+.btn-rl{background:#fff0f1 !important;color:var(--rl2) !important;border:1px solid #ffc3c8 !important}
+.team-box{
+  border-radius:14px !important;overflow:hidden;background:#fff !important;
+  box-shadow:0 12px 28px rgba(40,58,84,.10) !important;
+}
+.bl-box{border:1px solid rgba(34,104,232,.26) !important}
+.rl-box{border:1px solid rgba(225,63,67,.25) !important}
+.team-hdr{
+  background:linear-gradient(180deg,#f8fbff,#edf3fa) !important;
+  border-bottom:1px solid #dde7f2 !important;
+}
+.team-name-lbl{font-weight:950 !important;letter-spacing:.2px}
+.t-player,.p-row,.hist-item,.vdb-table td,.drop-z,.wait-pool > *{
+  border-color:#dce5ef !important;
+}
+.p-row{
+  background:#f8fbff !important;border-radius:9px !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);
+}
+.p-row:hover,.vdb-table tr:hover td{background:#f0f6ff !important}
+.bal-track{height:6px !important;background:#e7edf5 !important}
+.bal-fill{background:linear-gradient(90deg,var(--bl),#765fc8,var(--rl)) !important}
+#toast{
+  border-radius:12px !important;background:#101828 !important;color:#fff !important;
+  box-shadow:0 18px 44px rgba(16,24,40,.22) !important;
+}
+.overlay-dashboard{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:14px}
+.overlay-setting{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid #dce5ef;border-radius:12px;background:#f8fbff;margin-bottom:10px}
+.overlay-setting b{display:block;font-size:.9rem;color:#142033}
+.overlay-setting span{display:block;margin-top:4px;font-size:.75rem;color:var(--txt2);line-height:1.45}
+.overlay-switch{width:54px;height:30px;border:0;border-radius:999px;background:#cbd5e1;padding:4px;cursor:pointer}
+.overlay-switch i{display:block;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:.18s}
+.overlay-switch.on{background:#22c55e}
+.overlay-switch.on i{transform:translateX(24px)}
+.overlay-url{display:flex;gap:8px}.overlay-url input{flex:1}
+.overlay-preview{min-height:430px;border:1px dashed #b8c9dc;border-radius:14px;background:linear-gradient(135deg,#eef6ff,#fff8e8);display:grid;place-items:center;padding:22px}
+.overlay-frame{width:100%;max-width:760px;height:360px;border:0;border-radius:12px;background:#101828;box-shadow:0 18px 50px rgba(16,24,40,.28)}
+.overlay-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.overlay-mini .card{margin:0 !important;padding:12px !important;box-shadow:none !important}
+@media(max-width:980px){.overlay-dashboard{grid-template-columns:1fr}.nav{position:relative}.page,.wrap{padding:10px !important}}
 </style>
 </head>
 <body>
@@ -560,6 +684,7 @@ body { background: #f0f4f8; }
   <button class="nav-btn"     onclick="goTab('draft',this)">Draft</button>
   <button class="nav-btn"     onclick="goTab('records',this)">Records</button>
   <button class="nav-btn"     onclick="goTab('viewers',this)">시청자 DB</button>
+  <button class="nav-btn"     onclick="goTab('overlay',this)">오버레이</button>
 </nav>
 
 <!-- ══════ TAB: 내전 진행 ══════ -->
@@ -873,6 +998,62 @@ body { background: #f0f4f8; }
   </div>
 </div>
 
+<!-- ══════ TAB: OVERLAY ══════ -->
+<div id="tab-overlay" class="tab">
+  <div class="overlay-dashboard">
+    <div>
+      <div class="card">
+        <div class="card-title">🖥 오버레이 설정</div>
+        <div class="overlay-setting">
+          <div>
+            <b>팀박스 오버레이</b>
+            <span>현재 BLUE / RED 팀 정보를 OBS 브라우저 소스로 띄웁니다.</span>
+          </div>
+          <button class="overlay-switch on" id="overlayEnableBtn" onclick="toggleOverlayTabState()"><i></i></button>
+        </div>
+        <div class="overlay-setting">
+          <div>
+            <b>자동 동기화</b>
+            <span>자동 배정, 랜덤, 셔플, 팀 교체, 명단 저장 시 오버레이 데이터도 같이 갱신됩니다.</span>
+          </div>
+          <button class="overlay-switch on" type="button"><i></i></button>
+        </div>
+        <div class="overlay-setting">
+          <div>
+            <b>컴팩트 모드</b>
+            <span>롤 화면 위에 올리기 좋게 작은 팀박스 형태로 표시합니다.</span>
+          </div>
+          <button class="overlay-switch on" type="button"><i></i></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔗 OBS 브라우저 소스</div>
+        <div class="overlay-url">
+          <input id="overlayUrlInput" type="text" readonly value="/team-overlay.html?compact=1">
+          <button class="btn btn-g" onclick="copyOverlayUrl()">복사</button>
+        </div>
+        <p style="font-size:.75rem;color:var(--txt2);margin-top:10px;line-height:1.55">
+          Railway 주소 뒤에 위 경로를 붙여서 OBS의 브라우저 소스로 추가하면 됩니다.
+        </p>
+      </div>
+
+      <div class="overlay-mini">
+        <div class="card"><div class="card-title">BLUE</div><div id="overlayBlueCount" style="font-weight:900;color:var(--bl2)">0명</div></div>
+        <div class="card"><div class="card-title">RED</div><div id="overlayRedCount" style="font-weight:900;color:var(--rl2)">0명</div></div>
+        <div class="card"><div class="card-title">상태</div><div id="overlayStateText" style="font-weight:900;color:#16a34a">ON</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">👀 실시간 미리보기</div>
+      <div class="overlay-preview">
+        <iframe class="overlay-frame" id="overlayPreviewFrame" src="/team-overlay.html?compact=1"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div><!-- .page -->
 <div id="toast"></div>
 
@@ -1156,8 +1337,37 @@ function goTab(name,btn){
     if(name==='viewers') renderViewers();
     if(name==='auto')    autoIfReady();
     if(name==='main')    renderMainAll();
+    if(name==='overlay') renderOverlayTab();
     if(name==='roulette') initRoulette();
   }, 10);
+}
+
+function renderOverlayTab(){
+  syncOverlayTeams();
+  const blueCount=document.getElementById('overlayBlueCount');
+  const redCount=document.getElementById('overlayRedCount');
+  if(blueCount) blueCount.textContent=(curBlue?.length||0)+'명';
+  if(redCount) redCount.textContent=(curRed?.length||0)+'명';
+  const frame=document.getElementById('overlayPreviewFrame');
+  if(frame) frame.src='/team-overlay.html?compact=1&t='+Date.now();
+}
+function toggleOverlayTabState(){
+  const btn=document.getElementById('overlayEnableBtn');
+  const text=document.getElementById('overlayStateText');
+  const on=!btn.classList.contains('on');
+  btn.classList.toggle('on',on);
+  if(text){
+    text.textContent=on?'ON':'OFF';
+    text.style.color=on?'#16a34a':'#94a3b8';
+  }
+  toast(on?'오버레이 ON':'오버레이 OFF');
+}
+function copyOverlayUrl(){
+  const input=document.getElementById('overlayUrlInput');
+  const path=input?.value||'/team-overlay.html?compact=1';
+  const full=location.origin+path;
+  if(input) input.value=full;
+  navigator.clipboard?.writeText(full).then(()=>toast('OBS 주소를 복사했습니다')).catch(()=>toast(full));
 }
 
 /* ══════════════════════════════════════
@@ -2548,6 +2758,73 @@ function quickAddPlayer(viewerId){
   toast(v.name+' 추가! ('+players.filter(p=>p.name.trim()).length+'명)');
 }
 
+function normChatName(value){
+  return String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
+}
+function sameChatName(a,b){
+  return normChatName(a) && normChatName(a)===normChatName(b);
+}
+function findViewerByChatNickname(nickname){
+  const key=normChatName(nickname);
+  if(!key) return null;
+  return viewers.find(v=>sameChatName(v.chzzk,key) || sameChatName(v.name,key))
+    || viewers.find(v=>{
+      const ch=normChatName(v.chzzk);
+      const nm=normChatName(v.name);
+      return (ch && (ch.includes(key)||key.includes(ch))) || (nm && (nm.includes(key)||key.includes(nm)));
+    }) || null;
+}
+function isAlreadyInRoster(viewer,nickname){
+  const key=normChatName(nickname);
+  return players.some(p=>{
+    if(viewer && (p.viewerId===viewer.id || sameChatName(p.name,viewer.name) || sameChatName(p.chzzk,viewer.chzzk))) return true;
+    return key && (sameChatName(p.name,key) || sameChatName(p.chzzk,key));
+  });
+}
+function fillRosterSlot(playerData){
+  const emptySlot=players.find(p=>!String(p.name||'').trim());
+  if(emptySlot){
+    Object.assign(emptySlot, playerData);
+  } else {
+    players.push({id:++pid,...playerData});
+  }
+}
+function addChatParticipantByNickname(nickname){
+  const clean=String(nickname||'').trim();
+  if(!clean) return;
+  const viewer=findViewerByChatNickname(clean);
+  if(isAlreadyInRoster(viewer,clean)){
+    toast(clean+' 이미 참가 중');
+    return;
+  }
+  if(viewer){
+    fillRosterSlot({
+      name:viewer.name,
+      chzzk:viewer.chzzk||clean,
+      tier:viewer.tier,
+      positions:Array.isArray(viewer.positions)?[...viewer.positions]:normPositions(viewer),
+      posTiers:viewer.posTiers?[...viewer.posTiers]:null,
+      viewerId:viewer.id,
+      added:Date.now(),
+    });
+    toast('!참가: '+viewer.name+' 추가');
+  } else {
+    fillRosterSlot({
+      name:clean,
+      chzzk:clean,
+      tier:'GO4',
+      positions:['무관','무관','무관'],
+      posTiers:null,
+      added:Date.now(),
+      chatOnly:true,
+    });
+    toast('!참가: '+clean+' 임시 추가');
+  }
+  save();
+  renderMainAll();
+  renderRoster();
+}
+
 function quickPickFromDB(playerId){
   if(!viewers.length){toast('시청자 DB가 비어있습니다');return}
 
@@ -2811,17 +3088,34 @@ async function initApp(){
   updateSummary();
   if(curBlue.length&&curRed.length) renderAutoResult();
   setTimeout(()=>renderMainAll(), 50);
+  connectInhouseChatCommands();
 }
 initApp();
+
+let inhouseCommandWs=null;
+let inhouseCommandReconnect=null;
+function connectInhouseChatCommands(){
+  if(inhouseCommandWs && (inhouseCommandWs.readyState===WebSocket.OPEN || inhouseCommandWs.readyState===WebSocket.CONNECTING)) return;
+  const proto=location.protocol==='https:'?'wss:':'ws:';
+  inhouseCommandWs=new WebSocket(`${proto}//${location.host}`);
+  inhouseCommandWs.onmessage=e=>{
+    try{
+      const msg=JSON.parse(e.data);
+      if(msg.type==='inhouse_join') addChatParticipantByNickname(msg.nickname);
+    }catch{}
+  };
+  inhouseCommandWs.onclose=()=>{
+    clearTimeout(inhouseCommandReconnect);
+    inhouseCommandReconnect=setTimeout(connectInhouseChatCommands,3000);
+  };
+}
 
 // ── 외부에서 플레이어 추가 (투표 연동) ──
 window.addEventListener('message', (e) => {
   if (e.data?.type === 'add_player_by_chzzk') {
     const chzzkNick = e.data.chzzkNick;
     if (!chzzkNick) return;
-    const viewer = viewers.find(v => v.chzzk && v.chzzk.trim().toLowerCase() === chzzkNick.trim().toLowerCase());
-    if (!viewer) return; // DB에 없으면 추가 안 함
-    quickAddPlayer(viewer.id);
+    addChatParticipantByNickname(chzzkNick);
   }
 });
 </script>

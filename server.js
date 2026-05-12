@@ -221,6 +221,10 @@ function handleChat(msg) {
     state.chatLog.push({ nickname, text, ts: Date.now() });
     if (state.chatLog.length > 300) state.chatLog.shift();
 
+    if (/^!참가(?:\s|$)/.test(text)) {
+      broadcast({ type: 'inhouse_join', nickname, text, ts: Date.now() });
+    }
+
     // 투표
     if (state.vote.active) {
       const m = text.match(/^!투표\s*(\d+)$/);
