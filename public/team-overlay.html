@@ -158,6 +158,24 @@
   body.compact .player{grid-template-columns:48px 1fr auto;padding:0 10px}
   body.compact .name{font-size:15px}
   body.compact .tier{font-size:10px;max-width:76px}
+  body.square{padding:10px}
+  body.square .overlay{
+    grid-template-columns:1fr 1fr;
+    align-items:end;
+    gap:8px;
+  }
+  body.square .spacer{display:none}
+  body.square .team{align-self:end}
+  body.square .head{height:34px;padding:0 8px}
+  body.square .label{font-size:14px}
+  body.square .meta{gap:4px;font-size:10px}
+  body.square .score{font-size:13px}
+  body.square .list{grid-template-rows:repeat(5,34px)}
+  body.square .player{grid-template-columns:34px minmax(0,1fr) 48px;gap:5px;padding:0 6px}
+  body.square .pos{height:22px;font-size:10px}
+  body.square .name{font-size:11px}
+  body.square .sub{font-size:8px;margin-top:1px}
+  body.square .tier{font-size:8px;max-width:48px;padding:4px 5px}
   @media(max-width:900px){
     body{padding:14px}
     .overlay{
@@ -186,6 +204,7 @@ const params = new URLSearchParams(location.search);
 const scale = Number(params.get('scale') || '1');
 if(Number.isFinite(scale) && scale > 0) document.documentElement.style.setProperty('--scale', String(scale));
 if(params.get('compact') === '1') document.body.classList.add('compact');
+if(params.get('square') === '1') document.body.classList.add('square');
 
 let teams = { blue: [], red: [], updatedAt: null };
 let ws = null;
