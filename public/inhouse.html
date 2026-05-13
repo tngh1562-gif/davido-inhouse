@@ -1521,7 +1521,15 @@ function addPlayer(data){
 }
 
 function removePlayer(id){
+  const removed = players.find(p=>p.id===id);
   players=players.filter(p=>p.id!==id);
+  if(removed){
+    const isRemoved = p => p.id===id
+      || (removed.viewerId && p.viewerId===removed.viewerId)
+      || (removed.name && sameChatName(p.name,removed.name));
+    curBlue=curBlue.filter(p=>!isRemoved(p));
+    curRed=curRed.filter(p=>!isRemoved(p));
+  }
   renderRoster(); save();
   if(document.getElementById('mainRosterLeft')) renderMainAll();
 }
@@ -1612,7 +1620,8 @@ function updateSummary(){
 
 function clearRoster(){
   if(!confirm('참가자를 초기화할까요?')) return;
-  players=[]; pid=0; renderRoster(); save(); toast('초기화 완료');
+  players=[]; pid=0; curBlue=[]; curRed=[]; renderRoster(); save(); toast('초기화 완료');
+  if(document.getElementById('mainRosterLeft')) renderMainAll();
 }
 
 
@@ -2776,7 +2785,9 @@ function findViewerByChatNickname(nickname){
 }
 function isAlreadyInRoster(viewer,nickname){
   const key=normChatName(nickname);
-  return players.some(p=>{
+  const pool=[...players,...curBlue,...curRed];
+  return pool.some(p=>{
+    if(!String(p.name||'').trim()) return false;
     if(viewer && (p.viewerId===viewer.id || sameChatName(p.name,viewer.name) || sameChatName(p.chzzk,viewer.chzzk))) return true;
     return key && (sameChatName(p.name,key) || sameChatName(p.chzzk,key));
   });
@@ -2911,7 +2922,17 @@ function deleteMainRoster(){
 
 function clearMainRoster(){
   if(!confirm('참가자 명단을 전체 초기화할까요?')) return;
-  players.forEach(p=>{ p.name=''; p.tier='GO4'; p.positions=['무관','무관','무관']; });
+  players.forEach(p=>{
+    p.name='';
+    p.chzzk='';
+    p.tier='GO4';
+    p.positions=['무관','무관','무관'];
+    p.posTiers=null;
+    delete p.viewerId;
+    delete p.assignedPos;
+    delete p.posSlot;
+  });
+  curBlue=[]; curRed=[];
   save(); renderMainAll(); renderRoster(); toast('명단 초기화 완료');
 }
 
@@ -2920,8 +2941,14 @@ function clearMainSlot(id){
   const p = players.find(p=>p.id===id);
   if(!p) return;
   p.name = '';
+  p.chzzk = '';
+  delete p.viewerId;
+  delete p.assignedPos;
+  delete p.posSlot;
   p.tier = 'GO4';
   p.positions = ['무관','무관','무관'];
+  curBlue=curBlue.filter(x=>x.id!==id);
+  curRed=curRed.filter(x=>x.id!==id);
   save();
   renderMainAll();
   renderRoster();
