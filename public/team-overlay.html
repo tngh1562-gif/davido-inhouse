@@ -176,6 +176,29 @@
   body.square .name{font-size:11px}
   body.square .sub{font-size:8px;margin-top:1px}
   body.square .tier{font-size:8px;max-width:48px;padding:4px 5px}
+  body.corner{padding:0}
+  body.corner .overlay{
+    position:fixed;
+    right:var(--corner-margin,24px);
+    bottom:var(--corner-margin,24px);
+    width:var(--corner-size,360px);
+    height:var(--corner-size,360px);
+    grid-template-columns:1fr 1fr;
+    align-items:end;
+    gap:8px;
+  }
+  body.corner .spacer{display:none}
+  body.corner .team{align-self:end}
+  body.corner .head{height:32px;padding:0 8px}
+  body.corner .label{font-size:13px}
+  body.corner .meta{gap:4px;font-size:10px}
+  body.corner .score{font-size:13px}
+  body.corner .list{grid-template-rows:repeat(5,32px)}
+  body.corner .player{grid-template-columns:32px minmax(0,1fr) 46px;gap:5px;padding:0 6px}
+  body.corner .pos{height:21px;font-size:10px}
+  body.corner .name{font-size:11px}
+  body.corner .sub{font-size:8px;margin-top:1px}
+  body.corner .tier{font-size:8px;max-width:46px;padding:4px 5px}
   @media(max-width:900px){
     body{padding:14px}
     .overlay{
@@ -203,8 +226,13 @@
 const params = new URLSearchParams(location.search);
 const scale = Number(params.get('scale') || '1');
 if(Number.isFinite(scale) && scale > 0) document.documentElement.style.setProperty('--scale', String(scale));
+const cornerSize = Number(params.get('size') || '360');
+if(Number.isFinite(cornerSize) && cornerSize > 0) document.documentElement.style.setProperty('--corner-size', `${cornerSize}px`);
+const cornerMargin = Number(params.get('margin') || '24');
+if(Number.isFinite(cornerMargin) && cornerMargin >= 0) document.documentElement.style.setProperty('--corner-margin', `${cornerMargin}px`);
 if(params.get('compact') === '1') document.body.classList.add('compact');
 if(params.get('square') === '1') document.body.classList.add('square');
+if(params.get('corner') === '1') document.body.classList.add('corner');
 
 let teams = { blue: [], red: [], updatedAt: null };
 let ws = null;

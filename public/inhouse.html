@@ -1030,7 +1030,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
       <div class="card">
         <div class="card-title">🔗 OBS 브라우저 소스</div>
         <div class="overlay-url">
-          <input id="overlayUrlInput" type="text" readonly value="/team-overlay.html?square=1">
+          <input id="overlayUrlInput" type="text" readonly value="/team-overlay.html?corner=1&size=360">
           <button class="btn btn-g" onclick="copyOverlayUrl()">복사</button>
         </div>
         <p style="font-size:.75rem;color:var(--txt2);margin-top:10px;line-height:1.55">
@@ -1048,7 +1048,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
     <div class="card">
       <div class="card-title">👀 실시간 미리보기</div>
       <div class="overlay-preview">
-        <iframe class="overlay-frame" id="overlayPreviewFrame" src="/team-overlay.html?square=1"></iframe>
+        <iframe class="overlay-frame" id="overlayPreviewFrame" src="/team-overlay.html?corner=1&size=360"></iframe>
       </div>
     </div>
   </div>
@@ -1349,7 +1349,7 @@ function renderOverlayTab(){
   if(blueCount) blueCount.textContent=(curBlue?.length||0)+'명';
   if(redCount) redCount.textContent=(curRed?.length||0)+'명';
   const frame=document.getElementById('overlayPreviewFrame');
-  if(frame) frame.src='/team-overlay.html?square=1&t='+Date.now();
+  if(frame) frame.src='/team-overlay.html?corner=1&size=360&t='+Date.now();
 }
 function toggleOverlayTabState(){
   const btn=document.getElementById('overlayEnableBtn');
@@ -1364,7 +1364,7 @@ function toggleOverlayTabState(){
 }
 function copyOverlayUrl(){
   const input=document.getElementById('overlayUrlInput');
-  const path=input?.value||'/team-overlay.html?square=1';
+  const path=input?.value||'/team-overlay.html?corner=1&size=360';
   const full=location.origin+path;
   if(input) input.value=full;
   navigator.clipboard?.writeText(full).then(()=>toast('OBS 주소를 복사했습니다')).catch(()=>toast(full));
