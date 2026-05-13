@@ -237,7 +237,8 @@ if(params.get('corner') === '1') document.body.classList.add('corner');
 let teams = { blue: [], red: [], updatedAt: null };
 let ws = null;
 
-const POS_LABEL = { '탑':'TOP', '정글':'JUG', '미드':'MID', '원딜':'ADC', '서포터':'SUP', '무관':'FILL' };
+const POS_LABEL = { '탑':'TOP', '정글':'JUG', '미드':'MID', '원딜':'AD', '서포터':'SUP', '무관':'FILL' };
+const POS_ORDER = { '탑':0, '정글':1, '미드':2, '원딜':3, '서포터':4, '무관':5 };
 const TIER_BASE = { IR:0, BR:400, SI:800, GO:1200, PL:1600, EM:2000, DI:2400, MS:2800, GM:3800, CH:4200 };
 function esc(value){
   return String(value || '').replace(/[&<>"']/g, c=>({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -270,8 +271,18 @@ function posLabel(p, fallback){
 function tierLabel(p){
   return p.tierLabel || p.tier || '';
 }
+function playerPos(p){
+  return p.assignedPos || (p.positions||[])[0] || '무관';
+}
+function sortedTeam(side){
+  return [...(Array.isArray(teams[side]) ? teams[side] : [])].sort((a,b)=>{
+    const ao = POS_ORDER[playerPos(a)] ?? 99;
+    const bo = POS_ORDER[playerPos(b)] ?? 99;
+    return ao - bo;
+  });
+}
 function renderTeam(id, side, label){
-  const team = Array.isArray(teams[side]) ? teams[side] : [];
+  const team = sortedTeam(side);
   const box = document.getElementById(id);
   const score = totalScore(team);
   const rows = Array.from({ length:5 }, (_,idx)=>{
