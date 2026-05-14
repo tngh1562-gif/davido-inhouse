@@ -19,6 +19,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const INHOUSE_DB_FILE = path.join(DATA_DIR, 'inhouse-db.json');
+const SEED_INHOUSE_DB_FILE = path.join(__dirname, 'data', 'inhouse-db.json');
+const INHOUSE_BACKUP_DIR = path.join(DATA_DIR, 'backups');
 
 function defaultInhouseDB() {
   return {
@@ -33,11 +35,102 @@ function defaultInhouseDB() {
   };
 }
 
+function normalizeInhouseDB(data) {
+  return {
+    players: Array.isArray(data?.players) ? data.players : [],
+    history: Array.isArray(data?.history) ? data.history : [],
+    viewers: Array.isArray(data?.viewers) ? data.viewers : [],
+    curBlue: Array.isArray(data?.curBlue) ? data.curBlue : [],
+    curRed: Array.isArray(data?.curRed) ? data.curRed : [],
+    pid: Number.isFinite(Number(data?.pid)) ? Number(data.pid) : 0,
+    vid: Number.isFinite(Number(data?.vid)) ? Number(data.vid) : 0,
+    updatedAt: data?.updatedAt || null,
+  };
+}
+
+function readJsonFile(file) {
+  return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, ''));
+}
+
+function latestBackupFile() {
+  try {
+    if (!fs.existsSync(INHOUSE_BACKUP_DIR)) return null;
+    return fs.readdirSync(INHOUSE_BACKUP_DIR)
+      .filter(name => /^inhouse-db-\d+\.json$/.test(name))
+      .sort()
+      .pop() || null;
+  } catch (err) {
+    console.error('[INHOUSE_DB] backup scan failed:', err.message);
+    return null;
+  }
+}
+
+function backupInhouseDB(data) {
+  try {
+    if (!data || !Array.isArray(data.viewers) || !data.viewers.length) return;
+    if (!fs.existsSync(INHOUSE_BACKUP_DIR)) fs.mkdirSync(INHOUSE_BACKUP_DIR, { recursive: true });
+    const stamp = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
+    const file = path.join(INHOUSE_BACKUP_DIR, `inhouse-db-${stamp}.json`);
+    fs.writeFileSync(file, JSON.stringify(data), 'utf8');
+
+    const backups = fs.readdirSync(INHOUSE_BACKUP_DIR)
+      .filter(name => /^inhouse-db-\d+\.json$/.test(name))
+      .sort();
+    backups.slice(0, Math.max(0, backups.length - 30)).forEach(name => {
+      fs.unlinkSync(path.join(INHOUSE_BACKUP_DIR, name));
+    });
+  } catch (err) {
+    console.error('[INHOUSE_DB] backup failed:', err.message);
+  }
+}
+
+function mergeViewers(existing, incoming) {
+  const byId = new Map();
+  const byName = new Map();
+  const merged = [];
+  const remember = viewer => {
+    if (!viewer || !viewer.name) return;
+    if (Number.isFinite(Number(viewer.id))) byId.set(Number(viewer.id), viewer);
+    byName.set(String(viewer.name).trim().toLowerCase(), viewer);
+  };
+
+  existing.forEach(remember);
+  incoming.forEach(viewer => {
+    if (!viewer || !viewer.name) return;
+    const id = Number(viewer.id);
+    const key = String(viewer.name).trim().toLowerCase();
+    const prior = (Number.isFinite(id) && byId.get(id)) || byName.get(key) || {};
+    const next = { ...prior, ...viewer };
+    merged.push(next);
+    remember(next);
+  });
+
+  existing.forEach(viewer => {
+    if (!viewer || !viewer.name) return;
+    const exists = merged.some(v =>
+      (Number.isFinite(Number(v.id)) && Number(v.id) === Number(viewer.id)) ||
+      String(v.name).trim().toLowerCase() === String(viewer.name).trim().toLowerCase()
+    );
+    if (!exists) merged.push(viewer);
+  });
+  return merged;
+}
+
 function readInhouseDB() {
   try {
-    if (!fs.existsSync(INHOUSE_DB_FILE)) return defaultInhouseDB();
-    const parsed = JSON.parse(fs.readFileSync(INHOUSE_DB_FILE, 'utf8'));
-    return { ...defaultInhouseDB(), ...parsed };
+    if (fs.existsSync(INHOUSE_DB_FILE)) return { ...defaultInhouseDB(), ...normalizeInhouseDB(readJsonFile(INHOUSE_DB_FILE)) };
+
+    const backup = latestBackupFile();
+    if (backup) return { ...defaultInhouseDB(), ...normalizeInhouseDB(readJsonFile(path.join(INHOUSE_BACKUP_DIR, backup))) };
+
+    if (fs.existsSync(SEED_INHOUSE_DB_FILE)) {
+      const seeded = { ...defaultInhouseDB(), ...normalizeInhouseDB(readJsonFile(SEED_INHOUSE_DB_FILE)) };
+      if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+      fs.writeFileSync(INHOUSE_DB_FILE, JSON.stringify(seeded), 'utf8');
+      return seeded;
+    }
+
+    return defaultInhouseDB();
   } catch (err) {
     console.error('[INHOUSE_DB] read failed:', err.message);
     return defaultInhouseDB();
@@ -46,14 +139,16 @@ function readInhouseDB() {
 
 function writeInhouseDB(data) {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const existing = readInhouseDB();
+  backupInhouseDB(existing);
+
+  const incoming = normalizeInhouseDB(data || {});
+  const viewers = mergeViewers(existing.viewers, incoming.viewers);
+  const maxViewerId = viewers.reduce((max, viewer) => Math.max(max, Number(viewer.id) || 0), 0);
   const payload = {
-    players: Array.isArray(data.players) ? data.players : [],
-    history: Array.isArray(data.history) ? data.history : [],
-    viewers: Array.isArray(data.viewers) ? data.viewers : [],
-    curBlue: Array.isArray(data.curBlue) ? data.curBlue : [],
-    curRed: Array.isArray(data.curRed) ? data.curRed : [],
-    pid: Number.isFinite(Number(data.pid)) ? Number(data.pid) : 0,
-    vid: Number.isFinite(Number(data.vid)) ? Number(data.vid) : 0,
+    ...incoming,
+    viewers,
+    vid: Math.max(incoming.vid || 0, existing.vid || 0, maxViewerId),
     updatedAt: new Date().toISOString(),
   };
   const tmp = INHOUSE_DB_FILE + '.tmp';
