@@ -1,6 +1,448 @@
 {
-  "players": [],
-  "history": [],
+  "players": [
+    {
+      "id": 1,
+      "name": "원딜던지게만드는딜서폿모음집#알빠노",
+      "tier": "GO3",
+      "positions": [
+        "원딜",
+        "정글",
+        "미드"
+      ],
+      "added": 1778728960564,
+      "chzzk": "루모모rumomo",
+      "posTiers": null,
+      "viewerId": 80
+    },
+    {
+      "id": 2,
+      "name": "뀨공주님#0203",
+      "tier": "PL2",
+      "positions": [
+        "서포터",
+        "탑",
+        "정글"
+      ],
+      "added": 1778728974506,
+      "chzzk": "탁큐",
+      "posTiers": null,
+      "viewerId": 56
+    },
+    {
+      "id": 3,
+      "name": "ＭËＭÜ#κг1",
+      "tier": "DI2",
+      "positions": [
+        "정글",
+        "미드",
+        "무관"
+      ],
+      "added": 1778728976887,
+      "chzzk": "메무memu",
+      "posTiers": null,
+      "viewerId": 24
+    },
+    {
+      "id": 4,
+      "name": "액션쾌감#ZZZ",
+      "tier": "MS800",
+      "positions": [
+        "서포터",
+        "미드",
+        "원딜"
+      ],
+      "added": 1778728977905,
+      "chzzk": "푸른 눈의 마녀",
+      "posTiers": null,
+      "viewerId": 123
+    },
+    {
+      "id": 5,
+      "name": "moon of wish#kr1",
+      "tier": "MS300",
+      "positions": [
+        "원딜",
+        "정글",
+        "서포터"
+      ],
+      "added": 1778728977962,
+      "chzzk": "비비주민",
+      "posTiers": null,
+      "chatOnly": true,
+      "viewerId": 38
+    },
+    {
+      "id": 6,
+      "name": "위험하면 짖는 개#미친개",
+      "tier": "PL4",
+      "positions": [
+        "미드",
+        "서포터",
+        "탑"
+      ],
+      "added": 1778728978001,
+      "chzzk": "롱즈",
+      "posTiers": null,
+      "chatOnly": true,
+      "viewerId": 182
+    },
+    {
+      "id": 7,
+      "name": "섹시큐티나무#kr1",
+      "tier": "MS300",
+      "positions": [
+        "탑",
+        "미드",
+        "원딜"
+      ],
+      "added": 1778728979264,
+      "chzzk": "무난한 사람",
+      "posTiers": null,
+      "chatOnly": true,
+      "viewerId": 39
+    },
+    {
+      "id": 8,
+      "name": "무죄인#kr01",
+      "tier": "GM",
+      "positions": [
+        "서포터",
+        "정글",
+        "미드"
+      ],
+      "added": 1778728982324,
+      "chzzk": "달좋아해요",
+      "posTiers": null,
+      "chatOnly": true,
+      "viewerId": 181
+    },
+    {
+      "id": 9,
+      "name": "퍼석얼음#포실푸실",
+      "tier": "EM4",
+      "positions": [
+        "서포터",
+        "탑",
+        "미드"
+      ],
+      "added": 1778728990144,
+      "chzzk": "퍼석얼음",
+      "posTiers": null,
+      "viewerId": 145
+    },
+    {
+      "id": 10,
+      "name": "dabido#kr2",
+      "tier": "GO4",
+      "positions": [
+        "정글",
+        "무관",
+        "미드"
+      ],
+      "added": 1778729169649,
+      "chzzk": "다비도",
+      "posTiers": null,
+      "viewerId": 7
+    },
+    {
+      "id": 11,
+      "name": "",
+      "chzzk": "",
+      "tier": "GO4",
+      "positions": [
+        "무관",
+        "무관",
+        "무관"
+      ],
+      "posTiers": null,
+      "added": 1778721132006
+    },
+    {
+      "id": 12,
+      "name": "",
+      "chzzk": "",
+      "tier": "GO4",
+      "positions": [
+        "무관",
+        "무관",
+        "무관"
+      ],
+      "posTiers": null,
+      "added": 1778721132006
+    },
+    {
+      "id": 13,
+      "name": "",
+      "chzzk": "",
+      "tier": "GO4",
+      "positions": [
+        "무관",
+        "무관",
+        "무관"
+      ],
+      "posTiers": null,
+      "added": 1778721132006
+    },
+    {
+      "id": 14,
+      "name": "",
+      "chzzk": "",
+      "tier": "GO4",
+      "positions": [
+        "무관",
+        "무관",
+        "무관"
+      ],
+      "posTiers": null,
+      "added": 1778721132006
+    },
+    {
+      "id": 15,
+      "name": "",
+      "chzzk": "",
+      "tier": "GO4",
+      "positions": [
+        "무관",
+        "무관",
+        "무관"
+      ],
+      "posTiers": null,
+      "added": 1778721132006
+    },
+    {
+      "id": 16,
+      "name": "",
+      "chzzk": "",
+      "tier": "GO4",
+      "positions": [
+        "무관",
+        "무관",
+        "무관"
+      ],
+      "posTiers": null,
+      "added": 1778721132006
+    },
+    {
+      "id": 17,
+      "name": "",
+      "chzzk": "",
+      "tier": "GO4",
+      "positions": [
+        "무관",
+        "무관",
+        "무관"
+      ],
+      "posTiers": null,
+      "added": 1778721132006
+    },
+    {
+      "id": 18,
+      "name": "",
+      "chzzk": "",
+      "tier": "GO4",
+      "positions": [
+        "무관",
+        "무관",
+        "무관"
+      ],
+      "posTiers": null,
+      "added": 1778721132006
+    },
+    {
+      "id": 19,
+      "name": "",
+      "chzzk": "",
+      "tier": "GO4",
+      "positions": [
+        "무관",
+        "무관",
+        "무관"
+      ],
+      "posTiers": null,
+      "added": 1778721132006
+    }
+  ],
+  "history": [
+    {
+      "id": 1778728947039,
+      "date": "2026. 5. 14. 오후 12:22:27",
+      "blue": [
+        {
+          "id": 1,
+          "name": "ＭËＭÜ#κг1",
+          "tier": "DI2",
+          "positions": [
+            "정글",
+            "미드",
+            "무관"
+          ],
+          "added": 1778721166428,
+          "chzzk": "메무memu",
+          "posTiers": null,
+          "viewerId": 24,
+          "assignedPos": "정글",
+          "posSlot": 0
+        },
+        {
+          "id": 2,
+          "name": "dabido#kr2",
+          "tier": "GO4",
+          "positions": [
+            "정글",
+            "무관",
+            "미드"
+          ],
+          "added": 1778724889602,
+          "chzzk": "다비도",
+          "posTiers": null,
+          "viewerId": 7,
+          "assignedPos": "미드",
+          "posSlot": 2
+        },
+        {
+          "id": 8,
+          "name": "서울여관#kr1",
+          "tier": "GO2",
+          "positions": [
+            "서포터",
+            "정글",
+            "탑"
+          ],
+          "added": 1778724906934,
+          "chzzk": "얄미운 파괴왕 9797",
+          "posTiers": null,
+          "chatOnly": true,
+          "viewerId": 180,
+          "assignedPos": "원딜",
+          "posSlot": -1
+        },
+        {
+          "id": 9,
+          "name": "뀨공주님#0203",
+          "tier": "PL2",
+          "positions": [
+            "서포터",
+            "탑",
+            "정글"
+          ],
+          "added": 1778724917125,
+          "chzzk": "탁큐",
+          "posTiers": null,
+          "viewerId": 56,
+          "assignedPos": "서포터",
+          "posSlot": 0
+        },
+        {
+          "id": 3,
+          "name": "섹시큐티나무#kr1",
+          "tier": "MS300",
+          "positions": [
+            "탑",
+            "미드",
+            "원딜"
+          ],
+          "added": 1778724901485,
+          "chzzk": "무난한 사람",
+          "posTiers": null,
+          "viewerId": 39,
+          "assignedPos": "탑",
+          "posSlot": 0
+        }
+      ],
+      "red": [
+        {
+          "id": 10,
+          "name": "모코링#mkr",
+          "tier": "MS0",
+          "positions": [
+            "탑",
+            "정글",
+            "서포터"
+          ],
+          "added": 1778724962003,
+          "chzzk": "행코링",
+          "posTiers": null,
+          "viewerId": 173,
+          "assignedPos": "정글",
+          "posSlot": 1
+        },
+        {
+          "id": 5,
+          "name": "쇼미2차예선합격#ZICOツ",
+          "tier": "BR1",
+          "positions": [
+            "미드",
+            "서포터",
+            "탑"
+          ],
+          "added": 1778724902571,
+          "chzzk": "써 밋",
+          "posTiers": null,
+          "chatOnly": true,
+          "viewerId": 177,
+          "assignedPos": "미드",
+          "posSlot": 0
+        },
+        {
+          "id": 4,
+          "name": "퍼석얼음#포실푸실",
+          "tier": "EM4",
+          "positions": [
+            "서포터",
+            "탑",
+            "미드"
+          ],
+          "added": 1778724902509,
+          "chzzk": "퍼석얼음",
+          "posTiers": null,
+          "viewerId": 145,
+          "assignedPos": "원딜",
+          "posSlot": -1
+        },
+        {
+          "id": 7,
+          "name": "나를 기억해 줘#0000",
+          "tier": "PL4",
+          "positions": [
+            "서포터",
+            "무관",
+            "무관"
+          ],
+          "added": 1778724905916,
+          "chzzk": "천세나다",
+          "posTiers": null,
+          "chatOnly": true,
+          "viewerId": 179,
+          "assignedPos": "서포터",
+          "posSlot": 0
+        },
+        {
+          "id": 6,
+          "name": "그림만그리는기계#kr1",
+          "tier": "MS0",
+          "positions": [
+            "탑",
+            "원딜",
+            "미드"
+          ],
+          "added": 1778724903865,
+          "chzzk": "geu aen",
+          "posTiers": [
+            null,
+            null,
+            null
+          ],
+          "chatOnly": true,
+          "viewerId": 178,
+          "assignedPos": "탑",
+          "posSlot": 0
+        }
+      ],
+      "bS": 2450,
+      "rS": 2236,
+      "res": "red"
+    }
+  ],
   "viewers": [
     {
       "id": 1,
@@ -93,7 +535,7 @@
       "added": 1774225226550,
       "stats": {
         "w": 24,
-        "l": 32,
+        "l": 33,
         "d": 0
       }
     },
@@ -288,7 +730,7 @@
       "added": 1774321515481,
       "stats": {
         "w": 15,
-        "l": 21,
+        "l": 22,
         "d": 0
       },
       "pass": 0
@@ -511,7 +953,7 @@
       "pass": 1,
       "stats": {
         "w": 11,
-        "l": 11,
+        "l": 12,
         "d": 0
       }
     },
@@ -770,7 +1212,7 @@
       "added": 1774578396881,
       "stats": {
         "w": 13,
-        "l": 9,
+        "l": 10,
         "d": 0
       }
     },
@@ -2194,7 +2636,7 @@
       ],
       "added": 1777603354145,
       "stats": {
-        "w": 1,
+        "w": 2,
         "l": 0,
         "d": 0
       }
@@ -2654,7 +3096,7 @@
       ],
       "added": 1778296917721,
       "stats": {
-        "w": 0,
+        "w": 1,
         "l": 1,
         "d": 0
       }
@@ -2694,11 +3136,286 @@
         "정글"
       ],
       "added": 1778301024455
+    },
+    {
+      "id": 177,
+      "name": "쇼미2차예선합격#ZICOツ",
+      "chzzk": "써 밋",
+      "tier": "BR1",
+      "positions": [
+        "미드",
+        "서포터",
+        "탑"
+      ],
+      "posTiers": null,
+      "memo": "",
+      "added": 1778725090880,
+      "stats": {
+        "w": 1,
+        "l": 0,
+        "d": 0
+      }
+    },
+    {
+      "id": 178,
+      "name": "그림만그리는기계#kr1",
+      "chzzk": "geu aen",
+      "tier": "MS0",
+      "positions": [
+        "탑",
+        "원딜",
+        "미드"
+      ],
+      "posTiers": [
+        null,
+        null,
+        null
+      ],
+      "memo": "",
+      "added": 1778725090880,
+      "pass": 0,
+      "stats": {
+        "w": 1,
+        "l": 0,
+        "d": 0
+      }
+    },
+    {
+      "id": 179,
+      "name": "나를 기억해 줘#0000",
+      "chzzk": "천세나다",
+      "tier": "PL4",
+      "positions": [
+        "서포터",
+        "무관",
+        "무관"
+      ],
+      "posTiers": null,
+      "memo": "",
+      "added": 1778725107102,
+      "stats": {
+        "w": 1,
+        "l": 0,
+        "d": 0
+      }
+    },
+    {
+      "id": 180,
+      "name": "서울여관#kr1",
+      "chzzk": "얄미운 파괴왕 9797",
+      "tier": "GO2",
+      "positions": [
+        "서포터",
+        "정글",
+        "탑"
+      ],
+      "posTiers": null,
+      "memo": "",
+      "added": 1778725284223,
+      "stats": {
+        "w": 0,
+        "l": 1,
+        "d": 0
+      }
+    },
+    {
+      "id": 181,
+      "name": "무죄인#kr01",
+      "chzzk": "달좋아해요",
+      "tier": "GM",
+      "positions": [
+        "서포터",
+        "정글",
+        "미드"
+      ],
+      "posTiers": null,
+      "memo": "",
+      "added": 1778729059224
+    },
+    {
+      "id": 182,
+      "name": "위험하면 짖는 개#미친개",
+      "chzzk": "롱즈",
+      "tier": "PL4",
+      "positions": [
+        "미드",
+        "서포터",
+        "탑"
+      ],
+      "posTiers": null,
+      "memo": "",
+      "added": 1778729069351
     }
   ],
-  "curBlue": [],
-  "curRed": [],
-  "pid": 0,
-  "vid": 176,
-  "updatedAt": "2026-05-11T00:38:41.510Z"
+  "curBlue": [
+    {
+      "id": 10,
+      "name": "dabido#kr2",
+      "tier": "GO4",
+      "positions": [
+        "정글",
+        "무관",
+        "미드"
+      ],
+      "added": 1778729169649,
+      "chzzk": "다비도",
+      "posTiers": null,
+      "viewerId": 7,
+      "assignedPos": "정글",
+      "posSlot": 0
+    },
+    {
+      "id": 6,
+      "name": "위험하면 짖는 개#미친개",
+      "tier": "PL4",
+      "positions": [
+        "미드",
+        "서포터",
+        "탑"
+      ],
+      "added": 1778728978001,
+      "chzzk": "롱즈",
+      "posTiers": null,
+      "chatOnly": true,
+      "viewerId": 182,
+      "assignedPos": "미드",
+      "posSlot": 0
+    },
+    {
+      "id": 7,
+      "name": "섹시큐티나무#kr1",
+      "tier": "MS300",
+      "positions": [
+        "탑",
+        "미드",
+        "원딜"
+      ],
+      "added": 1778728979264,
+      "chzzk": "무난한 사람",
+      "posTiers": null,
+      "chatOnly": true,
+      "viewerId": 39,
+      "assignedPos": "원딜",
+      "posSlot": 2
+    },
+    {
+      "id": 8,
+      "name": "무죄인#kr01",
+      "tier": "GM",
+      "positions": [
+        "서포터",
+        "정글",
+        "미드"
+      ],
+      "added": 1778728982324,
+      "chzzk": "달좋아해요",
+      "posTiers": null,
+      "chatOnly": true,
+      "viewerId": 181,
+      "assignedPos": "서포터",
+      "posSlot": 0
+    },
+    {
+      "id": 9,
+      "name": "퍼석얼음#포실푸실",
+      "tier": "EM4",
+      "positions": [
+        "서포터",
+        "탑",
+        "미드"
+      ],
+      "added": 1778728990144,
+      "chzzk": "퍼석얼음",
+      "posTiers": null,
+      "viewerId": 145,
+      "assignedPos": "탑",
+      "posSlot": 1
+    }
+  ],
+  "curRed": [
+    {
+      "id": 1,
+      "name": "원딜던지게만드는딜서폿모음집#알빠노",
+      "tier": "GO3",
+      "positions": [
+        "원딜",
+        "정글",
+        "미드"
+      ],
+      "added": 1778728960564,
+      "chzzk": "루모모rumomo",
+      "posTiers": null,
+      "viewerId": 80,
+      "assignedPos": "정글",
+      "posSlot": 1
+    },
+    {
+      "id": 3,
+      "name": "ＭËＭÜ#κг1",
+      "tier": "DI2",
+      "positions": [
+        "정글",
+        "미드",
+        "무관"
+      ],
+      "added": 1778728976887,
+      "chzzk": "메무memu",
+      "posTiers": null,
+      "viewerId": 24,
+      "assignedPos": "미드",
+      "posSlot": 1
+    },
+    {
+      "id": 5,
+      "name": "moon of wish#kr1",
+      "tier": "MS300",
+      "positions": [
+        "원딜",
+        "정글",
+        "서포터"
+      ],
+      "added": 1778728977962,
+      "chzzk": "비비주민",
+      "posTiers": null,
+      "chatOnly": true,
+      "viewerId": 38,
+      "assignedPos": "원딜",
+      "posSlot": 0
+    },
+    {
+      "id": 4,
+      "name": "액션쾌감#ZZZ",
+      "tier": "MS800",
+      "positions": [
+        "서포터",
+        "미드",
+        "원딜"
+      ],
+      "added": 1778728977905,
+      "chzzk": "푸른 눈의 마녀",
+      "posTiers": null,
+      "viewerId": 123,
+      "assignedPos": "서포터",
+      "posSlot": 0
+    },
+    {
+      "id": 2,
+      "name": "뀨공주님#0203",
+      "tier": "PL2",
+      "positions": [
+        "서포터",
+        "탑",
+        "정글"
+      ],
+      "added": 1778728974506,
+      "chzzk": "탁큐",
+      "posTiers": null,
+      "viewerId": 56,
+      "assignedPos": "탑",
+      "posSlot": 1
+    }
+  ],
+  "pid": 19,
+  "vid": 182,
+  "updatedAt": "2026-05-14T03:30:24.150Z"
 }
