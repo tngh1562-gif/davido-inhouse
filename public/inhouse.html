@@ -552,37 +552,37 @@ body { background: #f0f4f8; }
    기존 기능/정보는 유지하고 시각 스타일만 덮어쓴다.
 ══════════════════════════════════════════ */
 :root{
-  --ink:#edf2f7;
-  --s1:#ffffff;
-  --s2:#f7f9fc;
-  --s3:#eef3f8;
-  --s4:#e3ebf4;
-  --line:#d8e1ec;
-  --line2:#aebfd4;
-  --txt:#101828;
-  --txt2:#667a92;
-  --txt3:#344765;
-  --a:#d89216;
-  --a2:#f2b94b;
-  --ad:#fff5dc;
-  --bl:#2268e8;
-  --bl2:#1556cf;
-  --rl:#e13f43;
-  --rl2:#c8212b;
+  --ink:#e5e7eb;
+  --s1:#f3f4f6;
+  --s2:#e9ecef;
+  --s3:#dde1e6;
+  --s4:#cfd5dc;
+  --line:#c8ced6;
+  --line2:#9aa3af;
+  --txt:#171a20;
+  --txt2:#59616d;
+  --txt3:#343b46;
+  --a:#b8842d;
+  --a2:#d2a14a;
+  --ad:#efe4cf;
+  --bl:#2f6dbd;
+  --bl2:#245a9d;
+  --rl:#bd4a4a;
+  --rl2:#9f3838;
   --radius:10px;
   --shadow:0 12px 30px rgba(35,55,85,.10);
 }
 body{
   background:
-    linear-gradient(180deg,#f7fbff 0%,#edf3f9 42%,#e9eff6 100%);
+    linear-gradient(180deg,#dfe3e8 0%,#d4d9df 45%,#cbd1d8 100%);
   color:var(--txt);
 }
 .page,.wrap{max-width:1480px !important;padding:14px 18px 70px !important}
 .nav{
   position:sticky;top:0;z-index:300;
   gap:8px;margin:0 0 14px !important;padding:10px;
-  background:rgba(255,255,255,.84);
-  border:1px solid rgba(180,195,216,.65);
+  background:rgba(238,240,243,.88);
+  border:1px solid rgba(160,168,178,.7);
   border-radius:14px;
   box-shadow:0 10px 28px rgba(36,54,82,.10);
   backdrop-filter:blur(14px);
@@ -592,9 +592,9 @@ body{
   padding:9px 15px !important;background:transparent !important;
   color:#5b6d83 !important;font-size:.82rem !important;font-weight:800 !important;
 }
-.nav-btn:hover{background:#eef4fb !important;color:#142033 !important}
+.nav-btn:hover{background:#e1e5ea !important;color:#171a20 !important}
 .nav-btn.on{
-  color:#101828 !important;background:#fff !important;
+  color:#111827 !important;background:#f8f9fb !important;
   box-shadow:inset 0 0 0 1px rgba(30,75,130,.12),0 6px 18px rgba(31,61,95,.10);
 }
 .nav-btn.on::before{
@@ -603,7 +603,7 @@ body{
 }
 .card{
   border:1px solid rgba(182,196,214,.72) !important;
-  border-radius:12px !important;background:rgba(255,255,255,.94) !important;
+  border-radius:12px !important;background:rgba(244,245,247,.94) !important;
   box-shadow:var(--shadow) !important;
 }
 .card-title{
@@ -612,10 +612,10 @@ body{
 }
 input[type=text],input[type=number],select,textarea,#quickSearch{
   border-radius:8px !important;border-color:#d4dfeb !important;
-  background:#f8fbff !important;color:#111827 !important;
+  background:#eceff3 !important;color:#111827 !important;
 }
 input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#quickSearch:focus{
-  border-color:#7ca7e8 !important;box-shadow:0 0 0 3px rgba(34,104,232,.12) !important;
+  border-color:#8b96a3 !important;box-shadow:0 0 0 3px rgba(100,116,139,.16) !important;
 }
 .btn{
   border-radius:9px !important;font-weight:900 !important;
@@ -626,38 +626,38 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
   color:#172033 !important;border:1px solid rgba(184,122,20,.25) !important;
 }
 .btn-o{
-  background:#fff !important;color:#30445e !important;border:1px solid #d6e0eb !important;
+  background:#f4f5f7 !important;color:#333b46 !important;border:1px solid #c8ced6 !important;
 }
-.btn-o:hover{background:#f2f7fd !important;border-color:#b8c9dc !important}
-.btn-bl{background:#eaf2ff !important;color:var(--bl2) !important;border:1px solid #b9d1ff !important}
-.btn-rl{background:#fff0f1 !important;color:var(--rl2) !important;border:1px solid #ffc3c8 !important}
+.btn-o:hover{background:#e7ebef !important;border-color:#aeb6c0 !important}
+.btn-bl{background:#e2e8f0 !important;color:var(--bl2) !important;border:1px solid #aebbd0 !important}
+.btn-rl{background:#ece1e1 !important;color:var(--rl2) !important;border:1px solid #d0b0b0 !important}
 .team-box{
-  border-radius:14px !important;overflow:hidden;background:#fff !important;
+  border-radius:14px !important;overflow:hidden;background:#f5f6f8 !important;
   box-shadow:0 12px 28px rgba(40,58,84,.10) !important;
 }
 .bl-box{border:1px solid rgba(34,104,232,.26) !important}
 .rl-box{border:1px solid rgba(225,63,67,.25) !important}
 .team-hdr{
-  background:linear-gradient(180deg,#f8fbff,#edf3fa) !important;
-  border-bottom:1px solid #dde7f2 !important;
+  background:linear-gradient(180deg,#eceff3,#dde2e8) !important;
+  border-bottom:1px solid #c8ced6 !important;
 }
 .team-name-lbl{font-weight:950 !important;letter-spacing:.2px}
 .t-player,.p-row,.hist-item,.vdb-table td,.drop-z,.wait-pool > *{
   border-color:#dce5ef !important;
 }
 .p-row{
-  background:#f8fbff !important;border-radius:9px !important;
+  background:#eceff3 !important;border-radius:9px !important;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);
 }
-.p-row:hover,.vdb-table tr:hover td{background:#f0f6ff !important}
-.bal-track{height:6px !important;background:#e7edf5 !important}
+.p-row:hover,.vdb-table tr:hover td{background:#e1e6eb !important}
+.bal-track{height:6px !important;background:#cfd5dc !important}
 .bal-fill{background:linear-gradient(90deg,var(--bl),#765fc8,var(--rl)) !important}
 #toast{
   border-radius:12px !important;background:#101828 !important;color:#fff !important;
   box-shadow:0 18px 44px rgba(16,24,40,.22) !important;
 }
 .overlay-dashboard{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:14px}
-.overlay-setting{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid #dce5ef;border-radius:12px;background:#f8fbff;margin-bottom:10px}
+.overlay-setting{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid #c8ced6;border-radius:12px;background:#eceff3;margin-bottom:10px}
 .overlay-setting b{display:block;font-size:.9rem;color:#142033}
 .overlay-setting span{display:block;margin-top:4px;font-size:.75rem;color:var(--txt2);line-height:1.45}
 .overlay-switch{width:54px;height:30px;border:0;border-radius:999px;background:#cbd5e1;padding:4px;cursor:pointer}
@@ -665,10 +665,28 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 .overlay-switch.on{background:#22c55e}
 .overlay-switch.on i{transform:translateX(24px)}
 .overlay-url{display:flex;gap:8px}.overlay-url input{flex:1}
-.overlay-preview{min-height:430px;border:1px dashed #b8c9dc;border-radius:14px;background:linear-gradient(135deg,#eef6ff,#fff8e8);display:grid;place-items:center;padding:22px}
+.overlay-preview{min-height:430px;border:1px dashed #9aa3af;border-radius:14px;background:linear-gradient(135deg,#d8dde3,#ece3d1);display:grid;place-items:center;padding:22px}
 .overlay-frame{width:100%;max-width:760px;height:360px;border:0;border-radius:12px;background:#101828;box-shadow:0 18px 50px rgba(16,24,40,.28)}
 .overlay-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
 .overlay-mini .card{margin:0 !important;padding:12px !important;box-shadow:none !important}
+.shop-layout{display:grid;grid-template-columns:360px 1fr;gap:14px;align-items:start}
+.shop-search{position:relative}
+.shop-result{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:var(--s2);max-height:440px;overflow:auto}
+.shop-user{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer;transition:.12s}
+.shop-user:hover,.shop-user.on{background:#e1e6eb}
+.shop-user b{font-size:.86rem;color:var(--txt)}
+.shop-user span{font-size:.72rem;color:var(--txt2)}
+.shop-points{font-size:1.9rem;font-weight:950;color:var(--a);line-height:1}
+.shop-products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.shop-product{border:1px solid #c8ced6;border-radius:14px;background:#eceff3;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:190px}
+.shop-product h3{margin:0;font-size:1rem;color:#121826}
+.shop-product p{margin:0;color:var(--txt2);font-size:.76rem;line-height:1.5;flex:1}
+.shop-price{font-size:1.35rem;font-weight:950;color:var(--a)}
+.shop-buy{width:100%;justify-content:center}
+.shop-buy:disabled{opacity:.45;cursor:not-allowed}
+.shop-log{display:flex;flex-direction:column;gap:7px;max-height:260px;overflow:auto}
+.shop-log-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#eef1f5;font-size:.78rem}
+@media(max-width:980px){.shop-layout{grid-template-columns:1fr}.shop-products{grid-template-columns:1fr 1fr}}
 @media(max-width:980px){.overlay-dashboard{grid-template-columns:1fr}.nav{position:relative}.page,.wrap{padding:10px !important}}
 </style>
 </head>
@@ -679,6 +697,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 <!-- NAV -->
 <nav class="nav">
   <button class="nav-btn on"  onclick="goTab('main',this)">⚔ 내전 진행</button>
+  <button class="nav-btn"     onclick="goTab('shop',this)">🛒 내전 상점</button>
   <button class="nav-btn"     onclick="goTab('roster',this)">Roster</button>
   <button class="nav-btn"     onclick="goTab('auto',this)">Auto</button>
   <button class="nav-btn"     onclick="goTab('draft',this)">Draft</button>
@@ -759,10 +778,10 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
     <div class="card" style="padding:14px">
       <div class="card-title">🏆 결과 기록</div>
       <div id="mainCurTeam" style="margin-bottom:10px;font-size:.75rem;color:var(--txt2)">배정 후 기록 가능</div>
+      <button class="btn btn-g" style="width:100%;padding:8px 6px;font-size:.75rem;margin-bottom:8px" onclick="confirmMainTeams()">💰 포인트 지급</button>
       <div style="display:flex;gap:6px">
         <button class="btn btn-bl" style="flex:1;padding:8px 6px;font-size:.75rem" onclick="record('blue');renderMainAll()">🔵 블루 승</button>
         <button class="btn btn-rl" style="flex:1;padding:8px 6px;font-size:.75rem" onclick="record('red');renderMainAll()">🔴 레드 승</button>
-        <button class="btn btn-o"  style="flex:1;padding:8px 6px;font-size:.75rem" onclick="record('draw');renderMainAll()">🤝 무승부</button>
       </div>
     </div>
     <div class="card" style="padding:14px">
@@ -771,6 +790,37 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
     </div>
   </div>
 
+</div>
+
+<!-- ══════ TAB: 내전 상점 ══════ -->
+<div id="tab-shop" class="tab">
+  <div class="shop-layout">
+    <div>
+      <div class="card">
+        <div class="card-title">🛒 구매자 선택</div>
+        <div class="shop-search">
+          <input id="shopSearch" type="text" placeholder="닉네임 / 치지직닉 검색..."
+            oninput="renderShopUsers()"
+            style="width:100%;background:var(--s2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px 12px;font-family:'Noto Sans KR',sans-serif;font-size:.85rem;outline:none">
+        </div>
+        <div id="shopUserList" class="shop-result"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="card-title">💰 선택된 시청자</div>
+        <div id="shopSelected"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">🎁 상품 목록</div>
+        <div id="shopProducts" class="shop-products"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="card-title">🧾 최근 구매 기록</div>
+        <div id="shopLog" class="shop-log"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ══════ TAB: ROSTER ══════ -->
@@ -951,7 +1001,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
         <option value="tier_asc">티어 낮은순</option>
         <option value="wr_desc">승률 높은순</option>
         <option value="wr_asc">승률 낮은순</option>
-        <option value="pass_desc">선참권 많은순</option>
+        <option value="pass_desc">내전 포인트 많은순</option>
         <option value="name_asc">이름 ㄱ→ㅎ</option>
         <option value="name_desc">이름 ㅎ→ㄱ</option>
         <option value="added_desc">최근 추가순</option>
@@ -968,7 +1018,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
             <th class="sortable" onclick="toggleSort('name')">닉네임 <span id="sh-name"></span></th>
             <th>치지직 닉네임</th>
             <th>메모</th>
-            <th>선참권</th>
+            <th>내전 포인트</th>
             <th class="sortable" onclick="toggleSort('tier')">티어 <span id="sh-tier"></span></th>
             <th>점수</th>
             <th>포지션</th>
@@ -1323,6 +1373,152 @@ function toast(msg){
 }
 
 /* ══════════════════════════════════════
+   INHOUSE SHOP
+══════════════════════════════════════ */
+const SHOP_ITEMS=[
+  {id:'priority',name:'선참권',price:60,desc:'다음 내전 참가 우선권. 자주 참여하면 1~2주 안에 노릴 수 있는 기본 상품.'},
+  {id:'all_day',name:'종일권',price:160,desc:'방송 당일 내전 참여 우선도를 크게 올리는 상품. 꾸준히 모아야 살 수 있는 상위 상품.'},
+  {id:'no_ban',name:'노밴권',price:120,desc:'한 판 동안 특정 챔피언 밴 금지 요청용 상품. 종일권보다 부담이 낮은 재미형 상품.'},
+  {id:'extend',name:'연장권',price:200,desc:'방송/내전 흐름에 맞춰 한 번 더 기회를 여는 최고가 상품. 포인트를 아끼면 한 달 목표치.'},
+];
+let shopSelectedViewerId=null;
+function viewerPoints(v){ return Math.max(0, parseInt(v?.pass||0)||0); }
+function findViewerForPlayer(p){
+  if(!p) return null;
+  if(p.viewerId){
+    const byId=viewers.find(v=>v.id===p.viewerId);
+    if(byId) return byId;
+  }
+  const name=(p.name||'').trim().toLowerCase();
+  if(!name) return null;
+  return viewers.find(v=>(v.name||'').trim().toLowerCase()===name) || null;
+}
+function grantInhousePoints(team,amount,reason){
+  let count=0;
+  team.forEach(p=>{
+    const v=findViewerForPlayer(p);
+    if(!v) return;
+    v.pass=viewerPoints(v)+amount;
+    if(!Array.isArray(v.pointHistory)) v.pointHistory=[];
+    v.pointHistory.unshift({id:Date.now()+count,amount,reason,at:Date.now()});
+    count++;
+  });
+  return count;
+}
+function renderShop(){
+  renderShopUsers();
+  renderShopSelected();
+  renderShopProducts();
+  renderShopLog();
+}
+function renderShopUsers(){
+  const box=document.getElementById('shopUserList');
+  if(!box) return;
+  const q=(document.getElementById('shopSearch')?.value||'').trim().toLowerCase();
+  const list=[...viewers]
+    .filter(v=>!q || v.name.toLowerCase().includes(q) || (v.chzzk||'').toLowerCase().includes(q))
+    .sort((a,b)=>viewerPoints(b)-viewerPoints(a) || a.name.localeCompare(b.name,'ko'))
+    .slice(0,80);
+  if(!list.length){
+    box.innerHTML='<div style="padding:18px;text-align:center;color:var(--txt2);font-size:.82rem">검색 결과 없음</div>';
+    return;
+  }
+  box.innerHTML=list.map(v=>`
+    <div class="shop-user ${shopSelectedViewerId===v.id?'on':''}" onclick="selectShopViewer(${v.id})">
+      <div style="flex:1;min-width:0">
+        <b>${esc(v.name)}</b>
+        <span>${v.chzzk?` · ${esc(v.chzzk)}`:''}</span>
+      </div>
+      <div style="font-weight:950;color:var(--a);white-space:nowrap">${viewerPoints(v)}P</div>
+    </div>`).join('');
+}
+function selectShopViewer(id){
+  shopSelectedViewerId=id;
+  renderShop();
+}
+function renderShopSelected(){
+  const el=document.getElementById('shopSelected');
+  if(!el) return;
+  const v=viewers.find(v=>v.id===shopSelectedViewerId);
+  if(!v){
+    el.innerHTML='<div class="empty-state">왼쪽에서 구매자를 선택하세요.</div>';
+    return;
+  }
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="min-width:0">
+        <div style="font-weight:950;font-size:1rem">${esc(v.name)}</div>
+        <div style="font-size:.76rem;color:var(--txt2);margin-top:3px">${v.chzzk?`치지직 · ${esc(v.chzzk)}`:'치지직 닉네임 없음'}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="shop-points">${viewerPoints(v)}P</div>
+        <div style="font-size:.7rem;color:var(--txt2)">내전 포인트</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" onclick="adjustShopPoints(10)">+10P</button>
+      <button class="btn btn-o" onclick="adjustShopPoints(50)">+50P</button>
+      <button class="btn btn-o" onclick="adjustShopPoints(-10)">-10P</button>
+    </div>`;
+}
+function renderShopProducts(){
+  const el=document.getElementById('shopProducts');
+  if(!el) return;
+  const v=viewers.find(v=>v.id===shopSelectedViewerId);
+  const points=viewerPoints(v);
+  el.innerHTML=SHOP_ITEMS.map(item=>{
+    const disabled=!v || points<item.price;
+    return `<div class="shop-product">
+      <h3>${item.name}</h3>
+      <div class="shop-price">${item.price}P</div>
+      <p>${item.desc}</p>
+      <button class="btn btn-g shop-buy" ${disabled?'disabled':''} onclick="buyShopItem('${item.id}')">
+        ${v ? (disabled?'포인트 부족':'구매 처리') : '구매자 선택 필요'}
+      </button>
+    </div>`;
+  }).join('');
+}
+function buyShopItem(itemId){
+  const v=viewers.find(v=>v.id===shopSelectedViewerId);
+  const item=SHOP_ITEMS.find(x=>x.id===itemId);
+  if(!v||!item) return;
+  const points=viewerPoints(v);
+  if(points<item.price){ toast('포인트가 부족합니다'); return; }
+  if(!confirm(`${v.name}님이 ${item.name}을 ${item.price}P로 구매 처리할까요?`)) return;
+  v.pass=points-item.price;
+  if(!Array.isArray(v.shopHistory)) v.shopHistory=[];
+  v.shopHistory.unshift({id:Date.now(),itemId:item.id,itemName:item.name,price:item.price,at:Date.now()});
+  v.memo = [v.memo||'', `[상점] ${item.name} 구매 (${item.price}P)`].filter(Boolean).join('\n').trim();
+  save();
+  renderShop();
+  renderViewers();
+  toast(`${v.name} · ${item.name} 구매 완료`);
+}
+function adjustShopPoints(delta){
+  const v=viewers.find(v=>v.id===shopSelectedViewerId);
+  if(!v) return;
+  v.pass=Math.max(0,viewerPoints(v)+delta);
+  save();
+  renderShop();
+  renderViewers();
+}
+function renderShopLog(){
+  const el=document.getElementById('shopLog');
+  if(!el) return;
+  const rows=viewers.flatMap(v=>(Array.isArray(v.shopHistory)?v.shopHistory:[]).map(h=>({...h,viewer:v.name})))
+    .sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,20);
+  if(!rows.length){
+    el.innerHTML='<div class="empty-state">아직 구매 기록이 없습니다.</div>';
+    return;
+  }
+  el.innerHTML=rows.map(h=>`
+    <div class="shop-log-row">
+      <div><b>${esc(h.viewer)}</b> · ${esc(h.itemName)}</div>
+      <div style="color:var(--txt2);white-space:nowrap">${h.price}P · ${new Date(h.at).toLocaleDateString('ko-KR')}</div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════
    TABS
 ══════════════════════════════════════ */
 function goTab(name,btn){
@@ -1337,6 +1533,7 @@ function goTab(name,btn){
     if(name==='viewers') renderViewers();
     if(name==='auto')    autoIfReady();
     if(name==='main')    renderMainAll();
+    if(name==='shop')    renderShop();
     if(name==='overlay') renderOverlayTab();
     if(name==='roulette') initRoulette();
   }, 10);
@@ -2251,6 +2448,15 @@ function swapTeams(){
   toast('블루 ⇄ 레드 팀 전체 스왑!');
 }
 
+function confirmMainTeams(){
+  if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정하세요');return}
+  const joinedCount=grantInhousePoints([...curBlue,...curRed],1,'팀 확정 참가');
+  save();
+  renderViewers();
+  if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
+  toast(joinedCount?`포인트 지급! 참가자 ${joinedCount}명 +1P`:'포인트 지급 완료');
+}
+
 function record(res){
   if(!curBlue.length||!curRed.length){toast('팀이 없습니다');return}
   history.unshift({
@@ -2269,8 +2475,14 @@ function record(res){
     });
   }
   updateViewerStat(curBlue,'blue'); updateViewerStat(curRed,'red');
+  let bonusCount=0;
+  if(res==='blue') bonusCount=grantInhousePoints(curBlue,1,'승리 보너스');
+  if(res==='red') bonusCount=grantInhousePoints(curRed,1,'승리 보너스');
   save(); renderRecords();
-  toast({blue:'🔵 블루 승리!',red:'🔴 레드 승리!',draw:'🤝 무승부!'}[res]);
+  renderViewers();
+  if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
+  const baseMsg={blue:'🔵 블루 승리!',red:'🔴 레드 승리!',draw:'🤝 무승부!'}[res];
+  toast(bonusCount?`${baseMsg} 승리팀 ${bonusCount}명 +1P` : baseMsg);
 }
 
 function autoIfReady(){
@@ -2556,7 +2768,9 @@ function confirmDraft(){
   // 인원 제한 없음 - 양팀 인원만 같으면 OK (1:1 ~ 5:5)
   if(!dBl.length||!dRl.length){toast('양팀에 최소 1명씩 배정하세요');return}
   if(dBl.length!==dRl.length){toast('양팀 인원이 같아야 합니다 (현재 블루 '+dBl.length+'명 vs 레드 '+dRl.length+'명)');return}
-  curBlue=[...dBl]; curRed=[...dRl]; save();
+  curBlue=[...dBl]; curRed=[...dRl];
+  const joinedCount=grantInhousePoints([...curBlue,...curRed],1,'팀 확정 참가');
+  save();
   const bS=teamEffScore(curBlue),rS=teamEffScore(curRed),diff=Math.abs(bS-rS);
   const dc=diff<40?'d-s':diff<120?'d-a':'d-b';
   const el=document.getElementById('draftOut');
@@ -2568,7 +2782,9 @@ function confirmDraft(){
     </div>
     <p style="font-size:.75rem;color:#4dffaa;margin-top:10px">✓ Records 탭에서 결과를 기록하세요.</p>
   </div>`;
-  toast('팀 확정!');
+  renderViewers();
+  if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
+  toast(joinedCount?`팀 확정! 참가자 ${joinedCount}명 +1P`:'팀 확정!');
 }
 
 function syncTeamSize(){
@@ -2655,7 +2871,7 @@ function renderDraftQuickSearch(){
           ${v.chzzk?`<span style="font-size:.7rem;color:#00c73c;font-weight:700">▶ ${esc(v.chzzk)}</span>`:''}
           <span style="font-size:.85rem;font-weight:700">${esc(v.name)}</span>
           ${tierBadge(v.tier)}
-          ${v.pass?`<span style="font-size:.65rem;color:var(--a)">선참 ${v.pass}</span>`:''}
+          ${v.pass?`<span style="font-size:.65rem;color:var(--a)">포인트 ${v.pass}</span>`:''}
         </div>
         <div style="font-size:.68rem;color:var(--txt2);margin-top:1px">${posStr}</div>
       </div>
@@ -2723,7 +2939,7 @@ function renderQuickSearch(){
           ${v.chzzk?`<span style="font-size:.7rem;color:#00c73c;font-weight:700">▶ ${esc(v.chzzk)}</span>`:''}
           <span style="font-size:.85rem;font-weight:700">${esc(v.name)}</span>
           ${tierBadge(v.tier)}
-          ${v.pass?`<span style="font-size:.65rem;color:var(--a)">선참 ${v.pass}</span>`:''}
+          ${v.pass?`<span style="font-size:.65rem;color:var(--a)">포인트 ${v.pass}</span>`:''}
         </div>
         <div style="font-size:.68rem;color:var(--txt2);margin-top:1px">${posStr}</div>
       </div>
@@ -2876,7 +3092,7 @@ function quickPickFromDB(playerId){
             ${v.chzzk?`<span style="font-size:.7rem;color:#00c73c;font-weight:700">▶ ${esc(v.chzzk)}</span>`:''}
             <span style="font-size:.88rem;font-weight:700">${esc(v.name)}</span>
             ${tierBadge(v.tier)}
-            ${v.pass?`<span style="font-size:.68rem;color:var(--a)">선참 ${v.pass}</span>`:''}
+            ${v.pass?`<span style="font-size:.68rem;color:var(--a)">포인트 ${v.pass}</span>`:''}
           </div>
           <div style="font-size:.7rem;color:var(--txt2);margin-top:2px">
             ${(()=>{const ps=Array.isArray(v.positions)?v.positions:normPositions(v);return ps.filter(p=>p&&p!=='무관').join(' · ')||'포지션 미설정';})()}
