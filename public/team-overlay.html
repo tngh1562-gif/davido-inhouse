@@ -10,8 +10,9 @@
     --blue-soft:rgba(47,125,246,.20);
     --red:#f04b55;
     --red-soft:rgba(240,75,85,.20);
-    --panel:rgba(7,12,20,.74);
-    --line:rgba(255,255,255,.16);
+    --panel:rgba(7,12,20,.90);
+    --panel-backdrop:rgba(2,6,12,.72);
+    --line:rgba(255,255,255,.22);
     --text:#f5f8ff;
     --muted:#aeb9cc;
     --gold:#f2c766;
@@ -41,14 +42,16 @@
   }
   .team{
     border:1px solid var(--line);
-    background:linear-gradient(180deg,rgba(15,22,35,.82),var(--panel));
-    box-shadow:0 18px 48px rgba(0,0,0,.34);
+    background:linear-gradient(180deg,rgba(18,28,45,.96),var(--panel));
+    box-shadow:
+      0 0 0 8px var(--panel-backdrop),
+      0 18px 48px rgba(0,0,0,.52);
     backdrop-filter:blur(10px);
     border-radius:8px;
     overflow:hidden;
   }
-  .team.blue{border-color:rgba(47,125,246,.45)}
-  .team.red{border-color:rgba(240,75,85,.45)}
+  .team.blue{border-color:rgba(85,154,255,.72)}
+  .team.red{border-color:rgba(255,105,116,.72)}
   .head{
     height:58px;
     display:flex;
@@ -58,8 +61,8 @@
     border-bottom:1px solid var(--line);
     letter-spacing:0;
   }
-  .blue .head{background:linear-gradient(90deg,var(--blue-soft),rgba(255,255,255,.03))}
-  .red .head{background:linear-gradient(270deg,var(--red-soft),rgba(255,255,255,.03))}
+  .blue .head{background:linear-gradient(90deg,rgba(47,125,246,.36),rgba(255,255,255,.05))}
+  .red .head{background:linear-gradient(270deg,rgba(240,75,85,.36),rgba(255,255,255,.05))}
   .label{
     font-size:22px;
     font-weight:900;
@@ -89,7 +92,8 @@
     align-items:center;
     gap:10px;
     padding:0 14px;
-    border-bottom:1px solid rgba(255,255,255,.10);
+    background:rgba(2,8,18,.28);
+    border-bottom:1px solid rgba(255,255,255,.16);
     min-width:0;
   }
   .player:last-child{border-bottom:0}
@@ -101,9 +105,9 @@
     border-radius:4px;
     font-size:13px;
     font-weight:900;
-    background:rgba(255,255,255,.08);
-    color:#dbe6ff;
-    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.14);
+    color:#f4f8ff;
+    border:1px solid rgba(255,255,255,.18);
   }
   .name{
     min-width:0;
@@ -112,11 +116,11 @@
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-    text-shadow:0 1px 8px rgba(0,0,0,.35);
+    text-shadow:0 2px 8px rgba(0,0,0,.72),0 0 14px rgba(0,0,0,.62);
   }
   .sub{
     margin-top:2px;
-    color:var(--muted);
+    color:#d5deee;
     font-size:11px;
     font-weight:700;
     white-space:nowrap;
