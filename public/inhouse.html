@@ -1123,6 +1123,13 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
         </div>
         <button class="overlay-switch on" id="discordRecentSwitch" onclick="toggleDiscordRecent()"><i></i></button>
       </div>
+      <div class="overlay-setting">
+        <div>
+          <b>버튼만 생성</b>
+          <span>ON이면 안내문 없이 버튼만 있는 메시지를 만들어 위에 직접 작성한 글과 자연스럽게 붙여 씁니다.</span>
+        </div>
+        <button class="overlay-switch" id="discordButtonOnlySwitch" onclick="toggleDiscordButtonOnly()"><i></i></button>
+      </div>
       <div style="display:grid;gap:8px;margin-top:12px">
         <input id="discordButtonLabel" type="text" placeholder="버튼 이름">
         <select id="discordButtonStyle">
@@ -1719,8 +1726,10 @@ async function renderDiscordTab(){
   const cfg=discordConfig||{};
   const reg=document.getElementById('discordRegisterSwitch');
   const recent=document.getElementById('discordRecentSwitch');
+  const buttonOnly=document.getElementById('discordButtonOnlySwitch');
   if(reg) reg.classList.toggle('on', cfg.registerButtonEnabled!==false);
   if(recent) recent.classList.toggle('on', cfg.recentPlacementEnabled!==false);
+  if(buttonOnly) buttonOnly.classList.toggle('on', cfg.buttonOnly===true);
   const label=document.getElementById('discordButtonLabel');
   const style=document.getElementById('discordButtonStyle');
   const title=document.getElementById('discordPanelTitle');
@@ -1755,6 +1764,10 @@ async function toggleDiscordRegister(){
 async function toggleDiscordRecent(){
   await saveDiscordConfig({ recentPlacementEnabled: !(discordConfig?.recentPlacementEnabled!==false) });
   toast(discordConfig.recentPlacementEnabled?'최근 메시지 아래 버튼 ON':'최근 메시지 아래 버튼 OFF');
+}
+async function toggleDiscordButtonOnly(){
+  await saveDiscordConfig({ buttonOnly: !(discordConfig?.buttonOnly===true) });
+  toast(discordConfig.buttonOnly?'버튼만 생성 ON':'버튼만 생성 OFF');
 }
 async function saveDiscordConfigFromForm(){
   await saveDiscordConfig({
