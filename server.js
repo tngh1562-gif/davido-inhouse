@@ -24,7 +24,15 @@ const SEED_INHOUSE_DB_FILE = path.join(__dirname, 'data', 'inhouse-db.json');
 const INHOUSE_BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const DISCORD_CONFIG_FILE = path.join(DATA_DIR, 'discord-config.json');
 // Optional: lets the inhouse site ask the separate Discord bot service to send button messages.
-const DISCORD_BOT_API_URL = (process.env.DISCORD_BOT_API_URL || '').replace(/\/$/, '');
+function normalizeDiscordBotApiUrl(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/health$/, '')
+    .replace(/\/api\/inhouse-register-button$/, '');
+}
+
+const DISCORD_BOT_API_URL = normalizeDiscordBotApiUrl(process.env.DISCORD_BOT_API_URL);
 const DISCORD_BOT_API_SECRET = process.env.DISCORD_BOT_API_SECRET || '';
 
 function defaultInhouseDB() {
@@ -906,14 +914,15 @@ app.post('/api/action', async (req, res) => {
       if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET) {
         return res.json({ ok: false, error: 'DISCORD_BOT_API_URL / DISCORD_BOT_API_SECRET 환경변수가 필요합니다.' });
       }
+      const botApiEndpoint = `${DISCORD_BOT_API_URL}/api/inhouse-register-button`;
       try {
-        const result = await postJson(`${DISCORD_BOT_API_URL}/api/inhouse-register-button`, {
+        const result = await postJson(botApiEndpoint, {
           secret: DISCORD_BOT_API_SECRET,
           channelId,
         });
         return res.json(result);
       } catch (err) {
-        return res.json({ ok: false, error: err.message || '보관함봇 호출 실패' });
+        return res.json({ ok: false, error: `${err.message || '보관함봇 호출 실패'} (${botApiEndpoint})` });
       }
     }
 
