@@ -7,6 +7,7 @@
 const express = require('express');
 const { WebSocketServer } = require('ws');
 const http = require('http');
+const https = require('https');
 const path = require('path');
 const fs = require('fs');
 
@@ -21,6 +22,7 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const INHOUSE_DB_FILE = path.join(DATA_DIR, 'inhouse-db.json');
 const SEED_INHOUSE_DB_FILE = path.join(__dirname, 'data', 'inhouse-db.json');
 const INHOUSE_BACKUP_DIR = path.join(DATA_DIR, 'backups');
+const DISCORD_CONFIG_FILE = path.join(DATA_DIR, 'discord-config.json');
 
 function defaultInhouseDB() {
   return {
@@ -157,6 +159,50 @@ function writeInhouseDB(data) {
   return payload;
 }
 
+function defaultDiscordConfig() {
+  return {
+    registerButtonEnabled: true,
+    recentPlacementEnabled: true,
+    buttonLabel: '내전 참가 등록',
+    buttonStyle: 'primary',
+    panelTitle: '내전 참가 등록',
+    panelDescription: '아래 버튼을 누르면 내전 참가 등록 팝업이 열립니다.\n롤 닉네임, 치지직 닉네임, 티어, 포지션을 입력하면 내전사이트 시청자 DB에 등록됩니다.',
+    updatedAt: null,
+  };
+}
+
+function normalizeDiscordConfig(data) {
+  const base = defaultDiscordConfig();
+  const style = ['primary', 'success', 'danger', 'secondary'].includes(data?.buttonStyle) ? data.buttonStyle : base.buttonStyle;
+  return {
+    registerButtonEnabled: data?.registerButtonEnabled !== false,
+    recentPlacementEnabled: data?.recentPlacementEnabled !== false,
+    buttonLabel: String(data?.buttonLabel || base.buttonLabel).slice(0, 80),
+    buttonStyle: style,
+    panelTitle: String(data?.panelTitle || base.panelTitle).slice(0, 120),
+    panelDescription: String(data?.panelDescription || base.panelDescription).slice(0, 1800),
+    updatedAt: data?.updatedAt || null,
+  };
+}
+
+function readDiscordConfig() {
+  try {
+    if (fs.existsSync(DISCORD_CONFIG_FILE)) return normalizeDiscordConfig(readJsonFile(DISCORD_CONFIG_FILE));
+  } catch (err) {
+    console.error('[DISCORD_CONFIG] read failed:', err.message);
+  }
+  return defaultDiscordConfig();
+}
+
+function writeDiscordConfig(data) {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const payload = normalizeDiscordConfig({ ...readDiscordConfig(), ...(data || {}), updatedAt: new Date().toISOString() });
+  const tmp = DISCORD_CONFIG_FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(payload, null, 2), 'utf8');
+  fs.renameSync(tmp, DISCORD_CONFIG_FILE);
+  return payload;
+}
+
 app.get('/api/inhouse-db', (req, res) => {
   res.json(readInhouseDB());
 });
@@ -170,6 +216,19 @@ app.post('/api/inhouse-db', (req, res) => {
   }
 });
 
+app.get('/api/discord-config', (req, res) => {
+  res.json(readDiscordConfig());
+});
+
+app.post('/api/discord-config', (req, res) => {
+  try {
+    res.json({ ok: true, data: writeDiscordConfig(req.body || {}) });
+  } catch (err) {
+    console.error('[DISCORD_CONFIG] write failed:', err.message);
+    res.status(500).json({ ok: false, error: 'write_failed' });
+  }
+});
+
 // ── 상태 ──
 const state = {
   channelId: null,
@@ -178,11 +237,57 @@ const state = {
   roulette: { items: [] },
   music: { queue: [], currentIdx: 0, playing: false },
   inhouseTeams: { blue: [], red: [], updatedAt: null },
+  lcuDraft: { connected: false, inChampSelect: false, error: null, session: null, updatedAt: null },
+  bot: {
+    enabled: true,
+    sendToChat: false,
+    hasAuth: false,
+    status: 'idle',
+    lastSendError: null,
+    commandCount: 0,
+    lastCommand: null,
+    lastReply: null,
+    macros: [
+      { id: 'join', title: '내전 참가 안내', text: '!참가 를 치면 내전 참가 신청이 됩니다.' },
+      { id: 'point', title: '포인트 안내', text: '!포인트 로 내전 포인트를 확인할 수 있습니다.' },
+      { id: 'rule', title: '내전 안내', text: '내전 참가자는 방송 화면과 내전사이트 안내를 확인해주세요.' },
+    ],
+  },
   chatLog: [],
 };
 
 let chzzkWs = null;
 let chzzkPing = null;
+let chzzkChatChannelId = null;
+let chzzkTid = 10;
+let chzzkReconnectTimer = null;
+let chzzkReconnectDelay = 5000;
+let chzzkAuthed = false;
+const chzzkAuth = {
+  nidAut: process.env.CHZZK_NID_AUT || '',
+  nidSes: process.env.CHZZK_NID_SES || '',
+};
+
+function hasChzzkAuth() {
+  return !!(chzzkAuth.nidAut && chzzkAuth.nidSes);
+}
+
+function chzzkCookieHeader() {
+  if (!hasChzzkAuth()) return '';
+  return `NID_AUT=${chzzkAuth.nidAut}; NID_SES=${chzzkAuth.nidSes}`;
+}
+
+function chzzkHeaders(extra = {}) {
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Origin': 'https://chzzk.naver.com',
+    'Referer': 'https://chzzk.naver.com/',
+    ...extra,
+  };
+  const cookie = chzzkCookieHeader();
+  if (cookie) headers.Cookie = cookie;
+  return headers;
+}
 
 // ── 브로드캐스트 ──
 function broadcast(data) {
@@ -191,17 +296,275 @@ function broadcast(data) {
 }
 
 function broadcastState() {
-  broadcast({ type: 'state', data: { ...state, chzzkConnected: chzzkWs?.readyState === 1 } });
+  state.bot.hasAuth = hasChzzkAuth();
+  broadcast({ type: 'state', data: publicState() });
+}
+
+function publicState() {
+  state.bot.hasAuth = hasChzzkAuth();
+  return { ...state, chzzkConnected: chzzkAuthed && chzzkWs?.readyState === 1 };
+}
+
+function normalizeChatName(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function displayViewerName(viewer, fallback) {
+  return String(viewer?.name || fallback || '').replace(/#.+$/, '').trim();
+}
+
+function findViewerByChzzkNickname(nickname) {
+  const key = normalizeChatName(nickname);
+  if (!key) return null;
+  const db = readInhouseDB();
+  return db.viewers.find(viewer =>
+    normalizeChatName(viewer.chzzk) === key || normalizeChatName(viewer.name) === key
+  ) || db.viewers.find(viewer => {
+    const chzzk = normalizeChatName(viewer.chzzk);
+    const name = normalizeChatName(viewer.name);
+    return (chzzk && (chzzk.includes(key) || key.includes(chzzk)))
+      || (name && (name.includes(key) || key.includes(name)));
+  }) || null;
+}
+
+function sendBotNotice(targetNickname, text) {
+  const payload = {
+    type: 'bot_reply',
+    nickname: targetNickname,
+    text,
+    ts: Date.now(),
+  };
+  state.bot.commandCount += 1;
+  state.bot.lastReply = payload;
+  broadcast(payload);
+  broadcast({ type: 'chat', nickname: '다비도 봇', text, ts: payload.ts, isSystem: true });
+  if (state.bot.sendToChat) sendChzzkChat(text);
+  broadcastState();
+}
+
+function sendChzzkChat(text) {
+  const msg = String(text || '').trim();
+  if (!msg) return false;
+  if (!chzzkWs || chzzkWs.readyState !== 1 || !chzzkChatChannelId) {
+    state.bot.lastSendError = '치지직 채팅에 연결되어 있지 않습니다.';
+    broadcastState();
+    return false;
+  }
+
+  try {
+    chzzkWs.send(JSON.stringify({
+      ver: '3',
+      cmd: 3101,
+      svcid: 'game',
+      cid: chzzkChatChannelId,
+      bdy: {
+        msg,
+        msgTypeCode: 1,
+        extras: '{}',
+      },
+      tid: ++chzzkTid,
+    }));
+    state.bot.lastSendError = null;
+    return true;
+  } catch (err) {
+    state.bot.lastSendError = err.message || '치지직 채팅 전송 실패';
+    broadcastState();
+    return false;
+  }
+}
+
+function handlePointCommand(nickname) {
+  const viewer = findViewerByChzzkNickname(nickname);
+  if (!viewer) {
+    sendBotNotice(nickname, `${nickname}님은 아직 시청자 DB에 등록되어 있지 않습니다.`);
+    return true;
+  }
+  const points = Math.max(0, Number(viewer.pass) || 0);
+  const name = displayViewerName(viewer, nickname);
+  sendBotNotice(nickname, `${name}님의 내전 포인트는 ${points}P 입니다.`);
+  return true;
 }
 
 // ── WebSocket 클라이언트 ──
 wss.on('connection', (ws) => {
   console.log('[WS] 브라우저 연결');
-  ws.send(JSON.stringify({ type: 'state', data: { ...state, chzzkConnected: chzzkWs?.readyState === 1 } }));
+  ws.send(JSON.stringify({ type: 'state', data: publicState() }));
+  ws.send(JSON.stringify({ type: 'lcu_champ_select', data: state.lcuDraft }));
 });
+
+// ── 롤 클라이언트 LCU 연동 ──
+const LCU_LOCKFILE_CANDIDATES = [
+  () => process.env.LCU_LOCKFILE,
+  () => process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Riot Games', 'League of Legends', 'lockfile'),
+  () => 'C:\\Riot Games\\League of Legends\\lockfile',
+  () => 'C:\\Program Files\\Riot Games\\League of Legends\\lockfile',
+  () => 'C:\\Program Files (x86)\\Riot Games\\League of Legends\\lockfile',
+].filter(Boolean);
+
+let lcuCreds = null;
+let lcuLastSig = '';
+let lcuPollTimer = null;
+
+function findLcuLockfile() {
+  for (const getPath of LCU_LOCKFILE_CANDIDATES) {
+    const file = getPath();
+    if (file && fs.existsSync(file)) return file;
+  }
+  return null;
+}
+
+function readLcuLockfile() {
+  const file = findLcuLockfile();
+  if (!file) return null;
+  const [name, pid, port, password, protocol] = fs.readFileSync(file, 'utf8').trim().split(':');
+  if (!port || !password) return null;
+  return { file, name, pid, port, password, protocol: protocol || 'https' };
+}
+
+function lcuRequest(endpoint) {
+  return new Promise((resolve, reject) => {
+    if (!lcuCreds) return reject(new Error('lcu_not_connected'));
+    const auth = Buffer.from(`riot:${lcuCreds.password}`).toString('base64');
+    const req = https.request({
+      hostname: '127.0.0.1',
+      port: lcuCreds.port,
+      path: endpoint,
+      method: 'GET',
+      rejectUnauthorized: false,
+      headers: { Authorization: `Basic ${auth}` },
+      timeout: 1200,
+    }, res => {
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        if (res.statusCode === 404) return resolve(null);
+        if (res.statusCode < 200 || res.statusCode >= 300) return reject(new Error(`lcu_${res.statusCode}`));
+        try { resolve(body ? JSON.parse(body) : null); }
+        catch (err) { reject(err); }
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('lcu_timeout')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function simplifyChampSelect(session) {
+  if (!session) return null;
+  const myTeam = Array.isArray(session.myTeam) ? session.myTeam : [];
+  const theirTeam = Array.isArray(session.theirTeam) ? session.theirTeam : [];
+  const teamByCell = new Map();
+  myTeam.forEach((p, idx) => teamByCell.set(p.cellId, { side: 'blue', idx, player: p }));
+  theirTeam.forEach((p, idx) => teamByCell.set(p.cellId, { side: 'red', idx, player: p }));
+
+  const actions = [];
+  (Array.isArray(session.actions) ? session.actions : []).flat().forEach(action => {
+    if (!action || !['ban', 'pick'].includes(action.type)) return;
+    const meta = teamByCell.get(action.actorCellId) || { side: 'blue', idx: 0, player: {} };
+    actions.push({
+      id: action.id,
+      type: action.type,
+      side: meta.side,
+      idx: meta.idx,
+      championId: Number(action.championId || 0),
+      completed: !!action.completed,
+      inProgress: !!action.isInProgress,
+      actorCellId: action.actorCellId,
+    });
+  });
+
+  const player = (p, idx) => ({
+    idx,
+    cellId: p.cellId,
+    championId: Number(p.championId || 0),
+    summonerId: p.summonerId,
+    name: p.displayName || p.summonerName || p.gameName || `참가자 ${idx + 1}`,
+    lane: p.assignedPosition || '',
+  });
+
+  return {
+    timer: session.timer || null,
+    localPlayerCellId: session.localPlayerCellId,
+    blue: myTeam.map(player),
+    red: theirTeam.map(player),
+    actions,
+  };
+}
+
+async function pollLcuDraft() {
+  if (state.lcuDraft?.source === 'relay' && Date.now() - Number(state.lcuDraft.updatedAt || 0) < 5000) {
+    return;
+  }
+  try {
+    const nextCreds = readLcuLockfile();
+    if (!nextCreds) {
+      lcuCreds = null;
+      updateLcuDraft({ connected: false, inChampSelect: false, error: '롤 클라이언트를 찾지 못했습니다.', session: null });
+      return;
+    }
+    lcuCreds = nextCreds;
+    const session = await lcuRequest('/lol-champ-select/v1/session');
+    updateLcuDraft({
+      connected: true,
+      inChampSelect: !!session,
+      error: null,
+      session: simplifyChampSelect(session),
+    });
+  } catch (err) {
+    updateLcuDraft({
+      connected: !!lcuCreds,
+      inChampSelect: false,
+      error: err.message,
+      session: null,
+    });
+  }
+}
+
+function updateLcuDraft(next) {
+  state.lcuDraft = { ...next, updatedAt: Date.now() };
+  const sig = JSON.stringify(state.lcuDraft);
+  if (sig === lcuLastSig) return;
+  lcuLastSig = sig;
+  broadcast({ type: 'lcu_champ_select', data: state.lcuDraft });
+}
+
+function startLcuPolling() {
+  if (lcuPollTimer) return;
+  pollLcuDraft();
+  lcuPollTimer = setInterval(pollLcuDraft, 1200);
+}
+
+function scheduleChzzkReconnect(chatChannelId, originalChannelId) {
+  if (!state.channelId || state.channelId !== originalChannelId) return;
+  if (chzzkReconnectTimer) return;
+  state.bot.status = 'reconnecting';
+  broadcastState();
+  const delay = chzzkReconnectDelay;
+  chzzkReconnectDelay = Math.min(chzzkReconnectDelay * 2, 60000);
+  console.log(`[CHZZK] reconnect in ${delay}ms`);
+  chzzkReconnectTimer = setTimeout(async () => {
+    chzzkReconnectTimer = null;
+    let newToken = null;
+    try {
+      const res = await fetch(`https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
+        { headers: chzzkHeaders() });
+      const json = await res.json();
+      newToken = json?.content?.accessToken || null;
+    } catch (err) {
+      state.bot.lastSendError = err.message || '치지직 토큰 갱신 실패';
+    }
+    connectChatWs(chatChannelId, originalChannelId, newToken);
+  }, delay);
+}
 
 // ── 치지직 연결 ──
 async function connectChzzk(channelId) {
+  clearTimeout(chzzkReconnectTimer);
+  chzzkReconnectTimer = null;
+  chzzkAuthed = false;
+  state.bot.status = 'connecting';
+  broadcastState();
   // 기존 연결 완전히 종료
   if (chzzkPing) { clearInterval(chzzkPing); chzzkPing = null; }
   if (chzzkWs) {
@@ -209,24 +572,29 @@ async function connectChzzk(channelId) {
     try { chzzkWs.terminate(); } catch {}
     chzzkWs = null;
   }
+  chzzkChatChannelId = null;
   // 잠시 대기 후 연결 (이전 연결 정리 시간)
   await new Promise(r => setTimeout(r, 500));
 
   state.channelId = channelId;
+  if (state.bot.sendToChat && !hasChzzkAuth()) {
+    state.bot.lastSendError = '채팅답장 ON 상태지만 봇 계정 인증이 없어 읽기 연결만 시도합니다.';
+  }
 
   let chatChannelId = channelId;
   try {
     const res = await fetch(`https://api.chzzk.naver.com/service/v2/channels/${channelId}/live-detail`,
-      { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://chzzk.naver.com/' } });
+      { headers: chzzkHeaders() });
     const json = await res.json();
     chatChannelId = json?.content?.chatChannelId || channelId;
+    chzzkChatChannelId = chatChannelId;
     console.log('[CHZZK] chatChannelId:', chatChannelId);
-  } catch (e) { console.log('[CHZZK] chatChannelId fallback:', e.message); }
+  } catch (e) { chzzkChatChannelId = chatChannelId; console.log('[CHZZK] chatChannelId fallback:', e.message); }
 
   let accessToken = null;
   try {
     const res = await fetch(`https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
-      { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://chzzk.naver.com/' } });
+      { headers: chzzkHeaders() });
     const json = await res.json();
     accessToken = json?.content?.accessToken || null;
     console.log('[CHZZK] accessToken:', accessToken ? '획득' : '없음');
@@ -237,6 +605,8 @@ async function connectChzzk(channelId) {
 
 function connectChatWs(chatChannelId, originalChannelId, accessToken) {
   const WS = require('ws');
+  chzzkAuthed = false;
+  const chatAuthMode = state.bot.sendToChat && hasChzzkAuth() ? 'SEND' : 'READ';
   const serverNum = Math.floor(Math.random() * 9) + 1;
   const url = `wss://kr-ss${serverNum}.chat.naver.com/chat`;
   console.log('[CHZZK] connecting to', url);
@@ -245,9 +615,7 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
     perMessageDeflate: false,
     handshakeTimeout: 10000,
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'Origin': 'https://chzzk.naver.com',
-      'Referer': 'https://chzzk.naver.com/',
+      ...chzzkHeaders(),
     }
   });
   chzzkWs = ws;
@@ -258,7 +626,7 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
     setTimeout(() => {
       ws.send(JSON.stringify({
         ver: '3', cmd: 100, svcid: 'game', cid: chatChannelId,
-        bdy: { uid: null, devType: 2001, accTkn: accessToken, auth: 'READ',
+        bdy: { uid: null, devType: 2001, accTkn: accessToken, auth: chatAuthMode,
                libVer: '4.9.1', osVer: 'Windows/10', devName: 'Chrome/120.0.0.0',
                locale: 'ko', chzzkTk: null },
         tid: 1,
@@ -276,6 +644,17 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
       console.log('[CHZZK] recv cmd:', msg.cmd);
       if (msg.cmd === 0) { ws.send(JSON.stringify({ ver: '3', cmd: 10000 })); return; }
       if (msg.cmd === 10000) return;
+      if (msg.cmd === 100) {
+        console.log('[CHZZK] auth response:', JSON.stringify(msg.bdy));
+        chzzkAuthed = true;
+        chzzkReconnectDelay = 5000;
+        state.bot.status = chatAuthMode === 'SEND' ? 'connected-send' : 'connected-read';
+        if (chatAuthMode === 'READ' && state.bot.sendToChat && !hasChzzkAuth()) {
+          state.bot.lastSendError = '봇 계정 인증이 없어 채팅 읽기만 연결됐습니다.';
+        }
+        broadcastState();
+        return;
+      }
       if (msg.cmd === 100) { console.log('[CHZZK] 인증 응답:', JSON.stringify(msg.bdy)); return; }
       if (msg.cmd === 93101) { console.log('[CHZZK] chat raw:', JSON.stringify(msg.bdy).slice(0,200)); handleChat(msg); }
     } catch (e) { console.log('[CHZZK] parse error:', e.message); }
@@ -284,14 +663,18 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
   ws.on('close', (code) => {
     console.log('[CHZZK] closed:', code);
     if (chzzkPing) { clearInterval(chzzkPing); chzzkPing = null; }
+    chzzkAuthed = false;
+    state.bot.status = 'closed';
     broadcastState();
+    scheduleChzzkReconnect(chatChannelId, originalChannelId);
+    return;
     if (state.channelId === originalChannelId) {
       console.log('[CHZZK] 재연결 5초 후...');
       setTimeout(async () => {
         let newToken = null;
         try {
           const res = await fetch(`https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
-            { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://chzzk.naver.com/' } });
+            { headers: chzzkHeaders() });
           const json = await res.json();
           newToken = json?.content?.accessToken || null;
         } catch {}
@@ -315,6 +698,11 @@ function handleChat(msg) {
 
     state.chatLog.push({ nickname, text, ts: Date.now() });
     if (state.chatLog.length > 300) state.chatLog.shift();
+
+    if (/^!포인트(?:\s|$)/.test(text)) {
+      state.bot.lastCommand = { nickname, text, command: '!포인트', ts: Date.now() };
+      handlePointCommand(nickname);
+    }
 
     if (/^!참가(?:\s|$)/.test(text)) {
       broadcast({ type: 'inhouse_join', nickname, text, ts: Date.now() });
@@ -396,11 +784,67 @@ app.post('/api/action', async (req, res) => {
       return res.json({ ok: true });
 
     case 'disconnect_chzzk':
+      clearTimeout(chzzkReconnectTimer);
+      chzzkReconnectTimer = null;
       if (chzzkWs) { try { chzzkWs.terminate(); } catch {} chzzkWs = null; }
       if (chzzkPing) { clearInterval(chzzkPing); chzzkPing = null; }
       state.channelId = null;
+      chzzkChatChannelId = null;
+      chzzkAuthed = false;
+      state.bot.status = 'idle';
       broadcastState();
       return res.json({ ok: true });
+
+    case 'set_bot_enabled':
+      state.bot.enabled = body.enabled !== false;
+      broadcastState();
+      return res.json({ ok: true, bot: state.bot });
+
+    case 'set_bot_chat_send':
+      state.bot.sendToChat = body.enabled === true;
+      state.bot.lastSendError = null;
+      if (state.bot.sendToChat && !hasChzzkAuth()) {
+        state.bot.lastSendError = '치지직 채팅 답장을 쓰려면 봇 계정 NID_AUT/NID_SES 인증이 필요합니다.';
+      }
+      if (state.channelId) connectChzzk(state.channelId).catch(err => {
+        state.bot.lastSendError = err.message || '치지직 재연결 실패';
+        broadcastState();
+      });
+      broadcastState();
+      return res.json({ ok: true, bot: state.bot });
+
+    case 'set_bot_auth':
+      chzzkAuth.nidAut = String(body.nidAut || '').trim();
+      chzzkAuth.nidSes = String(body.nidSes || '').trim();
+      state.bot.hasAuth = hasChzzkAuth();
+      state.bot.lastSendError = hasChzzkAuth() ? null : 'NID_AUT/NID_SES가 모두 필요합니다.';
+      if (state.channelId) connectChzzk(state.channelId).catch(err => {
+        state.bot.lastSendError = err.message || '치지직 재연결 실패';
+        broadcastState();
+      });
+      broadcastState();
+      return res.json({ ok: true, bot: state.bot });
+
+    case 'clear_bot_auth':
+      chzzkAuth.nidAut = '';
+      chzzkAuth.nidSes = '';
+      state.bot.hasAuth = false;
+      state.bot.sendToChat = false;
+      state.bot.lastSendError = null;
+      if (state.channelId) connectChzzk(state.channelId).catch(err => {
+        state.bot.lastSendError = err.message || '치지직 재연결 실패';
+        broadcastState();
+      });
+      broadcastState();
+      return res.json({ ok: true, bot: state.bot });
+
+    case 'bot_notice':
+      sendBotNotice(body.nickname || '방송공지', body.text || '');
+      return res.json({ ok: true, bot: state.bot });
+
+    case 'bot_send_test':
+      sendChzzkChat(body.text || '다비도 봇 테스트');
+      return res.json({ ok: true, bot: state.bot });
 
     case 'start_vote':
       state.vote = {
@@ -493,7 +937,21 @@ app.post('/api/action', async (req, res) => {
       return res.json({ ok: true });
 
     case 'get_state':
-      return res.json({ ...state, chzzkConnected: chzzkWs?.readyState === 1 });
+      return res.json(publicState());
+
+    case 'test_point_command':
+      handlePointCommand(body.nickname || '다비도');
+      return res.json({ ok: true, bot: state.bot });
+
+    case 'get_lcu_draft':
+      return res.json({ ok: true, data: state.lcuDraft });
+
+    case 'set_lcu_draft':
+      updateLcuDraft({
+        ...(body.data || {}),
+        source: 'relay',
+      });
+      return res.json({ ok: true });
 
     default:
       return res.json({ error: 'unknown' }, 400);
@@ -506,4 +964,5 @@ server.listen(PORT, () => {
   console.log(`  다비도의 내전 서버 실행 중`);
   console.log(`  http://localhost:${PORT}`);
   console.log('========================================');
+  startLcuPolling();
 });

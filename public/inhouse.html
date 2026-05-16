@@ -702,6 +702,8 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
   <button class="nav-btn"     onclick="goTab('records',this)">Records</button>
   <button class="nav-btn"     onclick="goTab('viewers',this)">시청자 DB</button>
   <button class="nav-btn"     onclick="goTab('overlay',this)">오버레이</button>
+  <button class="nav-btn"     onclick="goTab('discord',this)">디스코드 관리</button>
+  <button class="nav-btn"     onclick="goTab('bot',this)">치지직 봇</button>
 </nav>
 
 <!-- ══════ TAB: 내전 진행 ══════ -->
@@ -1098,6 +1100,128 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
       <div class="overlay-preview">
         <iframe class="overlay-frame" id="overlayPreviewFrame" src="/team-overlay.html?corner=1&size=360"></iframe>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ TAB: DISCORD MANAGER ══════ -->
+<div id="tab-discord" class="tab">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="card">
+      <div class="card-title">디스코드 등록 버튼</div>
+      <div class="overlay-setting">
+        <div>
+          <b>내전 참가 등록 버튼</b>
+          <span>보관함봇이 만든 버튼을 누르면 모달팝업으로 시청자 DB 등록을 진행합니다.</span>
+        </div>
+        <button class="overlay-switch on" id="discordRegisterSwitch" onclick="toggleDiscordRegister()"><i></i></button>
+      </div>
+      <div class="overlay-setting">
+        <div>
+          <b>최근 메시지 아래 버튼 생성</b>
+          <span>ON일 때 보관함봇의 버튼 생성 명령으로 채널 최신 위치에 버튼 메시지를 만들 수 있습니다.</span>
+        </div>
+        <button class="overlay-switch on" id="discordRecentSwitch" onclick="toggleDiscordRecent()"><i></i></button>
+      </div>
+      <div style="display:grid;gap:8px;margin-top:12px">
+        <input id="discordButtonLabel" type="text" placeholder="버튼 이름">
+        <select id="discordButtonStyle">
+          <option value="primary">파란색</option>
+          <option value="success">초록색</option>
+          <option value="danger">빨간색</option>
+          <option value="secondary">회색</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-g" onclick="saveDiscordConfigFromForm()">설정 저장</button>
+        <button class="btn btn-o" onclick="copyDiscordButtonCommand()">명령어 복사</button>
+      </div>
+      <p style="font-size:.74rem;color:var(--txt2);line-height:1.55;margin-top:10px">
+        디스코드 등록 채널에서 관리자만 <b>/내전등록버튼</b>을 한 번 실행하면 버튼 메시지가 생성됩니다.
+        채팅 권한이 없는 시청자도 버튼 클릭과 팝업 입력은 가능합니다.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">버튼 메시지 미리보기</div>
+      <input id="discordPanelTitle" type="text" placeholder="안내 제목" style="margin-bottom:8px;width:100%">
+      <textarea id="discordPanelDescription" rows="5" placeholder="안내 설명" style="width:100%;resize:vertical"></textarea>
+      <div style="margin-top:12px;border:1px solid var(--line);border-radius:12px;background:#eceff3;padding:14px">
+        <div id="discordPreviewTitle" style="font-weight:950;color:var(--txt);font-size:1rem;margin-bottom:8px">내전 참가 등록</div>
+        <div id="discordPreviewDesc" style="white-space:pre-line;color:var(--txt2);font-size:.82rem;line-height:1.55;margin-bottom:12px"></div>
+        <button id="discordPreviewButton" class="btn btn-bl" style="pointer-events:none">내전 참가 등록</button>
+      </div>
+      <div id="discordConfigState" style="font-size:.75rem;color:var(--txt2);margin-top:10px">설정 불러오는 중</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ TAB: CHZZK BOT ══════ -->
+<div id="tab-bot" class="tab">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="card">
+      <div class="card-title">치지직 봇 연결</div>
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:12px">
+        <input id="botChannelId" type="text" placeholder="치지직 채널 ID">
+        <button class="btn btn-g" onclick="connectBotChannel()">연결</button>
+        <button class="btn btn-o" onclick="disconnectBotChannel()">해제</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span id="botConnState" class="tb">연결 확인 중</span>
+        <span id="botEnableState" class="tb">봇 ON</span>
+        <span id="botSendState" class="tb">채팅답장 OFF</span>
+        <button class="btn btn-o" style="padding:7px 12px" onclick="toggleBotEnabled()">봇 ON/OFF</button>
+        <button class="btn btn-o" style="padding:7px 12px" onclick="toggleBotChatSend()">채팅답장 ON/OFF</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:12px">
+        <input id="botSendTestText" type="text" placeholder="치지직 채팅 직접 전송 테스트">
+        <button class="btn btn-o" onclick="testBotChatSend()">전송 테스트</button>
+      </div>
+      <div id="botSendError" style="font-size:.72rem;color:var(--rl2);margin-top:8px;min-height:18px"></div>
+      <p style="font-size:.74rem;color:var(--txt2);line-height:1.55;margin-top:12px">
+        현재 시험판은 채팅을 읽어서 사이트/OBS에 응답을 띄우는 단계입니다. 치지직 채팅창에 직접 답장하는 기능은 봇 계정 인증을 붙인 뒤 확장합니다.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">봇 계정 인증</div>
+      <div style="display:grid;gap:8px;margin-bottom:10px">
+        <input id="botNidAut" type="password" placeholder="NID_AUT">
+        <input id="botNidSes" type="password" placeholder="NID_SES">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-g" onclick="saveBotAuth()">인증 적용</button>
+        <button class="btn btn-o" onclick="clearBotAuth()">인증 지우기</button>
+        <span id="botAuthState" class="tb">인증 없음</span>
+      </div>
+      <p style="font-size:.72rem;color:var(--txt2);line-height:1.55;margin-top:10px">
+        입력값은 서버 메모리에만 보관되고 파일에는 저장하지 않습니다. 서버를 재시작하면 다시 입력해야 합니다.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">!포인트 테스트</div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:12px">
+        <input id="botTestNick" type="text" placeholder="치지직 닉네임 입력">
+        <button class="btn btn-g" onclick="testPointCommand()">테스트</button>
+      </div>
+      <div id="botLastReply" style="border:1px solid var(--line);background:var(--s2);border-radius:10px;padding:12px;font-size:.84rem;color:var(--txt2);min-height:52px">
+        아직 봇 응답이 없습니다.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">매크로 공지</div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:10px">
+        <input id="botNoticeText" type="text" placeholder="방송 화면에 띄울 공지">
+        <button class="btn btn-o" onclick="sendBotNotice()">공지 테스트</button>
+      </div>
+      <div id="botMacroList" style="display:flex;flex-direction:column;gap:7px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">명령어 상태</div>
+      <div id="botCommandState" style="display:grid;gap:8px;font-size:.82rem;color:var(--txt2)"></div>
     </div>
   </div>
 </div>
@@ -1533,8 +1657,233 @@ function goTab(name,btn){
     if(name==='main')    renderMainAll();
     if(name==='shop')    renderShop();
     if(name==='overlay') renderOverlayTab();
+    if(name==='discord') renderDiscordTab();
+    if(name==='bot')     renderBotTab();
     if(name==='roulette') initRoulette();
   }, 10);
+}
+
+let discordConfig=null;
+async function fetchDiscordConfig(){
+  const res=await fetch('/api/discord-config',{cache:'no-store'});
+  discordConfig=await res.json();
+  return discordConfig;
+}
+async function saveDiscordConfig(next){
+  const res=await fetch('/api/discord-config',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(next)
+  });
+  const data=await res.json();
+  if(data.data) discordConfig=data.data;
+  renderDiscordTab();
+  return discordConfig;
+}
+function syncDiscordPreview(){
+  const cfg=discordConfig||{};
+  const title=(document.getElementById('discordPanelTitle')?.value||cfg.panelTitle||'내전 참가 등록');
+  const desc=(document.getElementById('discordPanelDescription')?.value||cfg.panelDescription||'');
+  const label=(document.getElementById('discordButtonLabel')?.value||cfg.buttonLabel||'내전 참가 등록');
+  const style=(document.getElementById('discordButtonStyle')?.value||cfg.buttonStyle||'primary');
+  const pt=document.getElementById('discordPreviewTitle');
+  const pd=document.getElementById('discordPreviewDesc');
+  const pb=document.getElementById('discordPreviewButton');
+  if(pt) pt.textContent=title;
+  if(pd) pd.textContent=desc;
+  if(pb){
+    pb.textContent=label;
+    pb.className='btn '+({primary:'btn-bl',success:'btn-g',danger:'btn-rl',secondary:'btn-o'}[style]||'btn-bl');
+    pb.style.pointerEvents='none';
+  }
+}
+async function renderDiscordTab(){
+  if(!document.getElementById('tab-discord')) return;
+  if(!discordConfig) await fetchDiscordConfig();
+  const cfg=discordConfig||{};
+  const reg=document.getElementById('discordRegisterSwitch');
+  const recent=document.getElementById('discordRecentSwitch');
+  if(reg) reg.classList.toggle('on', cfg.registerButtonEnabled!==false);
+  if(recent) recent.classList.toggle('on', cfg.recentPlacementEnabled!==false);
+  const label=document.getElementById('discordButtonLabel');
+  const style=document.getElementById('discordButtonStyle');
+  const title=document.getElementById('discordPanelTitle');
+  const desc=document.getElementById('discordPanelDescription');
+  if(label && document.activeElement!==label) label.value=cfg.buttonLabel||'내전 참가 등록';
+  if(style && document.activeElement!==style) style.value=cfg.buttonStyle||'primary';
+  if(title && document.activeElement!==title) title.value=cfg.panelTitle||'내전 참가 등록';
+  if(desc && document.activeElement!==desc) desc.value=cfg.panelDescription||'';
+  [label,style,title,desc].forEach(el=>{ if(el && !el.dataset.discordBound){ el.dataset.discordBound='1'; el.addEventListener('input',syncDiscordPreview); el.addEventListener('change',syncDiscordPreview); }});
+  const state=document.getElementById('discordConfigState');
+  if(state) state.textContent='저장됨: '+(cfg.updatedAt?new Date(cfg.updatedAt).toLocaleString('ko-KR'):'기본 설정');
+  syncDiscordPreview();
+}
+async function toggleDiscordRegister(){
+  await saveDiscordConfig({ registerButtonEnabled: !(discordConfig?.registerButtonEnabled!==false) });
+  toast(discordConfig.registerButtonEnabled?'등록 버튼 ON':'등록 버튼 OFF');
+}
+async function toggleDiscordRecent(){
+  await saveDiscordConfig({ recentPlacementEnabled: !(discordConfig?.recentPlacementEnabled!==false) });
+  toast(discordConfig.recentPlacementEnabled?'최근 메시지 아래 버튼 ON':'최근 메시지 아래 버튼 OFF');
+}
+async function saveDiscordConfigFromForm(){
+  await saveDiscordConfig({
+    buttonLabel:(document.getElementById('discordButtonLabel')?.value||'내전 참가 등록').trim(),
+    buttonStyle:document.getElementById('discordButtonStyle')?.value||'primary',
+    panelTitle:(document.getElementById('discordPanelTitle')?.value||'내전 참가 등록').trim(),
+    panelDescription:(document.getElementById('discordPanelDescription')?.value||'').trim(),
+  });
+  toast('디스코드 버튼 설정 저장');
+}
+function copyDiscordButtonCommand(){
+  const cmd='/내전등록버튼';
+  navigator.clipboard?.writeText(cmd).then(()=>toast('명령어 복사: '+cmd)).catch(()=>toast(cmd));
+}
+
+let botState=null;
+async function botAction(type, body={}){
+  const res=await fetch('/api/action',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({type,...body})
+  });
+  return res.json();
+}
+function setBotState(data){
+  if(!data) return;
+  botState=data;
+  renderBotTab();
+}
+function renderBotTab(){
+  const conn=document.getElementById('botConnState');
+  const enabled=document.getElementById('botEnableState');
+  const sendState=document.getElementById('botSendState');
+  const sendError=document.getElementById('botSendError');
+  const authState=document.getElementById('botAuthState');
+  const last=document.getElementById('botLastReply');
+  const stateBox=document.getElementById('botCommandState');
+  const macroList=document.getElementById('botMacroList');
+  const bot=botState?.bot||{};
+  if(conn){
+    const statusText={
+      connecting:'연결 시도 중',
+      reconnecting:'재연결 대기 중',
+      closed:'연결 끊김',
+      'connected-read':'읽기 연결됨',
+      'connected-send':'답장 연결됨',
+      idle:'치지직 미연결'
+    }[bot.status] || (botState?.chzzkConnected?'치지직 연결됨':'치지직 미연결');
+    conn.textContent=statusText;
+    conn.style.color=botState?.chzzkConnected?'#16a34a':'var(--txt2)';
+  }
+  if(enabled){
+    enabled.textContent=bot.enabled===false?'봇 OFF':'봇 ON';
+    enabled.style.color=bot.enabled===false?'#94a3b8':'#16a34a';
+  }
+  if(sendState){
+    sendState.textContent=bot.sendToChat?'채팅답장 ON':'채팅답장 OFF';
+    sendState.style.color=bot.sendToChat?'#16a34a':'var(--txt2)';
+  }
+  if(sendError){
+    sendError.textContent=bot.lastSendError||'';
+  }
+  if(authState){
+    authState.textContent=bot.hasAuth?'인증 적용됨':'인증 없음';
+    authState.style.color=bot.hasAuth?'#16a34a':'var(--txt2)';
+  }
+  if(last){
+    const reply=bot.lastReply;
+    last.textContent=reply?reply.text:'아직 봇 응답이 없습니다.';
+  }
+  if(stateBox){
+    const cmd=bot.lastCommand;
+    stateBox.innerHTML=`
+      <div>처리한 명령어: <b>${bot.commandCount||0}</b>개</div>
+      <div>마지막 명령어: <b>${cmd?esc(cmd.nickname+' '+cmd.text):'-'}</b></div>
+      <div>지원 명령어: <b>!포인트</b>, <b>!참가</b></div>
+    `;
+  }
+  if(macroList){
+    const macros=Array.isArray(bot.macros)?bot.macros:[];
+    macroList.innerHTML=macros.map(m=>`
+      <button class="btn btn-o" style="text-align:left;justify-content:flex-start" onclick="sendPresetNotice('${esc(String(m.id))}')">
+        <b>${esc(m.title||'공지')}</b>&nbsp; <span style="color:var(--txt2);font-weight:500">${esc(m.text||'')}</span>
+      </button>
+    `).join('') || '<div style="color:var(--txt2);font-size:.8rem">등록된 매크로가 없습니다.</div>';
+  }
+}
+async function refreshBotState(){
+  const data=await botAction('get_state');
+  setBotState(data);
+}
+async function connectBotChannel(){
+  const input=document.getElementById('botChannelId');
+  const channelId=(input?.value||'').trim();
+  if(!channelId){toast('치지직 채널 ID를 입력하세요');return;}
+  await botAction('connect_chzzk',{channelId});
+  toast('치지직 연결 시도 중');
+  setTimeout(refreshBotState,800);
+}
+async function disconnectBotChannel(){
+  await botAction('disconnect_chzzk');
+  toast('치지직 연결 해제');
+  refreshBotState();
+}
+async function toggleBotEnabled(){
+  const next=!(botState?.bot?.enabled!==false);
+  const res=await botAction('set_bot_enabled',{enabled:next});
+  if(res.bot) botState={...(botState||{}),bot:res.bot};
+  toast(next?'봇 ON':'봇 OFF');
+  refreshBotState();
+}
+async function toggleBotChatSend(){
+  const next=!(botState?.bot?.sendToChat===true);
+  const res=await botAction('set_bot_chat_send',{enabled:next});
+  if(res.bot) botState={...(botState||{}),bot:res.bot};
+  toast(next?'치지직 채팅 직접답장 ON':'치지직 채팅 직접답장 OFF');
+  setTimeout(refreshBotState,800);
+}
+async function saveBotAuth(){
+  const nidAut=(document.getElementById('botNidAut')?.value||'').trim();
+  const nidSes=(document.getElementById('botNidSes')?.value||'').trim();
+  if(!nidAut||!nidSes){toast('NID_AUT와 NID_SES를 모두 입력하세요');return;}
+  const res=await botAction('set_bot_auth',{nidAut,nidSes});
+  if(res.bot) botState={...(botState||{}),bot:res.bot};
+  const a=document.getElementById('botNidAut');
+  const s=document.getElementById('botNidSes');
+  if(a) a.value='';
+  if(s) s.value='';
+  toast('봇 계정 인증 적용');
+  setTimeout(refreshBotState,800);
+}
+async function clearBotAuth(){
+  await botAction('clear_bot_auth');
+  toast('봇 계정 인증 삭제');
+  setTimeout(refreshBotState,500);
+}
+async function testBotChatSend(){
+  const text=(document.getElementById('botSendTestText')?.value||'').trim();
+  if(!text){toast('전송 테스트 문구를 입력하세요');return;}
+  await botAction('bot_send_test',{text});
+  setTimeout(refreshBotState,300);
+}
+async function testPointCommand(){
+  const nick=(document.getElementById('botTestNick')?.value||'').trim();
+  if(!nick){toast('테스트할 치지직 닉네임을 입력하세요');return;}
+  await botAction('test_point_command',{nickname:nick});
+  setTimeout(refreshBotState,200);
+}
+async function sendBotNotice(){
+  const text=(document.getElementById('botNoticeText')?.value||'').trim();
+  if(!text){toast('공지 내용을 입력하세요');return;}
+  await botAction('bot_notice',{nickname:'방송공지',text});
+  setTimeout(refreshBotState,200);
+}
+async function sendPresetNotice(id){
+  const macro=(botState?.bot?.macros||[]).find(m=>String(m.id)===String(id));
+  if(!macro) return;
+  await botAction('bot_notice',{nickname:'방송공지',text:macro.text});
+  setTimeout(refreshBotState,200);
 }
 
 function renderOverlayTab(){
@@ -1985,17 +2334,23 @@ function parseTierText(raw){
   const t=raw.trim().replace(/\s+/g,' ');
   const found=ALL_TIERS.find(x=>x.label.toLowerCase()===t.toLowerCase());
   if(found) return found.key;
-  const msMatch=t.match(/(마스터|master)\s*(\d+)/i);
+  const msMatch=t.match(/(마스터|마|master|m)\s*(\d+)/i);
   if(msMatch){
     const lp=parseInt(msMatch[2]);
     const rounded=Math.max(0,Math.min(800,Math.round(lp/100)*100));
     return 'MS'+rounded;
   }
   const tierMap={
-    '챌':'CH','챌린저':'CH','그마':'GM','그랜드마스터':'GM','그랜드':'GM',
-    '마스터':'MS0','마':'MS0','다이아':'DI','다':'DI','에메랄드':'EM','에메':'EM','에':'EM',
-    '플래티넘':'PL','플':'PL','플래':'PL','골드':'GO','골':'GO',
-    '실버':'SI','실':'SI','브론즈':'BR','브':'BR','아이언':'IR','아':'IR',
+    '챌':'CH','챌린저':'CH','첼린저':'CH','챌린져':'CH','첼린져':'CH','c':'CH','challenger':'CH',
+    '그마':'GM','그랜드마스터':'GM','그랜드':'GM','gm':'GM','grandmaster':'GM',
+    '마스터':'MS0','마':'MS0','m':'MS0','master':'MS0',
+    '다이아':'DI','다야':'DI','다':'DI','d':'DI','diamond':'DI',
+    '에메랄드':'EM','에매랄드':'EM','애매랄드':'EM','애메랄드':'EM','에메':'EM','에':'EM','e':'EM','emerald':'EM',
+    '플래티넘':'PL','플레티넘':'PL','플래':'PL','플레':'PL','플':'PL','p':'PL','platinum':'PL',
+    '골드':'GO','골':'GO','g':'GO','gold':'GO',
+    '실버':'SI','실':'SI','s':'SI','silver':'SI',
+    '브론즈':'BR','브':'BR','b':'BR','bronze':'BR',
+    '아이언':'IR','아':'IR','i':'IR','iron':'IR',
   };
   // 공백 없이 붙여쓴 경우도 처리: '에메랄드3', '골드4', '플4' 등
   const m=t.match(/^([가-힣a-zA-Z]+?)\s*(\d?)$/);
@@ -3330,6 +3685,7 @@ async function initApp(){
   if(curBlue.length&&curRed.length) renderAutoResult();
   setTimeout(()=>renderMainAll(), 50);
   connectInhouseChatCommands();
+  refreshBotState();
 }
 initApp();
 
@@ -3343,6 +3699,8 @@ function connectInhouseChatCommands(){
     try{
       const msg=JSON.parse(e.data);
       if(msg.type==='inhouse_join') addChatParticipantByNickname(msg.nickname);
+      if(msg.type==='bot_reply') toast(msg.text);
+      if(msg.type==='state') setBotState(msg.data);
     }catch{}
   };
   inhouseCommandWs.onclose=()=>{
