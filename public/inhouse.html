@@ -1862,6 +1862,42 @@ async function moveDiscordVoiceTeams(){
     toast(res.error||'팀 음성방 이동 실패');
   }
 }
+function discordMoveReasonText(reason){
+  const text=String(reason||'');
+  if(text==='not_in_lobby') return '내전대기방에 없음';
+  if(text==='missing_permission') return '봇 권한 부족';
+  if(text.includes('Unknown Member')) return '서버 멤버를 찾을 수 없음';
+  return text || '알 수 없음';
+}
+async function moveDiscordVoiceTeams(){
+  if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정하세요');return}
+  await saveDiscordVoiceConfig();
+  const blueDiscordIds=curBlue.map(discordIdForPlayer).filter(Boolean);
+  const redDiscordIds=curRed.map(discordIdForPlayer).filter(Boolean);
+  const playersByDiscordId={};
+  curBlue.forEach(p=>{const id=discordIdForPlayer(p); if(id) playersByDiscordId[id]=p.name||'?';});
+  curRed.forEach(p=>{const id=discordIdForPlayer(p); if(id) playersByDiscordId[id]=p.name||'?';});
+  const missing=[...curBlue,...curRed].filter(p=>!discordIdForPlayer(p)).map(p=>p.name||'?');
+  if(!blueDiscordIds.length&&!redDiscordIds.length){
+    alert('이동 가능한 디스코드 연동 인원이 없습니다.\n\n디코 미연동:\n- '+missing.join('\n- '));
+    return;
+  }
+  const res=await botAction('move_discord_voice_teams',{blueDiscordIds,redDiscordIds});
+  if(res.ok){
+    const moved=(res.moved?.blue||0)+(res.moved?.red||0);
+    const skipped=(res.skipped||[]).map(item=>{
+      const id=String(item.discordId||'');
+      return `${playersByDiscordId[id]||id}: ${discordMoveReasonText(item.reason)}`;
+    });
+    const lines=[`이동 완료: ${moved}명`];
+    if(missing.length) lines.push('', '디코 미연동:', ...missing.map(name=>'- '+name));
+    if(skipped.length) lines.push('', '이동 안 됨:', ...skipped.map(text=>'- '+text));
+    alert(lines.join('\n'));
+    toast(`팀 음성방 이동: ${moved}명 이동, ${missing.length+skipped.length}명 제외`);
+  } else {
+    toast(res.error||'팀 음성방 이동 실패');
+  }
+}
 async function saveDiscordChannelOverride(){
   const input=document.getElementById('discordChannelIdInput');
   const enabled=document.getElementById('discordChannelEnabled');
