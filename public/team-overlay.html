@@ -33,7 +33,7 @@
     width:100%;
     height:100%;
     display:grid;
-    grid-template-columns:minmax(300px,420px) 1fr minmax(300px,420px);
+    grid-template-columns:minmax(360px,520px) 1fr minmax(360px,520px);
     align-items:center;
     gap:24px;
     transform:scale(var(--scale,1));
@@ -181,24 +181,24 @@
     position:fixed;
     right:var(--corner-margin,24px);
     bottom:var(--corner-margin,24px);
-    width:var(--corner-size,360px);
-    height:var(--corner-size,360px);
+    width:var(--corner-width,var(--corner-size,620px));
+    height:var(--corner-height,385px);
     grid-template-columns:1fr 1fr;
     align-items:end;
-    gap:8px;
+    gap:10px;
   }
   body.corner .spacer{display:none}
   body.corner .team{align-self:end}
-  body.corner .head{height:32px;padding:0 8px}
+  body.corner .head{height:34px;padding:0 10px}
   body.corner .label{font-size:13px}
   body.corner .meta{gap:4px;font-size:10px}
   body.corner .score{font-size:13px}
-  body.corner .list{grid-template-rows:repeat(5,32px)}
-  body.corner .player{grid-template-columns:32px minmax(0,1fr) 46px;gap:5px;padding:0 6px}
+  body.corner .list{grid-template-rows:repeat(5,34px)}
+  body.corner .player{grid-template-columns:32px minmax(0,1fr) 44px;gap:6px;padding:0 8px}
   body.corner .pos{height:21px;font-size:10px}
-  body.corner .name{font-size:11px}
+  body.corner .name{font-size:10.5px}
   body.corner .sub{font-size:8px;margin-top:1px}
-  body.corner .tier{font-size:8px;max-width:46px;padding:4px 5px}
+  body.corner .tier{font-size:8px;max-width:44px;padding:4px 5px}
   @media(max-width:900px){
     body{padding:14px}
     .overlay{
@@ -226,8 +226,12 @@
 const params = new URLSearchParams(location.search);
 const scale = Number(params.get('scale') || '1');
 if(Number.isFinite(scale) && scale > 0) document.documentElement.style.setProperty('--scale', String(scale));
-const cornerSize = Number(params.get('size') || '360');
+const cornerSize = Number(params.get('size') || '0');
 if(Number.isFinite(cornerSize) && cornerSize > 0) document.documentElement.style.setProperty('--corner-size', `${cornerSize}px`);
+const cornerWidth = Number(params.get('width') || '620');
+if(Number.isFinite(cornerWidth) && cornerWidth > 0) document.documentElement.style.setProperty('--corner-width', `${cornerWidth}px`);
+const cornerHeight = Number(params.get('height') || '385');
+if(Number.isFinite(cornerHeight) && cornerHeight > 0) document.documentElement.style.setProperty('--corner-height', `${cornerHeight}px`);
 const cornerMargin = Number(params.get('margin') || '24');
 if(Number.isFinite(cornerMargin) && cornerMargin >= 0) document.documentElement.style.setProperty('--corner-margin', `${cornerMargin}px`);
 if(params.get('compact') === '1') document.body.classList.add('compact');
