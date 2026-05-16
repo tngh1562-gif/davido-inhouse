@@ -1130,6 +1130,13 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
         </div>
         <button class="overlay-switch" id="discordButtonOnlySwitch" onclick="toggleDiscordButtonOnly()"><i></i></button>
       </div>
+      <div class="overlay-setting">
+        <div>
+          <b>일반 글 + 버튼</b>
+          <span>ON이면 프로봇처럼 일반 메시지 본문 아래에 버튼을 같이 붙여 보냅니다.</span>
+        </div>
+        <button class="overlay-switch" id="discordPlainSwitch" onclick="toggleDiscordPlainMessage()"><i></i></button>
+      </div>
       <div style="display:grid;gap:8px;margin-top:12px">
         <input id="discordButtonLabel" type="text" placeholder="버튼 이름">
         <select id="discordButtonStyle">
@@ -1727,9 +1734,11 @@ async function renderDiscordTab(){
   const reg=document.getElementById('discordRegisterSwitch');
   const recent=document.getElementById('discordRecentSwitch');
   const buttonOnly=document.getElementById('discordButtonOnlySwitch');
+  const plain=document.getElementById('discordPlainSwitch');
   if(reg) reg.classList.toggle('on', cfg.registerButtonEnabled!==false);
   if(recent) recent.classList.toggle('on', cfg.recentPlacementEnabled!==false);
   if(buttonOnly) buttonOnly.classList.toggle('on', cfg.buttonOnly===true);
+  if(plain) plain.classList.toggle('on', cfg.plainMessage===true);
   const label=document.getElementById('discordButtonLabel');
   const style=document.getElementById('discordButtonStyle');
   const title=document.getElementById('discordPanelTitle');
@@ -1768,6 +1777,10 @@ async function toggleDiscordRecent(){
 async function toggleDiscordButtonOnly(){
   await saveDiscordConfig({ buttonOnly: !(discordConfig?.buttonOnly===true) });
   toast(discordConfig.buttonOnly?'버튼만 생성 ON':'버튼만 생성 OFF');
+}
+async function toggleDiscordPlainMessage(){
+  await saveDiscordConfig({ plainMessage: !(discordConfig?.plainMessage===true) });
+  toast(discordConfig.plainMessage?'일반 글 + 버튼 ON':'일반 글 + 버튼 OFF');
 }
 async function saveDiscordConfigFromForm(){
   await saveDiscordConfig({
