@@ -173,6 +173,7 @@ function defaultDiscordConfig() {
     buttonStyle: 'primary',
     panelTitle: '내전 참가 등록',
     panelDescription: '아래 버튼을 누르면 내전 참가 등록 팝업이 열립니다.\n롤 닉네임, 치지직 닉네임, 티어, 포지션을 입력하면 내전사이트 시청자 DB에 등록됩니다.',
+    messageContent: '# 내전 참가 등록\n아래 버튼을 누르면 내전 참가 등록 팝업이 열립니다.\n롤 닉네임, 치지직 닉네임, 티어, 포지션을 입력하면 내전사이트 시청자 DB에 등록됩니다.',
     updatedAt: null,
   };
 }
@@ -198,6 +199,7 @@ function normalizeDiscordConfig(data) {
     buttonStyle: style,
     panelTitle: String(data?.panelTitle || base.panelTitle).slice(0, 120),
     panelDescription: String(data?.panelDescription || base.panelDescription).slice(0, 1800),
+    messageContent: String(data?.messageContent || data?.panelDescription || base.messageContent).slice(0, 1900),
     updatedAt: data?.updatedAt || null,
   };
 }

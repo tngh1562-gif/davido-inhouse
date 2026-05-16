@@ -1162,10 +1162,8 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 
     <div class="card">
       <div class="card-title">버튼 메시지 미리보기</div>
-      <input id="discordPanelTitle" type="text" placeholder="안내 제목" style="margin-bottom:8px;width:100%">
-      <textarea id="discordPanelDescription" rows="5" placeholder="안내 설명" style="width:100%;resize:vertical"></textarea>
+      <textarea id="discordMessageContent" rows="8" placeholder="# 내전 규칙&#10;원하는 글을 디스코드 마크다운 그대로 입력하세요." style="width:100%;resize:vertical"></textarea>
       <div style="margin-top:12px;border:1px solid var(--line);border-radius:12px;background:#eceff3;padding:14px">
-        <div id="discordPreviewTitle" style="font-weight:950;color:var(--txt);font-size:1rem;margin-bottom:8px">내전 참가 등록</div>
         <div id="discordPreviewDesc" style="white-space:pre-line;color:var(--txt2);font-size:.82rem;line-height:1.55;margin-bottom:12px"></div>
         <button id="discordPreviewButton" class="btn btn-bl" style="pointer-events:none">내전 참가 등록</button>
       </div>
@@ -1716,14 +1714,11 @@ async function saveDiscordConfig(next){
 }
 function syncDiscordPreview(){
   const cfg=discordConfig||{};
-  const title=(document.getElementById('discordPanelTitle')?.value||cfg.panelTitle||'내전 참가 등록');
-  const desc=(document.getElementById('discordPanelDescription')?.value||cfg.panelDescription||'');
+  const desc=(document.getElementById('discordMessageContent')?.value||cfg.messageContent||cfg.panelDescription||'');
   const label=(document.getElementById('discordButtonLabel')?.value||cfg.buttonLabel||'내전 참가 등록');
   const style=(document.getElementById('discordButtonStyle')?.value||cfg.buttonStyle||'primary');
-  const pt=document.getElementById('discordPreviewTitle');
   const pd=document.getElementById('discordPreviewDesc');
   const pb=document.getElementById('discordPreviewButton');
-  if(pt) pt.textContent=title;
   if(pd) pd.textContent=desc;
   if(pb){
     pb.textContent=label;
@@ -1745,13 +1740,11 @@ async function renderDiscordTab(){
   if(plain) plain.classList.toggle('on', cfg.plainMessage===true);
   const label=document.getElementById('discordButtonLabel');
   const style=document.getElementById('discordButtonStyle');
-  const title=document.getElementById('discordPanelTitle');
-  const desc=document.getElementById('discordPanelDescription');
+  const desc=document.getElementById('discordMessageContent');
   const channelList=document.getElementById('discordChannelList');
   if(label && document.activeElement!==label) label.value=cfg.buttonLabel||'내전 참가 등록';
   if(style && document.activeElement!==style) style.value=cfg.buttonStyle||'primary';
-  if(title && document.activeElement!==title) title.value=cfg.panelTitle||'내전 참가 등록';
-  if(desc && document.activeElement!==desc) desc.value=cfg.panelDescription||'';
+  if(desc && document.activeElement!==desc) desc.value=cfg.messageContent||cfg.panelDescription||'';
   if(channelList){
     const overrides=cfg.channelOverrides||{};
     const rows=Object.entries(overrides);
@@ -1765,7 +1758,7 @@ async function renderDiscordTab(){
       </div>
     `).join(''):'<div style="font-size:.78rem;color:var(--txt2);padding:10px;border:1px solid var(--line);border-radius:10px;background:#eceff3">채널별 설정 없음 · 전체 ON/OFF 설정을 따릅니다.</div>';
   }
-  [label,style,title,desc].forEach(el=>{ if(el && !el.dataset.discordBound){ el.dataset.discordBound='1'; el.addEventListener('input',syncDiscordPreview); el.addEventListener('change',syncDiscordPreview); }});
+  [label,style,desc].forEach(el=>{ if(el && !el.dataset.discordBound){ el.dataset.discordBound='1'; el.addEventListener('input',syncDiscordPreview); el.addEventListener('change',syncDiscordPreview); }});
   const state=document.getElementById('discordConfigState');
   if(state) state.textContent='저장됨: '+(cfg.updatedAt?new Date(cfg.updatedAt).toLocaleString('ko-KR'):'기본 설정');
   syncDiscordPreview();
@@ -1790,8 +1783,7 @@ async function saveDiscordConfigFromForm(){
   await saveDiscordConfig({
     buttonLabel:(document.getElementById('discordButtonLabel')?.value||'내전 참가 등록').trim(),
     buttonStyle:document.getElementById('discordButtonStyle')?.value||'primary',
-    panelTitle:(document.getElementById('discordPanelTitle')?.value||'내전 참가 등록').trim(),
-    panelDescription:(document.getElementById('discordPanelDescription')?.value||'').trim(),
+    messageContent:(document.getElementById('discordMessageContent')?.value||'').trim(),
   });
   toast('디스코드 버튼 설정 저장');
 }
