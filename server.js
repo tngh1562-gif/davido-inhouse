@@ -163,6 +163,7 @@ function defaultDiscordConfig() {
   return {
     registerButtonEnabled: true,
     recentPlacementEnabled: true,
+    channelOverrides: {},
     buttonLabel: '내전 참가 등록',
     buttonStyle: 'primary',
     panelTitle: '내전 참가 등록',
@@ -174,9 +175,18 @@ function defaultDiscordConfig() {
 function normalizeDiscordConfig(data) {
   const base = defaultDiscordConfig();
   const style = ['primary', 'success', 'danger', 'secondary'].includes(data?.buttonStyle) ? data.buttonStyle : base.buttonStyle;
+  const channelOverrides = {};
+  if (data?.channelOverrides && typeof data.channelOverrides === 'object') {
+    Object.entries(data.channelOverrides).forEach(([channelId, value]) => {
+      const id = String(channelId || '').replace(/\D/g, '');
+      if (!id) return;
+      channelOverrides[id] = { recentPlacementEnabled: value?.recentPlacementEnabled !== false };
+    });
+  }
   return {
     registerButtonEnabled: data?.registerButtonEnabled !== false,
     recentPlacementEnabled: data?.recentPlacementEnabled !== false,
+    channelOverrides,
     buttonLabel: String(data?.buttonLabel || base.buttonLabel).slice(0, 80),
     buttonStyle: style,
     panelTitle: String(data?.panelTitle || base.panelTitle).slice(0, 120),
