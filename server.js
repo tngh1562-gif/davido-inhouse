@@ -182,6 +182,9 @@ function defaultDiscordConfig() {
     panelTitle: '내전 참가 등록',
     panelDescription: '아래 버튼을 누르면 내전 참가 등록 팝업이 열립니다.\n롤 닉네임, 치지직 닉네임, 티어, 포지션을 입력하면 내전사이트 시청자 DB에 등록됩니다.',
     messageContent: '# 내전 참가 등록\n아래 버튼을 누르면 내전 참가 등록 팝업이 열립니다.\n롤 닉네임, 치지직 닉네임, 티어, 포지션을 입력하면 내전사이트 시청자 DB에 등록됩니다.',
+    voiceLobbyChannelId: '',
+    voiceBlueChannelId: '',
+    voiceRedChannelId: '',
     updatedAt: null,
   };
 }
@@ -208,6 +211,9 @@ function normalizeDiscordConfig(data) {
     panelTitle: String(data?.panelTitle || base.panelTitle).slice(0, 120),
     panelDescription: String(data?.panelDescription || base.panelDescription).slice(0, 1800),
     messageContent: String(data?.messageContent || data?.panelDescription || base.messageContent).slice(0, 1900),
+    voiceLobbyChannelId: String(data?.voiceLobbyChannelId || '').replace(/\D/g, ''),
+    voiceBlueChannelId: String(data?.voiceBlueChannelId || '').replace(/\D/g, ''),
+    voiceRedChannelId: String(data?.voiceRedChannelId || '').replace(/\D/g, ''),
     updatedAt: data?.updatedAt || null,
   };
 }
@@ -919,6 +925,41 @@ app.post('/api/action', async (req, res) => {
         const result = await postJson(botApiEndpoint, {
           secret: DISCORD_BOT_API_SECRET,
           channelId,
+        });
+        return res.json(result);
+      } catch (err) {
+        return res.json({ ok: false, error: `${err.message || '보관함봇 호출 실패'} (${botApiEndpoint})` });
+      }
+    }
+
+    case 'move_discord_voice_teams': {
+      const cfg = readDiscordConfig();
+      const lobbyChannelId = String(body.lobbyChannelId || cfg.voiceLobbyChannelId || '').replace(/\D/g, '');
+      const blueChannelId = String(body.blueChannelId || cfg.voiceBlueChannelId || '').replace(/\D/g, '');
+      const redChannelId = String(body.redChannelId || cfg.voiceRedChannelId || '').replace(/\D/g, '');
+      const cleanIds = value => Array.isArray(value)
+        ? value.map(id => String(id || '').replace(/\D/g, '')).filter(Boolean)
+        : [];
+      const blueDiscordIds = cleanIds(body.blueDiscordIds);
+      const redDiscordIds = cleanIds(body.redDiscordIds);
+      if (!lobbyChannelId || !blueChannelId || !redChannelId) {
+        return res.json({ ok: false, error: '내전대기방 / 1팀 / 2팀 음성채널 ID를 먼저 저장하세요.' });
+      }
+      if (!blueDiscordIds.length || !redDiscordIds.length) {
+        return res.json({ ok: false, error: '팀원 중 디스코드 등록이 안 된 사람이 있습니다.' });
+      }
+      if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET) {
+        return res.json({ ok: false, error: 'DISCORD_BOT_API_URL / DISCORD_BOT_API_SECRET 환경변수가 필요합니다.' });
+      }
+      const botApiEndpoint = `${DISCORD_BOT_API_URL}/api/move-voice-teams`;
+      try {
+        const result = await postJson(botApiEndpoint, {
+          secret: DISCORD_BOT_API_SECRET,
+          lobbyChannelId,
+          blueChannelId,
+          redChannelId,
+          blueDiscordIds,
+          redDiscordIds,
         });
         return res.json(result);
       } catch (err) {
