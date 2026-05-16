@@ -23,6 +23,9 @@ const INHOUSE_DB_FILE = path.join(DATA_DIR, 'inhouse-db.json');
 const SEED_INHOUSE_DB_FILE = path.join(__dirname, 'data', 'inhouse-db.json');
 const INHOUSE_BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const DISCORD_CONFIG_FILE = path.join(DATA_DIR, 'discord-config.json');
+// Optional: lets the inhouse site ask the separate Discord bot service to send button messages.
+const DISCORD_BOT_API_URL = (process.env.DISCORD_BOT_API_URL || '').replace(/\/$/, '');
+const DISCORD_BOT_API_SECRET = process.env.DISCORD_BOT_API_SECRET || '';
 
 function defaultInhouseDB() {
   return {
@@ -301,6 +304,41 @@ function chzzkHeaders(extra = {}) {
   const cookie = chzzkCookieHeader();
   if (cookie) headers.Cookie = cookie;
   return headers;
+}
+
+function postJson(url, payload) {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const body = Buffer.from(JSON.stringify(payload || {}), 'utf8');
+    const lib = target.protocol === 'https:' ? https : http;
+    const req = lib.request(target, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Length': body.length,
+      },
+      timeout: 10000,
+    }, res => {
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => {
+        const text = Buffer.concat(chunks).toString('utf8');
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+        if (res.statusCode >= 400) {
+          const err = new Error(data.error || `HTTP ${res.statusCode}`);
+          err.data = data;
+          reject(err);
+          return;
+        }
+        resolve(data);
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => req.destroy(new Error('request_timeout')));
+    req.write(body);
+    req.end();
+  });
 }
 
 // ── 브로드캐스트 ──
@@ -859,6 +897,23 @@ app.post('/api/action', async (req, res) => {
     case 'bot_send_test':
       sendChzzkChat(body.text || '다비도 봇 테스트');
       return res.json({ ok: true, bot: state.bot });
+
+    case 'send_discord_register_button': {
+      const channelId = String(body.channelId || '').replace(/\D/g, '');
+      if (!channelId) return res.json({ ok: false, error: '디스코드 채널 ID가 필요합니다.' });
+      if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET) {
+        return res.json({ ok: false, error: 'DISCORD_BOT_API_URL / DISCORD_BOT_API_SECRET 환경변수가 필요합니다.' });
+      }
+      try {
+        const result = await postJson(`${DISCORD_BOT_API_URL}/api/inhouse-register-button`, {
+          secret: DISCORD_BOT_API_SECRET,
+          channelId,
+        });
+        return res.json(result);
+      } catch (err) {
+        return res.json({ ok: false, error: err.message || '보관함봇 호출 실패' });
+      }
+    }
 
     case 'start_vote':
       state.vote = {

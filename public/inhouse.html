@@ -1150,6 +1150,10 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
         <button class="btn btn-g" onclick="saveDiscordConfigFromForm()">설정 저장</button>
         <button class="btn btn-o" onclick="copyDiscordButtonCommand()">명령어 복사</button>
       </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:12px">
+        <input id="discordSendChannelId" type="text" placeholder="보낼 디스코드 채널 ID">
+        <button class="btn btn-g" onclick="sendDiscordButtonFromSite()">디코로 보내기</button>
+      </div>
       <p style="font-size:.74rem;color:var(--txt2);line-height:1.55;margin-top:10px">
         디스코드 등록 채널에서 관리자만 <b>/내전등록버튼</b>을 한 번 실행하면 버튼 메시지가 생성됩니다.
         채팅 권한이 없는 시청자도 버튼 클릭과 팝업 입력은 가능합니다.
@@ -1794,6 +1798,18 @@ async function saveDiscordConfigFromForm(){
 function copyDiscordButtonCommand(){
   const cmd='/내전등록버튼';
   navigator.clipboard?.writeText(cmd).then(()=>toast('명령어 복사: '+cmd)).catch(()=>toast(cmd));
+}
+async function sendDiscordButtonFromSite(){
+  const input=document.getElementById('discordSendChannelId');
+  const channelId=(input?.value||'').replace(/\D/g,'');
+  if(!channelId){toast('보낼 디스코드 채널 ID를 입력하세요');return}
+  await saveDiscordConfigFromForm();
+  const res=await botAction('send_discord_register_button',{channelId});
+  if(res.ok){
+    toast('디스코드로 버튼 메시지를 보냈습니다');
+  } else {
+    toast(res.error||'디스코드 전송 실패');
+  }
 }
 async function saveDiscordChannelOverride(){
   const input=document.getElementById('discordChannelIdInput');
