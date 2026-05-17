@@ -179,6 +179,129 @@ function writeInhouseDB(data) {
   return payload;
 }
 
+function normalizeRegisterText(value, max = 200) {
+  return String(value || '').trim().slice(0, max);
+}
+
+function normalizeRegisterTier(value) {
+  const raw = normalizeRegisterText(value, 40);
+  if (!raw) return '';
+  const upper = raw.toUpperCase().replace(/\s+/g, '');
+  const compact = upper
+    .replace(/^IRON/, 'IR').replace(/^아이언/, 'IR')
+    .replace(/^BRONZE/, 'BR').replace(/^브론즈/, 'BR')
+    .replace(/^SILVER/, 'SI').replace(/^실버/, 'SI')
+    .replace(/^GOLD/, 'GO').replace(/^골드/, 'GO')
+    .replace(/^PLATINUM/, 'PL').replace(/^플래티넘/, 'PL').replace(/^플레티넘/, 'PL').replace(/^플래/, 'PL')
+    .replace(/^EMERALD/, 'EM').replace(/^에메랄드/, 'EM')
+    .replace(/^DIAMOND/, 'DI').replace(/^다이아몬드/, 'DI').replace(/^다이아/, 'DI')
+    .replace(/^MASTER/, 'MS').replace(/^마스터/, 'MS')
+    .replace(/^GRANDMASTER/, 'GM').replace(/^그랜드마스터/, 'GM')
+    .replace(/^CHALLENGER/, 'CH').replace(/^챌린저/, 'CH');
+  if (/^(CH|GM)$/.test(compact)) return compact;
+  if (/^M(?:S|ASTER)?\d*$/.test(compact)) return 'MS' + (compact.match(/\d+/)?.[0] || '0');
+  const m = compact.match(/^(IR|BR|SI|GO|PL|EM|DI)([1-4])$/);
+  return m ? `${m[1]}${m[2]}` : raw;
+}
+
+function normalizeRegisterPosition(value) {
+  const raw = normalizeRegisterText(value, 30);
+  const key = raw.toLowerCase().replace(/\s+/g, '');
+  const map = {
+    top: '탑', t: '탑', 탑: '탑',
+    jug: '정글', jg: '정글', jgl: '정글', jungle: '정글', j: '정글', 정글: '정글',
+    mid: '미드', m: '미드', 미드: '미드',
+    adc: '원딜', ad: '원딜', bot: '원딜', 원딜: '원딜',
+    sup: '서포터', supp: '서포터', support: '서포터', spt: '서포터', 서폿: '서포터', 서포터: '서포터',
+    fill: '무관', any: '무관', none: '무관', 무관: '무관', '-': '무관',
+  };
+  return map[key] || raw || '무관';
+}
+
+function normalizeRegisterPositions(body) {
+  const hasPositions = Array.isArray(body.positions)
+    || body.position1 || body.pos1 || body.mainPosition || body.mainPos
+    || body.position2 || body.pos2 || body.subPosition || body.subPos
+    || body.position3 || body.pos3;
+  if (!hasPositions) return [];
+  const raw = Array.isArray(body.positions)
+    ? body.positions
+    : [body.position1 || body.pos1 || body.mainPosition || body.mainPos, body.position2 || body.pos2 || body.subPosition || body.subPos, body.position3 || body.pos3];
+  const positions = raw.map(normalizeRegisterPosition).filter(Boolean).slice(0, 3);
+  while (positions.length < 3) positions.push('무관');
+  return positions;
+}
+
+function normalizeRegisterName(body) {
+  const direct = normalizeRegisterText(body.name || body.lolName || body.riotName || body.summonerName || body.nickname, 120);
+  if (direct) return direct;
+  const gameName = normalizeRegisterText(body.gameName || body.lolId, 80);
+  const tagLine = normalizeRegisterText(body.tagLine || body.tag || body.riotTag, 30).replace(/^#/, '');
+  if (gameName && tagLine) return `${gameName}#${tagLine}`;
+  return gameName;
+}
+
+function upsertViewerFromDiscordRegistration(body) {
+  const db = readInhouseDB();
+  const discordId = normalizeRegisterText(body.discordId || body.discordUserId || body.userId || body.memberId, 40).replace(/\D/g, '');
+  const name = normalizeRegisterName(body);
+  const chzzk = normalizeRegisterText(body.chzzk || body.chzzkNick || body.chzzkNickname || body.chatName, 120);
+  const tier = normalizeRegisterTier(body.tier || body.rank || body.lolTier);
+  const memo = normalizeRegisterText(body.memo || body.note, 500);
+  const positions = normalizeRegisterPositions(body);
+  const now = Date.now();
+
+  if (!discordId && !name && !chzzk) {
+    const err = new Error('등록할 닉네임 또는 디스코드 ID가 필요합니다.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const norm = value => String(value || '').trim().toLowerCase();
+  const cleanName = norm(name);
+  const cleanChzzk = norm(chzzk);
+  let viewer = db.viewers.find(v => discordId && String(v.discordId || '').replace(/\D/g, '') === discordId)
+    || db.viewers.find(v => cleanChzzk && norm(v.chzzk) === cleanChzzk)
+    || db.viewers.find(v => cleanName && norm(v.name) === cleanName);
+
+  if (!viewer) {
+    if (!name) {
+      const err = new Error('신규 등록은 롤 닉네임이 필요합니다.');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (!tier) {
+      const err = new Error('신규 등록은 티어가 필요합니다.');
+      err.statusCode = 400;
+      throw err;
+    }
+    viewer = {
+      id: Math.max(Number(db.vid) || 0, ...db.viewers.map(v => Number(v.id) || 0)) + 1,
+      name,
+      chzzk,
+      tier,
+      positions: positions.length ? positions : ['무관', '무관', '무관'],
+      memo,
+      discordId,
+      added: now,
+      registeredFrom: 'discord',
+    };
+    db.viewers.push(viewer);
+  } else {
+    if (name) viewer.name = name;
+    if (chzzk) viewer.chzzk = chzzk;
+    if (tier) viewer.tier = tier;
+    if (positions.length) viewer.positions = positions;
+    if (memo) viewer.memo = memo;
+    if (discordId) viewer.discordId = discordId;
+    viewer.updatedAt = now;
+    viewer.registeredFrom = viewer.registeredFrom || 'discord';
+  }
+
+  db.vid = Math.max(Number(db.vid) || 0, Number(viewer.id) || 0);
+  return { db: writeInhouseDB(db), viewer };
+}
+
 function defaultDiscordConfig() {
   return {
     registerButtonEnabled: true,
@@ -257,6 +380,33 @@ app.post('/api/inhouse-db', (req, res) => {
     res.status(500).json({ ok: false, error: 'write_failed' });
   }
 });
+
+function validateDiscordBotSecret(req, res) {
+  if (!DISCORD_BOT_API_SECRET) return true;
+  const supplied = req.body?.secret || req.headers['x-discord-bot-secret'] || req.headers['x-inhouse-secret'];
+  if (supplied === DISCORD_BOT_API_SECRET) return true;
+  res.status(401).json({ ok: false, error: 'invalid_secret' });
+  return false;
+}
+
+function handleDiscordInhouseRegister(req, res) {
+  if (!validateDiscordBotSecret(req, res)) return;
+  try {
+    const result = upsertViewerFromDiscordRegistration(req.body || {});
+    res.json({
+      ok: true,
+      viewer: result.viewer,
+      viewers: result.db.viewers.length,
+      vid: result.db.vid,
+    });
+  } catch (err) {
+    res.status(err.statusCode || 400).json({ ok: false, error: err.message || 'register_failed' });
+  }
+}
+
+app.post('/api/inhouse-register', handleDiscordInhouseRegister);
+app.post('/api/discord-inhouse-register', handleDiscordInhouseRegister);
+app.post('/api/register-viewer', handleDiscordInhouseRegister);
 
 app.get('/api/discord-config', (req, res) => {
   res.json(readDiscordConfig());
@@ -1032,10 +1182,18 @@ app.post('/api/action', async (req, res) => {
         return res.json({ ok: false, error: 'DISCORD_BOT_API_URL / DISCORD_BOT_API_SECRET 환경변수가 필요합니다.' });
       }
       const botApiEndpoint = `${DISCORD_BOT_API_URL}/api/inhouse-register-button`;
+      const baseUrl = String(process.env.PUBLIC_BASE_URL || process.env.RAILWAY_PUBLIC_DOMAIN || `${req.protocol}://${req.get('host')}`)
+        .replace(/^([^:]+:\/\/)?([^/]+)$/, (all, proto, host) => proto ? all : `https://${host}`)
+        .replace(/\/+$/, '');
+      const cfg = readDiscordConfig();
       try {
         const result = await postJson(botApiEndpoint, {
           secret: DISCORD_BOT_API_SECRET,
           channelId,
+          apiBaseUrl: baseUrl,
+          siteUrl: baseUrl,
+          registerEndpoint: `${baseUrl}/api/inhouse-register`,
+          discordConfig: cfg,
         });
         return res.json(result);
       } catch (err) {
