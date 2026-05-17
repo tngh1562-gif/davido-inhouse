@@ -28,7 +28,15 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: res => {
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  },
+}));
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const INHOUSE_DB_FILE = path.join(DATA_DIR, 'inhouse-db.json');
