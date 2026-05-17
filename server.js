@@ -296,6 +296,8 @@ let chzzkTid = 10;
 let chzzkReconnectTimer = null;
 let chzzkReconnectDelay = 5000;
 let chzzkAuthed = false;
+let chzzkLastMessageAt = 0;
+const recentChatKeys = new Map();
 const chzzkAuth = {
   nidAut: process.env.CHZZK_NID_AUT || '',
   nidSes: process.env.CHZZK_NID_SES || '',
@@ -370,7 +372,9 @@ function broadcastState() {
 
 function publicState() {
   state.bot.hasAuth = hasChzzkAuth();
-  return { ...state, chzzkConnected: chzzkAuthed && chzzkWs?.readyState === 1 };
+  const wsOpen = chzzkWs?.readyState === 1;
+  const recentlyReceivedChat = Date.now() - chzzkLastMessageAt < 60000;
+  return { ...state, chzzkConnected: wsOpen && (chzzkAuthed || recentlyReceivedChat) };
 }
 
 function normalizeChatName(value) {
@@ -762,9 +766,31 @@ function handleChat(msg) {
     const nickname = profile.nickname || chat.nickname || "unknown";
     const text = (chat.msg || chat.message || chat.content || '').trim();
     if (!text) return;
+    const now = Date.now();
+    const messageTime = Number(chat.msgTime || chat.ctime || chat.createTime || 0);
+    const chatKey = [
+      chat.msgId || chat.messageId || chat.sid || '',
+      nickname,
+      text,
+      messageTime || Math.floor(now / 1000),
+    ].join('|');
+    const lastSeen = recentChatKeys.get(chatKey) || 0;
+    if (now - lastSeen < 3000) return;
+    recentChatKeys.set(chatKey, now);
+    for (const [key, seenAt] of recentChatKeys) {
+      if (now - seenAt > 30000) recentChatKeys.delete(key);
+    }
+
+    chzzkLastMessageAt = now;
+    if (!chzzkAuthed || state.bot.status === 'connecting' || state.bot.status === 'closed') {
+      chzzkAuthed = true;
+      chzzkReconnectDelay = 5000;
+      state.bot.status = state.bot.sendToChat && hasChzzkAuth() ? 'connected-send' : 'connected-read';
+      broadcastState();
+    }
     console.log('[CHAT] keys:', Object.keys(chat).join(','), 'nick:', nickname, 'text:', text);
 
-    state.chatLog.push({ nickname, text, ts: Date.now() });
+    state.chatLog.push({ nickname, text, ts: now });
     if (state.chatLog.length > 300) state.chatLog.shift();
 
     if (/^!포인트(?:\s|$)/.test(text)) {
