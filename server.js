@@ -170,13 +170,15 @@ function readInhouseDB() {
   }
 }
 
-function writeInhouseDB(data) {
+function writeInhouseDB(data, options = {}) {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   const existing = readInhouseDB();
   backupInhouseDB(existing);
 
   const incoming = normalizeInhouseDB(data || {});
-  const viewers = mergeViewers(existing.viewers, incoming.viewers);
+  const viewers = options.mergeViewers === true
+    ? mergeViewers(existing.viewers, incoming.viewers)
+    : incoming.viewers;
   const maxViewerId = viewers.reduce((max, viewer) => Math.max(max, Number(viewer.id) || 0), 0);
   const payload = {
     ...incoming,
@@ -317,7 +319,7 @@ function upsertViewerFromDiscordRegistration(body) {
   }
 
   db.vid = Math.max(Number(db.vid) || 0, Number(viewer.id) || 0);
-  return { db: writeInhouseDB(db), viewer };
+  return { db: writeInhouseDB(db, { mergeViewers: true }), viewer };
 }
 
 function defaultDiscordConfig() {
@@ -392,7 +394,7 @@ app.get('/api/inhouse-db', (req, res) => {
 
 app.post('/api/inhouse-db', (req, res) => {
   try {
-    res.json({ ok: true, data: writeInhouseDB(req.body || {}) });
+    res.json({ ok: true, data: writeInhouseDB(req.body || {}, { mergeViewers: false }) });
   } catch (err) {
     console.error('[INHOUSE_DB] write failed:', err.message);
     res.status(500).json({ ok: false, error: 'write_failed' });

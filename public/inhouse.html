@@ -1484,7 +1484,16 @@ function saveRemoteNow(){
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify(snapshotData()),
-  }).catch(()=>{});
+  })
+  .then(async r=>{
+    const payload=await r.json().catch(()=>null);
+    if(!r.ok || payload?.ok===false) throw new Error(payload?.error || 'server_save_failed');
+    return payload;
+  })
+  .catch(err=>{
+    console.error('[INHOUSE_DB] remote save failed', err);
+    toast('서버 DB 저장 실패: 새로고침 전에 다시 저장을 확인해주세요');
+  });
 }
 
 function queueRemoteSave(){
