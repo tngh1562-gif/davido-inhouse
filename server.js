@@ -240,7 +240,7 @@ function normalizeRegisterPositions(body) {
 }
 
 function normalizeRegisterName(body) {
-  const direct = normalizeRegisterText(body.name || body.lolName || body.lolNickname || body.riotName || body.riotNickname || body.riotId || body.summonerName || body.nickname || body['룰닉'] || body['롤닉'], 120);
+  const direct = normalizeRegisterText(body.name || body.lolName || body.lolNickname || body.riotName || body.riotNickname || body.riotId || body.summonerName || body['룰닉'] || body['롤닉'], 120);
   if (direct) return direct;
   const gameName = normalizeRegisterText(body.gameName || body.lolId || body.game_name, 80);
   const tagLine = normalizeRegisterText(body.tagLine || body.tag || body.riotTag, 30).replace(/^#/, '');
@@ -252,7 +252,7 @@ function upsertViewerFromDiscordRegistration(body) {
   const db = readInhouseDB();
   const discordId = normalizeRegisterText(body.discordId || body.discordUserId || body.userId || body.memberId, 40).replace(/\D/g, '');
   const name = normalizeRegisterName(body);
-  const chzzk = normalizeRegisterText(body.chzzk || body.chzzkNick || body.chzzkNickname || body.chatName || body['치지직'], 120);
+  const chzzk = normalizeRegisterText(body.chzzk || body.chzzkNick || body.chzzkNickname || body.chzzkName || body.chatName || body.chatNickname || body.nickname || body['치지직'], 120);
   const tier = normalizeRegisterTier(body.tier || body.rank || body.lolTier || body['티어']);
   const memo = normalizeRegisterText(body.memo || body.note, 500);
   const positions = normalizeRegisterPositions(body);
@@ -414,6 +414,9 @@ function handleDiscordInhouseRegister(req, res) {
 app.post('/api/inhouse-register', handleDiscordInhouseRegister);
 app.post('/api/discord-inhouse-register', handleDiscordInhouseRegister);
 app.post('/api/register-viewer', handleDiscordInhouseRegister);
+app.post('/api/discord-link', handleDiscordInhouseRegister);
+app.post('/api/inhouse-link', handleDiscordInhouseRegister);
+app.post('/api/link-discord', handleDiscordInhouseRegister);
 
 app.get('/api/discord-config', (req, res) => {
   res.json(readDiscordConfig());
@@ -1200,6 +1203,11 @@ app.post('/api/action', async (req, res) => {
           apiBaseUrl: baseUrl,
           siteUrl: baseUrl,
           registerEndpoint: `${baseUrl}/api/inhouse-register`,
+          linkEndpoint: `${baseUrl}/api/discord-link`,
+          endpoints: {
+            register: `${baseUrl}/api/inhouse-register`,
+            link: `${baseUrl}/api/discord-link`,
+          },
           discordConfig: cfg,
         });
         return res.json(result);
