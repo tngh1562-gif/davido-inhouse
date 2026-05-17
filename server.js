@@ -315,6 +315,15 @@ let chzzkReconnectDelay = 5000;
 let chzzkAuthed = false;
 let chzzkLastMessageAt = 0;
 const recentChatKeys = new Map();
+const CHZZK_CMD = {
+  PING: 0,
+  CONNECT: 100,
+  PONG: 10000,
+  CONNECTED: 10100,
+  REQUEST_RECENT_CHAT: 5101,
+  RECENT_CHAT: 15101,
+  CHAT: 93101,
+};
 const chzzkAuth = {
   nidAut: process.env.CHZZK_NID_AUT || '',
   nidSes: process.env.CHZZK_NID_SES || '',
@@ -745,13 +754,20 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
     }
   });
   chzzkWs = ws;
+  const connectGuard = setTimeout(() => {
+    if (state.channelId !== originalChannelId || chzzkAuthed) return;
+    state.bot.status = 'closed';
+    state.bot.lastSendError = '치지직 채팅 서버가 연결 성공 응답을 주지 않았습니다.';
+    broadcastState();
+    try { ws.terminate(); } catch {}
+  }, 12000);
 
   ws.on('open', () => {
     console.log('[CHZZK] open!');
     // 연결 확인 패킷 먼저 대기
     setTimeout(() => {
       ws.send(JSON.stringify({
-        ver: '3', cmd: 100, svcid: 'game', cid: chatChannelId,
+        ver: '3', cmd: CHZZK_CMD.CONNECT, svcid: 'game', cid: chatChannelId,
         bdy: { uid: null, devType: 2001, accTkn: accessToken, auth: chatAuthMode,
                libVer: '4.9.1', osVer: 'Windows/10', devName: 'Chrome/120.0.0.0',
                locale: 'ko', chzzkTk: null },
@@ -768,13 +784,15 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
     try {
       const msg = JSON.parse(Buffer.isBuffer(raw) ? raw.toString('utf8') : String(raw));
       console.log('[CHZZK] recv cmd:', msg.cmd);
-      if (msg.cmd === 0) { ws.send(JSON.stringify({ ver: '3', cmd: 10000 })); return; }
-      if (msg.cmd === 10000) return;
-      if (msg.cmd === 100) {
+      if (msg.cmd === CHZZK_CMD.PING) { ws.send(JSON.stringify({ ver: '3', cmd: CHZZK_CMD.PONG })); return; }
+      if (msg.cmd === CHZZK_CMD.PONG) return;
+      if (msg.cmd === CHZZK_CMD.CONNECTED || msg.cmd === CHZZK_CMD.CONNECT) {
         console.log('[CHZZK] auth response:', JSON.stringify(msg.bdy));
+        clearTimeout(connectGuard);
         chzzkAuthed = true;
         chzzkReconnectDelay = 5000;
         state.bot.status = chatAuthMode === 'SEND' ? 'connected-send' : 'connected-read';
+        state.bot.lastSendError = null;
         if (chatAuthMode === 'READ' && state.bot.sendToChat && !hasChzzkAuth()) {
           state.bot.lastSendError = '봇 계정 인증이 없어 채팅 읽기만 연결됐습니다.';
         }
@@ -788,9 +806,13 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
 
   ws.on('close', (code) => {
     console.log('[CHZZK] closed:', code);
+    clearTimeout(connectGuard);
     if (chzzkPing) { clearInterval(chzzkPing); chzzkPing = null; }
     chzzkAuthed = false;
     state.bot.status = 'closed';
+    if (state.channelId === originalChannelId && !state.bot.lastSendError) {
+      state.bot.lastSendError = `치지직 채팅 연결이 끊겼습니다. (${code})`;
+    }
     broadcastState();
     scheduleChzzkReconnect(chatChannelId, originalChannelId);
     return;
@@ -809,7 +831,12 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
     }
   });
 
-  ws.on('error', (err) => console.error('[CHZZK] error:', err.message));
+  ws.on('error', (err) => {
+    clearTimeout(connectGuard);
+    state.bot.lastSendError = err.message || '치지직 채팅 웹소켓 연결 실패';
+    broadcastState();
+    console.error('[CHZZK] error:', err.message);
+  });
 }
 
 function handleChat(msg) {
