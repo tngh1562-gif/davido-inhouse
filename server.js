@@ -38,9 +38,22 @@ app.use(express.static(path.join(__dirname, 'public'), {
   },
 }));
 
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const IS_RAILWAY = !!(
+  process.env.RAILWAY_ENVIRONMENT ||
+  process.env.RAILWAY_PROJECT_ID ||
+  process.env.RAILWAY_SERVICE_ID
+);
+
+function resolveDataDir() {
+  if (process.env.DATA_DIR) return process.env.DATA_DIR;
+  if (process.env.RAILWAY_VOLUME_MOUNT_PATH) return process.env.RAILWAY_VOLUME_MOUNT_PATH;
+  if (IS_RAILWAY && fs.existsSync('/data')) return '/data';
+  return path.join(__dirname, 'data');
+}
+
+const DATA_DIR = resolveDataDir();
 const INHOUSE_DB_FILE = path.join(DATA_DIR, 'inhouse-db.json');
-const SEED_INHOUSE_DB_FILE = path.join(__dirname, 'data', 'inhouse-db.json');
+const SEED_INHOUSE_DB_FILE = path.join(__dirname, 'data', 'inhouse-db.seed.json');
 const INHOUSE_BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const DISCORD_CONFIG_FILE = path.join(DATA_DIR, 'discord-config.json');
 // Optional: lets the inhouse site ask the separate Discord bot service to send button messages.
@@ -177,7 +190,7 @@ function readInhouseDB() {
       return restored;
     }
 
-    if (fs.existsSync(SEED_INHOUSE_DB_FILE)) {
+    if (!IS_RAILWAY && fs.existsSync(SEED_INHOUSE_DB_FILE)) {
       const seeded = { ...defaultInhouseDB(), ...normalizeInhouseDB(readJsonFile(SEED_INHOUSE_DB_FILE)) };
       if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
       fs.writeFileSync(INHOUSE_DB_FILE, JSON.stringify(seeded), 'utf8');
@@ -503,6 +516,40 @@ app.get('/api/version', (req, res) => {
     commit,
     shortCommit: commit === 'local' ? 'local' : commit.slice(0, 8),
     marker: 'index-redirect-chzzk-timeout-2026-05-17',
+    storage: {
+      railway: IS_RAILWAY,
+      dataDir: DATA_DIR,
+      dbFileExists: fs.existsSync(INHOUSE_DB_FILE),
+    },
+    servedAt: new Date().toISOString(),
+  });
+});
+
+app.get('/api/storage-status', (req, res) => {
+  const db = readInhouseDB();
+  const backupCount = (() => {
+    try {
+      if (!fs.existsSync(INHOUSE_BACKUP_DIR)) return 0;
+      return fs.readdirSync(INHOUSE_BACKUP_DIR)
+        .filter(name => /^inhouse-db-\d+\.json$/.test(name))
+        .length;
+    } catch (err) {
+      return 0;
+    }
+  })();
+
+  res.json({
+    ok: true,
+    railway: IS_RAILWAY,
+    dataDir: DATA_DIR,
+    dbFile: INHOUSE_DB_FILE,
+    dbFileExists: fs.existsSync(INHOUSE_DB_FILE),
+    backupCount,
+    viewers: Array.isArray(db.viewers) ? db.viewers.length : 0,
+    blue: Array.isArray(db.curBlue) ? db.curBlue.length : 0,
+    red: Array.isArray(db.curRed) ? db.curRed.length : 0,
+    vid: db.vid,
+    updatedAt: db.updatedAt,
     servedAt: new Date().toISOString(),
   });
 });

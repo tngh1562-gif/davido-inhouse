@@ -4,4 +4,5 @@ node_modules/
 .env.local
 *.log
 data/backups/
+data/inhouse-db.json
 data/inhouse-db.backup-*.json
