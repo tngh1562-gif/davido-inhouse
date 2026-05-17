@@ -16,6 +16,12 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 app.use(express.json({ limit: '10mb' }));
+app.use((req, res, next) => {
+  if (req.path === '/' || req.path.endsWith('.html')) {
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+  }
+  next();
+});
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'inhouse.html'));
 });
@@ -256,6 +262,14 @@ app.get('/api/discord-config', (req, res) => {
   res.json(readDiscordConfig());
 });
 
+app.get('/api/version', (req, res) => {
+  res.json({
+    ok: true,
+    commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT || 'local',
+    marker: 'index-redirect-chzzk-timeout-2026-05-17',
+  });
+});
+
 app.post('/api/discord-config', (req, res) => {
   try {
     res.json({ ok: true, data: writeDiscordConfig(req.body || {}) });
@@ -336,6 +350,22 @@ function chzzkHeaders(extra = {}) {
   const cookie = chzzkCookieHeader();
   if (cookie) headers.Cookie = cookie;
   return headers;
+}
+
+async function fetchChzzkJson(url, options = {}, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json?.message || json?.error || `HTTP ${res.status}`);
+    return json;
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('치지직 API 응답 시간이 초과됐습니다.');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function postJson(url, payload) {
@@ -633,9 +663,10 @@ function scheduleChzzkReconnect(chatChannelId, originalChannelId) {
     chzzkReconnectTimer = null;
     let newToken = null;
     try {
-      const res = await fetch(`https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
-        { headers: chzzkHeaders() });
-      const json = await res.json();
+      const json = await fetchChzzkJson(
+        `https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
+        { headers: chzzkHeaders() }
+      );
       newToken = json?.content?.accessToken || null;
     } catch (err) {
       state.bot.lastSendError = err.message || '치지직 토큰 갱신 실패';
@@ -676,9 +707,10 @@ async function connectChzzk(channelId) {
 
   let chatChannelId = channelId;
   try {
-    const res = await fetch(`https://api.chzzk.naver.com/service/v2/channels/${channelId}/live-detail`,
-      { headers: chzzkHeaders() });
-    const json = await res.json();
+    const json = await fetchChzzkJson(
+      `https://api.chzzk.naver.com/service/v2/channels/${channelId}/live-detail`,
+      { headers: chzzkHeaders() }
+    );
     chatChannelId = json?.content?.chatChannelId || channelId;
     chzzkChatChannelId = chatChannelId;
     console.log('[CHZZK] chatChannelId:', chatChannelId);
@@ -686,9 +718,10 @@ async function connectChzzk(channelId) {
 
   let accessToken = null;
   try {
-    const res = await fetch(`https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
-      { headers: chzzkHeaders() });
-    const json = await res.json();
+    const json = await fetchChzzkJson(
+      `https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
+      { headers: chzzkHeaders() }
+    );
     accessToken = json?.content?.accessToken || null;
     console.log('[CHZZK] accessToken:', accessToken ? '획득' : '없음');
   } catch (e) { console.log('[CHZZK] token failed:', e.message); }
