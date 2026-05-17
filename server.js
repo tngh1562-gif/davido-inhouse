@@ -882,14 +882,26 @@ function simplifyChampSelect(session) {
     });
   });
 
-  const player = (p, idx) => ({
-    idx,
-    cellId: p.cellId,
-    championId: Number(p.championId || 0),
-    summonerId: p.summonerId,
-    name: p.displayName || p.summonerName || p.gameName || `참가자 ${idx + 1}`,
-    lane: p.assignedPosition || '',
+   const tentativeByCell = new Map();
+  actions.forEach(a => {
+    if (a.type === 'pick' && a.inProgress && a.championId) {
+      tentativeByCell.set(a.actorCellId, a.championId);
+    }
   });
+
+  const player = (p, idx) => {
+    const lockedId = Number(p.championId || 0);
+    const tentativeId = tentativeByCell.get(p.cellId) || 0;
+    return {
+      idx,
+      cellId: p.cellId,
+      championId: lockedId || tentativeId,
+      isLocked: lockedId > 0,
+      summonerId: p.summonerId,
+      name: p.displayName || p.summonerName || p.gameName || `참가자 ${idx + 1}`,
+      lane: p.assignedPosition || '',
+    };
+  };
 
   return {
     timer: session.timer || null,
