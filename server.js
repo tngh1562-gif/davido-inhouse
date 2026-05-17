@@ -16,6 +16,9 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 app.use(express.json({ limit: '10mb' }));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'inhouse.html'));
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
@@ -302,6 +305,17 @@ const chzzkAuth = {
   nidAut: process.env.CHZZK_NID_AUT || '',
   nidSes: process.env.CHZZK_NID_SES || '',
 };
+
+function normalizeChzzkChannelId(value) {
+  let raw = String(value || '').trim();
+  if (!raw) return '';
+  try {
+    const parsed = new URL(raw);
+    raw = parsed.pathname.split('/').filter(Boolean).pop() || '';
+  } catch {}
+  raw = raw.replace(/^@/, '').split(/[?#]/)[0].trim();
+  return /^[A-Za-z0-9_-]{3,100}$/.test(raw) ? raw : '';
+}
 
 function hasChzzkAuth() {
   return !!(chzzkAuth.nidAut && chzzkAuth.nidSes);
@@ -632,6 +646,13 @@ function scheduleChzzkReconnect(chatChannelId, originalChannelId) {
 
 // ── 치지직 연결 ──
 async function connectChzzk(channelId) {
+  channelId = normalizeChzzkChannelId(channelId);
+  if (!channelId) {
+    state.bot.status = 'idle';
+    state.bot.lastSendError = '치지직 채널 ID 또는 채널 URL을 확인하세요.';
+    broadcastState();
+    throw new Error(state.bot.lastSendError);
+  }
   clearTimeout(chzzkReconnectTimer);
   chzzkReconnectTimer = null;
   chzzkAuthed = false;
@@ -874,8 +895,12 @@ app.post('/api/action', async (req, res) => {
 
   switch (type) {
     case 'connect_chzzk':
-      await connectChzzk(body.channelId);
-      return res.json({ ok: true });
+      try {
+        await connectChzzk(body.channelId);
+        return res.json({ ok: true, data: publicState() });
+      } catch (err) {
+        return res.status(400).json({ ok: false, error: err.message || '치지직 연결 실패', data: publicState() });
+      }
 
     case 'disconnect_chzzk':
       clearTimeout(chzzkReconnectTimer);

@@ -1930,7 +1930,21 @@ async function botAction(type, body={}){
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({type,...body})
   });
-  return res.json();
+  const data=await res.json().catch(()=>({ok:false,error:'서버 응답을 읽지 못했습니다.'}));
+  if(!res.ok || data.ok===false){
+    if(data.data) setBotState(data.data);
+    throw new Error(data.error||'요청 실패');
+  }
+  return data;
+}
+function normalizeChzzkInput(value){
+  let raw=(value||'').trim();
+  if(!raw) return '';
+  try{
+    const url=new URL(raw);
+    raw=url.pathname.split('/').filter(Boolean).pop()||'';
+  }catch(e){}
+  return raw.replace(/^@/,'').split(/[?#]/)[0].trim();
 }
 function setBotState(data){
   if(!data) return;
@@ -2001,11 +2015,18 @@ async function refreshBotState(){
 }
 async function connectBotChannel(){
   const input=document.getElementById('botChannelId');
-  const channelId=(input?.value||'').trim();
+  const channelId=normalizeChzzkInput(input?.value||'');
   if(!channelId){toast('치지직 채널 ID를 입력하세요');return;}
-  await botAction('connect_chzzk',{channelId});
-  toast('치지직 연결 시도 중');
-  setTimeout(refreshBotState,800);
+  try{
+    const res=await botAction('connect_chzzk',{channelId});
+    if(input) input.value=channelId;
+    if(res.data) setBotState(res.data);
+    toast('치지직 연결 시도 중');
+    setTimeout(refreshBotState,800);
+  }catch(err){
+    toast(err.message||'치지직 연결 실패');
+    refreshBotState();
+  }
 }
 async function disconnectBotChannel(){
   await botAction('disconnect_chzzk');
