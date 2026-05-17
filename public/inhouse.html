@@ -1540,6 +1540,13 @@ function saveRemoteNow(){
         toast(`DB 축소 저장 차단: ${err.payload.currentViewers}명 → ${err.payload.incomingViewers}명`);
         return;
       }
+            const freshAt=err.payload?.currentUpdatedAt;
+      if(freshAt && freshAt !== serverUpdatedAt && _staleSaveRetryCount < 2){
+        _staleSaveRetryCount++;
+        serverUpdatedAt=freshAt;
+        return saveRemoteNow();
+      }
+      _staleSaveRetryCount=0;
       toast('서버 DB가 더 최신입니다. DB 새로고침 후 다시 수정해주세요');
       return;
     }
