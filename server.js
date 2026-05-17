@@ -177,7 +177,11 @@ function writeInhouseDB(data, options = {}) {
 
   const incoming = normalizeInhouseDB(data || {});
   const hasIncomingViewers = Array.isArray(data?.viewers);
-  if (hasIncomingViewers && options.mergeViewers !== true && existing.updatedAt) {
+  const hasIncomingPlayers = Array.isArray(data?.players);
+  const hasIncomingHistory = Array.isArray(data?.history);
+  const hasIncomingBlue = Array.isArray(data?.curBlue);
+  const hasIncomingRed = Array.isArray(data?.curRed);
+  if (options.mergeViewers !== true && existing.updatedAt) {
     const baseUpdatedAt = data?.baseUpdatedAt || data?.updatedAt || null;
     if (!baseUpdatedAt || baseUpdatedAt !== existing.updatedAt) {
       const err = new Error('stale_db_snapshot');
@@ -194,7 +198,12 @@ function writeInhouseDB(data, options = {}) {
   const maxViewerId = viewers.reduce((max, viewer) => Math.max(max, Number(viewer.id) || 0), 0);
   const payload = {
     ...incoming,
+    players: hasIncomingPlayers ? incoming.players : existing.players,
+    history: hasIncomingHistory ? incoming.history : existing.history,
     viewers,
+    curBlue: hasIncomingBlue ? incoming.curBlue : existing.curBlue,
+    curRed: hasIncomingRed ? incoming.curRed : existing.curRed,
+    pid: Number.isFinite(Number(data?.pid)) ? Number(data.pid) : existing.pid,
     vid: hasIncomingViewers ? Math.max(incoming.vid || 0, existing.vid || 0, maxViewerId) : Math.max(existing.vid || 0, maxViewerId),
     updatedAt: new Date().toISOString(),
   };

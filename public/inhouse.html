@@ -1381,9 +1381,13 @@ let pid=0,vid=0;
 let remoteSaveTimer=null;
 let serverUpdatedAt=null;
 let viewersDirty=false;
+let inhouseDirty=false;
 
 function markViewersDirty(){
   viewersDirty=true;
+}
+function markInhouseDirty(){
+  inhouseDirty=true;
 }
 
 function normalizeStoredData(){
@@ -1429,8 +1433,15 @@ function normalizeStoredData(){
   curRed.forEach(syncPlayerViewerId);
 }
 
-function snapshotData(includeViewers=viewersDirty){
-  const data = { players, history, curBlue, curRed, pid, baseUpdatedAt: serverUpdatedAt };
+function snapshotData(includeViewers=viewersDirty, includeInhouse=inhouseDirty){
+  const data = { baseUpdatedAt: serverUpdatedAt };
+  if(includeInhouse){
+    data.players = players;
+    data.history = history;
+    data.curBlue = curBlue;
+    data.curRed = curRed;
+    data.pid = pid;
+  }
   if(includeViewers){
     data.viewers = viewers;
     data.vid = vid;
@@ -1502,10 +1513,12 @@ function saveRemoteNow(){
   clearTimeout(remoteSaveTimer);
   remoteSaveTimer=null;
   const savingViewers=viewersDirty;
+  const savingInhouse=inhouseDirty;
+  if(!savingViewers && !savingInhouse) return Promise.resolve({ok:true, skipped:true});
   return fetch('/api/inhouse-db', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(snapshotData(savingViewers)),
+    body: JSON.stringify(snapshotData(savingViewers, savingInhouse)),
   })
   .then(async r=>{
     const payload=await r.json().catch(()=>null);
@@ -1517,6 +1530,7 @@ function saveRemoteNow(){
     }
     if(payload?.data?.updatedAt) serverUpdatedAt=payload.data.updatedAt;
     if(savingViewers) viewersDirty=false;
+    if(savingInhouse) inhouseDirty=false;
     return payload;
   })
   .catch(err=>{
@@ -1536,6 +1550,8 @@ function queueRemoteSave(){
 
 function save(){
   saveLocal();
+  const activeTab=document.querySelector('.tab.on')?.id || '';
+  if(!viewersDirty && activeTab!=='tab-viewers' && activeTab!=='tab-shop') markInhouseDirty();
   queueRemoteSave();
 }
 
@@ -3694,6 +3710,7 @@ function addChatParticipantByNickname(nickname){
     });
     toast('!참가: '+clean+' 임시 추가');
   }
+  markInhouseDirty();
   save();
   renderMainAll();
   renderRoster();
