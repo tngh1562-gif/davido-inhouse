@@ -26,7 +26,7 @@ app.use((req, res, next) => {
   next();
 });
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.type('html').send(fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8'));
 });
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
