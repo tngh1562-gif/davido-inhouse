@@ -416,6 +416,13 @@ input::placeholder{color:var(--txt2)}
   max-width:220px;white-space:pre-wrap;word-break:break-word;
 }
 .vdb-memo-empty{opacity:.3}
+.discord-badge{
+  display:inline-flex;align-items:center;gap:4px;margin-left:7px;
+  padding:2px 7px;border-radius:999px;
+  background:rgba(88,101,242,.12);border:1px solid rgba(88,101,242,.32);
+  color:#5865f2;font-size:.66rem;font-weight:800;white-space:nowrap;
+}
+.discord-badge::before{content:'●';font-size:.48rem;color:#22c55e}
 
 /* ══════════════════════════════════════════
    TOAST
@@ -2762,7 +2769,7 @@ function getFiltered(){
   const so=document.getElementById('vSort').value;
 
   let list=[...viewers];
-  if(q) list=list.filter(v=>v.name.toLowerCase().includes(q)||(v.chzzk||'').toLowerCase().includes(q)||(v.memo||'').toLowerCase().includes(q));
+  if(q) list=list.filter(v=>v.name.toLowerCase().includes(q)||(v.chzzk||'').toLowerCase().includes(q)||(v.memo||'').toLowerCase().includes(q)||String(v.discordId||'').includes(q));
   if(tf) list=list.filter(v=>tierObj(v.tier).cls===tf);
   if(pf) list=list.filter(v=>{
     const pos=Array.isArray(v.positions)?v.positions:normPositions(v);
@@ -2815,11 +2822,13 @@ function renderViewers(){
     tbody.innerHTML=slice.map((v,i)=>{
       const rank=(vPage-1)*V_PER_PAGE+i+1;
       const rankCls=rank===1?'top1':rank===2?'top2':rank===3?'top3':'';
+      const discordBadge=v.discordId?`<span class="discord-badge" title="디스코드 연동됨 · ${esc(String(v.discordId))}">디코 연동</span>`:'';
       if(editingVid===v.id){
         return `<tr>
           <td class="vdb-rank ${rankCls}">${rank}</td>
           <td>
             <input class="edit-inp" id="en-${v.id}" value="${esc(v.name)}" style="width:100%;min-width:120px;margin-bottom:3px">
+            ${discordBadge}
           </td>
           <td>
             <input class="edit-inp" id="ec-${v.id}" value="${esc(v.chzzk||'')}" placeholder="치지직 닉네임" style="width:100%;min-width:100px">
@@ -2871,7 +2880,7 @@ function renderViewers(){
       }
       return `<tr>
         <td class="vdb-rank ${rankCls}">${rankCls?'🥇🥈🥉'[rank-1]:rank}</td>
-        <td><b>${esc(v.name)}</b></td>
+        <td><b>${esc(v.name)}</b>${discordBadge}</td>
         <td style="font-size:.78rem;color:var(--txt2)">${v.chzzk?`<span style="display:inline-flex;align-items:center;gap:4px"><span style="color:#00c73c;font-size:.7rem">▶</span>${esc(v.chzzk)}</span>`:'<span style="opacity:.3">-</span>'}</td>
         <td><div class="vdb-memo ${v.memo?'':'vdb-memo-empty'}">${v.memo?esc(v.memo):'-'}</div></td>
         <td style="white-space:nowrap">
