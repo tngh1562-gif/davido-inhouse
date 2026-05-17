@@ -188,7 +188,7 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 
     <!-- 내전 탭 -->
     <div class="panel active" id="panel-inhouse">
-      <iframe id="inhouse-frame" src="/inhouse.html" title="내전 진행"></iframe>
+      <iframe id="inhouse-frame" src="/inhouse.html?v=stable-shell" title="내전 진행"></iframe>
     </div>
 
     <!-- 투표 탭 -->
@@ -349,17 +349,38 @@ connectWS();
 // ── API ──
 async function api(type, extra = {}) {
   const r = await fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, ...extra }) });
-  return r.json();
+  const data = await r.json().catch(() => ({ ok: false, error: '서버 응답을 읽지 못했습니다.' }));
+  if (!r.ok || data.ok === false) throw new Error(data.error || '요청 실패');
+  return data;
 }
 
 // ── 연결 ──
-function doConnect() {
-  const cid = document.getElementById('cid-input').value.trim();
-  if (!cid) return;
-  api('connect_chzzk', { channelId: cid });
+function normalizeChannelInput(value) {
+  let raw = String(value || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw);
+    raw = url.pathname.split('/').filter(Boolean).pop() || '';
+  } catch {}
+  return raw.replace(/^@/, '').split(/[?#]/)[0].trim();
+}
+async function doConnect() {
+  const input = document.getElementById('cid-input');
+  const btn = document.getElementById('conn-btn');
+  const cid = normalizeChannelInput(input?.value || '');
+  if (!cid) return alert('치지직 채널 ID 또는 URL을 입력하세요');
+  if (input) input.value = cid;
+  if (btn) { btn.disabled = true; btn.textContent = '연결 중'; }
+  try {
+    await api('connect_chzzk', { channelId: cid });
+  } catch (err) {
+    alert(err.message || '치지직 연결 실패');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '연결'; }
+  }
 }
 function doDisconnect() {
-  api('disconnect_chzzk');
+  api('disconnect_chzzk').catch(err => alert(err.message || '연결 해제 실패'));
 }
 
 // ── 렌더 전체 ──
@@ -389,7 +410,7 @@ function renderConnBar() {
       <div class="dot"></div>
       <span class="conn-id">연결 안 됨</span>
       <input class="cid-input" id="cid-input" placeholder="채널 ID" />
-      <button class="btn primary" onclick="doConnect()">연결</button>
+      <button class="btn primary" id="conn-btn" onclick="doConnect()">연결</button>
     `;
     // Enter key
     document.getElementById('cid-input')?.addEventListener('keydown', e => { if(e.key==='Enter') doConnect(); });
