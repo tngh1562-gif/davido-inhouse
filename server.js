@@ -118,35 +118,51 @@ function backupInhouseDB(data) {
 }
 
 function mergeViewers(existing, incoming) {
-  const byId = new Map();
-  const byName = new Map();
   const merged = [];
-  const remember = viewer => {
+  const indexById = new Map();
+  const indexByName = new Map();
+  const remember = (viewer, index) => {
     if (!viewer || !viewer.name) return;
-    if (Number.isFinite(Number(viewer.id))) byId.set(Number(viewer.id), viewer);
-    byName.set(String(viewer.name).trim().toLowerCase(), viewer);
+    if (Number.isFinite(Number(viewer.id))) indexById.set(Number(viewer.id), index);
+    indexByName.set(String(viewer.name).trim().toLowerCase(), index);
   };
 
-  existing.forEach(remember);
+  existing.forEach(viewer => {
+    if (!viewer || !viewer.name) return;
+    merged.push({ ...viewer });
+    remember(viewer, merged.length - 1);
+  });
+
   incoming.forEach(viewer => {
     if (!viewer || !viewer.name) return;
     const id = Number(viewer.id);
     const key = String(viewer.name).trim().toLowerCase();
-    const prior = (Number.isFinite(id) && byId.get(id)) || byName.get(key) || {};
+    const priorIndex = (Number.isFinite(id) && indexById.get(id)) ?? indexByName.get(key);
+    const prior = Number.isInteger(priorIndex) ? merged[priorIndex] : {};
     const next = { ...prior, ...viewer };
-    merged.push(next);
-    remember(next);
+    if (Number.isInteger(priorIndex)) {
+      merged[priorIndex] = next;
+      remember(next, priorIndex);
+    } else {
+      merged.push(next);
+      remember(next, merged.length - 1);
+    }
   });
 
-  existing.forEach(viewer => {
-    if (!viewer || !viewer.name) return;
-    const exists = merged.some(v =>
-      (Number.isFinite(Number(v.id)) && Number(v.id) === Number(viewer.id)) ||
-      String(v.name).trim().toLowerCase() === String(viewer.name).trim().toLowerCase()
-    );
-    if (!exists) merged.push(viewer);
-  });
   return merged;
+}
+
+function writeViewerUpsert(viewer) {
+  const existing = readInhouseDB();
+  const viewers = mergeViewers(existing.viewers, [viewer]);
+  return writeInhouseDB(
+    {
+      baseUpdatedAt: existing.updatedAt,
+      viewers,
+      vid: Math.max(Number(existing.vid) || 0, ...viewers.map(v => Number(v.id) || 0)),
+    },
+    { mergeViewers: true }
+  );
 }
 
 function readInhouseDB() {
@@ -357,7 +373,7 @@ function upsertViewerFromDiscordRegistration(body) {
   }
 
   db.vid = Math.max(Number(db.vid) || 0, Number(viewer.id) || 0);
-  return { db: writeInhouseDB(db, { mergeViewers: true }), viewer };
+  return { db: writeViewerUpsert(viewer), viewer };
 }
 
 function defaultDiscordConfig() {
