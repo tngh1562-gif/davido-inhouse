@@ -1536,6 +1536,10 @@ function saveRemoteNow(){
   .catch(err=>{
     console.error('[INHOUSE_DB] remote save failed', err);
     if(err.message==='stale_db_snapshot' || err.status===409){
+      if(err.payload?.error==='viewer_db_shrink_guard'){
+        toast(`DB 축소 저장 차단: ${err.payload.currentViewers}명 → ${err.payload.incomingViewers}명`);
+        return;
+      }
       toast('서버 DB가 더 최신입니다. DB 새로고침 후 다시 수정해주세요');
       return;
     }

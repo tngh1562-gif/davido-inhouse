@@ -154,7 +154,12 @@ function readInhouseDB() {
     if (fs.existsSync(INHOUSE_DB_FILE)) return { ...defaultInhouseDB(), ...normalizeInhouseDB(readJsonFile(INHOUSE_DB_FILE)) };
 
     const backup = latestBackupFile();
-    if (backup) return { ...defaultInhouseDB(), ...normalizeInhouseDB(readJsonFile(path.join(INHOUSE_BACKUP_DIR, backup))) };
+    if (backup) {
+      const restored = { ...defaultInhouseDB(), ...normalizeInhouseDB(readJsonFile(path.join(INHOUSE_BACKUP_DIR, backup))) };
+      if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+      fs.writeFileSync(INHOUSE_DB_FILE, JSON.stringify(restored), 'utf8');
+      return restored;
+    }
 
     if (fs.existsSync(SEED_INHOUSE_DB_FILE)) {
       const seeded = { ...defaultInhouseDB(), ...normalizeInhouseDB(readJsonFile(SEED_INHOUSE_DB_FILE)) };
@@ -195,6 +200,18 @@ function writeInhouseDB(data, options = {}) {
     : options.mergeViewers === true
     ? mergeViewers(existing.viewers, incoming.viewers)
     : incoming.viewers;
+  if (hasIncomingViewers && options.mergeViewers !== true && !data?.allowViewerShrink) {
+    const oldCount = Array.isArray(existing.viewers) ? existing.viewers.length : 0;
+    const nextCount = Array.isArray(viewers) ? viewers.length : 0;
+    const suspiciousDrop = oldCount >= 20 && nextCount < oldCount - 5 && nextCount < Math.floor(oldCount * 0.95);
+    if (suspiciousDrop) {
+      const err = new Error('viewer_db_shrink_guard');
+      err.statusCode = 409;
+      err.currentViewers = oldCount;
+      err.incomingViewers = nextCount;
+      throw err;
+    }
+  }
   const maxViewerId = viewers.reduce((max, viewer) => Math.max(max, Number(viewer.id) || 0), 0);
   const payload = {
     ...incoming,
@@ -402,6 +419,7 @@ function readDiscordConfig() {
 
 function writeDiscordConfig(data) {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  backupInhouseDB(readInhouseDB());
   const payload = normalizeDiscordConfig({ ...readDiscordConfig(), ...(data || {}), updatedAt: new Date().toISOString() });
   const tmp = DISCORD_CONFIG_FILE + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(payload, null, 2), 'utf8');
@@ -422,6 +440,8 @@ app.post('/api/inhouse-db', (req, res) => {
       ok: false,
       error: err.message || 'write_failed',
       currentUpdatedAt: err.currentUpdatedAt,
+      currentViewers: err.currentViewers,
+      incomingViewers: err.incomingViewers,
     });
   }
 });
