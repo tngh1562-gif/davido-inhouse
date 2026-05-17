@@ -150,7 +150,7 @@ function mergeViewers(existing, incoming) {
     if (!viewer || !viewer.name) return;
     const id = Number(viewer.id);
     const key = String(viewer.name).trim().toLowerCase();
-    const priorIndex = (Number.isFinite(id) && indexById.get(id)) ?? indexByName.get(key);
+    const priorIndex = (Number.isFinite(id) ? indexById.get(id) : undefined) ?? indexByName.get(key);
     const prior = Number.isInteger(priorIndex) ? merged[priorIndex] : {};
     const next = { ...prior, ...viewer };
     if (Number.isInteger(priorIndex)) {
