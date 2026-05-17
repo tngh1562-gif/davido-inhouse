@@ -176,7 +176,8 @@ function writeInhouseDB(data, options = {}) {
   backupInhouseDB(existing);
 
   const incoming = normalizeInhouseDB(data || {});
-  if (options.mergeViewers !== true && existing.updatedAt) {
+  const hasIncomingViewers = Array.isArray(data?.viewers);
+  if (hasIncomingViewers && options.mergeViewers !== true && existing.updatedAt) {
     const baseUpdatedAt = data?.baseUpdatedAt || data?.updatedAt || null;
     if (!baseUpdatedAt || baseUpdatedAt !== existing.updatedAt) {
       const err = new Error('stale_db_snapshot');
@@ -185,14 +186,16 @@ function writeInhouseDB(data, options = {}) {
       throw err;
     }
   }
-  const viewers = options.mergeViewers === true
+  const viewers = !hasIncomingViewers
+    ? existing.viewers
+    : options.mergeViewers === true
     ? mergeViewers(existing.viewers, incoming.viewers)
     : incoming.viewers;
   const maxViewerId = viewers.reduce((max, viewer) => Math.max(max, Number(viewer.id) || 0), 0);
   const payload = {
     ...incoming,
     viewers,
-    vid: Math.max(incoming.vid || 0, existing.vid || 0, maxViewerId),
+    vid: hasIncomingViewers ? Math.max(incoming.vid || 0, existing.vid || 0, maxViewerId) : Math.max(existing.vid || 0, maxViewerId),
     updatedAt: new Date().toISOString(),
   };
   const tmp = INHOUSE_DB_FILE + '.tmp';

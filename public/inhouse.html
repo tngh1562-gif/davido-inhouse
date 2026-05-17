@@ -1380,6 +1380,11 @@ let curBlue=[],curRed=[];
 let pid=0,vid=0;
 let remoteSaveTimer=null;
 let serverUpdatedAt=null;
+let viewersDirty=false;
+
+function markViewersDirty(){
+  viewersDirty=true;
+}
 
 function normalizeStoredData(){
   const usedViewerIds = new Set();
@@ -1424,8 +1429,13 @@ function normalizeStoredData(){
   curRed.forEach(syncPlayerViewerId);
 }
 
-function snapshotData(){
-  return { players, history, viewers, curBlue, curRed, pid, vid, baseUpdatedAt: serverUpdatedAt };
+function snapshotData(includeViewers=viewersDirty){
+  const data = { players, history, curBlue, curRed, pid, baseUpdatedAt: serverUpdatedAt };
+  if(includeViewers){
+    data.viewers = viewers;
+    data.vid = vid;
+  }
+  return data;
 }
 
 function applyData(data){
@@ -1437,6 +1447,13 @@ function applyData(data){
   pid = parseInt(data?.pid || '0');
   vid = parseInt(data?.vid || '0');
   serverUpdatedAt = data?.updatedAt || null;
+}
+
+function applyViewerData(data){
+  viewers = Array.isArray(data?.viewers) ? data.viewers : viewers;
+  vid = parseInt(data?.vid || vid || '0');
+  serverUpdatedAt = data?.updatedAt || serverUpdatedAt;
+  viewersDirty = false;
 }
 
 function saveLocal(){
@@ -1484,10 +1501,11 @@ function syncOverlayTeams(){
 function saveRemoteNow(){
   clearTimeout(remoteSaveTimer);
   remoteSaveTimer=null;
+  const savingViewers=viewersDirty;
   return fetch('/api/inhouse-db', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(snapshotData()),
+    body: JSON.stringify(snapshotData(savingViewers)),
   })
   .then(async r=>{
     const payload=await r.json().catch(()=>null);
@@ -1498,6 +1516,7 @@ function saveRemoteNow(){
       throw err;
     }
     if(payload?.data?.updatedAt) serverUpdatedAt=payload.data.updatedAt;
+    if(savingViewers) viewersDirty=false;
     return payload;
   })
   .catch(err=>{
@@ -1610,6 +1629,7 @@ function grantInhousePoints(team,amount,reason){
     v.pointHistory.unshift({id:Date.now()+count,amount,reason,at:Date.now()});
     count++;
   });
+  if(count) markViewersDirty();
   return count;
 }
 function renderShop(){
@@ -1696,6 +1716,7 @@ function buyShopItem(itemId){
   if(!Array.isArray(v.shopHistory)) v.shopHistory=[];
   v.shopHistory.unshift({id:Date.now(),itemId:item.id,itemName:item.name,price:item.price,at:Date.now()});
   v.memo = [v.memo||'', `[상점] ${item.name} 구매 (${item.price}P)`].filter(Boolean).join('\n').trim();
+  markViewersDirty();
   save();
   renderShop();
   renderViewers();
@@ -1705,6 +1726,7 @@ function adjustShopPoints(delta){
   const v=viewers.find(v=>v.id===shopSelectedViewerId);
   if(!v) return;
   v.pass=Math.max(0,viewerPoints(v)+delta);
+  markViewersDirty();
   save();
   renderShop();
   renderViewers();
@@ -2070,7 +2092,7 @@ async function refreshFromServer(silent=false){
     if(!r.ok) throw new Error('server_db_load_failed');
     const data=await r.json();
     if(Array.isArray(data.viewers)){
-      applyData(data);
+      applyViewerData(data);
       normalizeLoadedData();
       saveLocal();
       if(document.getElementById('tab-viewers')?.classList.contains('on')) renderViewers();
@@ -2670,6 +2692,7 @@ function addViewerPaste(){
     viewers.push({id:++vid,name,chzzk,tier,positions,posTiers,memo,added:Date.now()});
     added++;
   });
+  if(added) markViewersDirty();
   save();renderViewers();
   document.getElementById('vPaste').value='';
   let msg=added+'명 추가됨';
@@ -2693,6 +2716,7 @@ function addViewer(){
     toast('이미 존재하는 닉네임입니다');return;
   }
   viewers.push({id:++vid,name,chzzk,tier,positions,memo,added:Date.now()});
+  markViewersDirty();
   save(); renderViewers();
   document.getElementById('vName').value='';
   const chzzkEl=document.getElementById('vChzzk'); if(chzzkEl) chzzkEl.value='';
@@ -2704,6 +2728,7 @@ function addViewer(){
 
 function deleteViewer(id){
   viewers=viewers.filter(v=>v.id!==id);
+  markViewersDirty();
   // roster 연결 해제 (데이터는 유지, viewerId만 제거)
   players.forEach(p=>{ if(p.viewerId===id) delete p.viewerId; });
   save(); renderViewers(); toast('삭제됨');
@@ -2761,6 +2786,7 @@ function saveEdit(id){
     }
   });
 
+  markViewersDirty();
   save();
   renderViewers();
   renderRoster();
@@ -2774,12 +2800,14 @@ function changePass(id, delta){
   const v = viewers.find(v=>v.id===id);
   if(!v) return;
   v.pass = Math.max(0, (v.pass||0) + delta);
+  markViewersDirty();
   save();
   renderViewers();
 }
 function clearViewerStats(){
   if(!confirm('시청자 DB 전체 승률을 초기화할까요?')) return;
   viewers.forEach(v=>{ v.stats={w:0,l:0,d:0}; });
+  markViewersDirty();
   save(); renderViewers(); toast('승률 초기화 완료');
 }
 
@@ -3081,6 +3109,7 @@ function record(res){
     bS:teamScore(curBlue),rS:teamScore(curRed),res
   });
   function updateViewerStat(team,side){
+    let changed=false;
     team.forEach(p=>{
       const name=(p.name||'').trim().toLowerCase(); if(!name) return;
       const v=viewers.find(v=>v.name.trim().toLowerCase()===name); if(!v) return;
@@ -3088,7 +3117,9 @@ function record(res){
       if(res===side) v.stats.w++;
       else if(res==='draw') v.stats.d++;
       else v.stats.l++;
+      changed=true;
     });
+    if(changed) markViewersDirty();
   }
   updateViewerStat(curBlue,'blue'); updateViewerStat(curRed,'red');
   let bonusCount=0;
