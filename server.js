@@ -15,10 +15,13 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
+app.disable('etag');
 app.use(express.json({ limit: '10mb' }));
 app.use((req, res, next) => {
-  if (req.path === '/' || req.path.endsWith('.html')) {
+  if (req.method === 'GET') {
     res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
   }
   next();
 });
@@ -423,10 +426,13 @@ app.get('/api/discord-config', (req, res) => {
 });
 
 app.get('/api/version', (req, res) => {
+  const commit = process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT || 'local';
   res.json({
     ok: true,
-    commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT || 'local',
+    commit,
+    shortCommit: commit === 'local' ? 'local' : commit.slice(0, 8),
     marker: 'index-redirect-chzzk-timeout-2026-05-17',
+    servedAt: new Date().toISOString(),
   });
 });
 

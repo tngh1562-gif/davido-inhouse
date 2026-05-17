@@ -188,7 +188,7 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 
     <!-- 내전 탭 -->
     <div class="panel active" id="panel-inhouse">
-      <iframe id="inhouse-frame" src="/inhouse.html?v=stable-shell" title="내전 진행"></iframe>
+      <iframe id="inhouse-frame" src="/inhouse.html?v=loading" title="내전 진행"></iframe>
     </div>
 
     <!-- 투표 탭 -->
@@ -327,6 +327,19 @@ let rouletteAngle = 0;
 let spinning = false;
 let currentVideoId = null;
 let expandedVoteIdx = null;
+
+async function initInhouseFrame() {
+  const iframe = document.getElementById('inhouse-frame');
+  if (!iframe) return;
+  let version = Date.now();
+  try {
+    const res = await fetch('/api/version?ts=' + Date.now(), { cache: 'no-store' });
+    const data = await res.json();
+    version = `${data.shortCommit || data.commit || 'local'}-${Date.now()}`;
+  } catch {}
+  iframe.src = `/inhouse.html?v=${encodeURIComponent(version)}`;
+}
+initInhouseFrame();
 
 // ── WebSocket ──
 let ws = null;
