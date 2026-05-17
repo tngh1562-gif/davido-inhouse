@@ -332,7 +332,7 @@ function upsertViewerFromDiscordRegistration(body) {
   const db = readInhouseDB();
   const discordId = normalizeRegisterText(body.discordId || body.discordUserId || body.userId || body.memberId, 40).replace(/\D/g, '');
   const name = normalizeRegisterName(body);
-  const chzzk = normalizeRegisterText(body.chzzk || body.chzzkNick || body.chzzkNickname || body.chzzkName || body.chatName || body.chatNickname || body.nickname || body['치지직'], 120);
+  const chzzk = normalizeRegisterText(body.chzzk || body.chzzkNick || body.chzzkNickname || body.chzzkName || body.chatName || body.chatNickname || body['치지직'], 120);
   const tier = normalizeRegisterTier(body.tier || body.rank || body.lolTier || body['티어']);
   const memo = normalizeRegisterText(body.memo || body.note, 500);
   const positions = normalizeRegisterPositions(body);
