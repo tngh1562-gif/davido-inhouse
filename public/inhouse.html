@@ -1508,7 +1508,7 @@ function syncOverlayTeams(){
     }).catch(()=>{});
   }, 120);
 }
-
+let _staleSaveRetryCount=0;
 function saveRemoteNow(){
   clearTimeout(remoteSaveTimer);
   remoteSaveTimer=null;
