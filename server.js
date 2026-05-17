@@ -219,13 +219,20 @@ function normalizeRegisterPosition(value) {
 }
 
 function normalizeRegisterPositions(body) {
+  const koreanPositions = body['포지션'];
+  const singularPosition = body.position || body.pos || koreanPositions;
   const hasPositions = Array.isArray(body.positions)
+    || singularPosition
     || body.position1 || body.pos1 || body.mainPosition || body.mainPos
     || body.position2 || body.pos2 || body.subPosition || body.subPos
     || body.position3 || body.pos3;
   if (!hasPositions) return [];
   const raw = Array.isArray(body.positions)
     ? body.positions
+    : Array.isArray(singularPosition)
+      ? singularPosition
+      : singularPosition
+        ? String(singularPosition).split(/[,/|]/)
     : [body.position1 || body.pos1 || body.mainPosition || body.mainPos, body.position2 || body.pos2 || body.subPosition || body.subPos, body.position3 || body.pos3];
   const positions = raw.map(normalizeRegisterPosition).filter(Boolean).slice(0, 3);
   while (positions.length < 3) positions.push('무관');
@@ -233,9 +240,9 @@ function normalizeRegisterPositions(body) {
 }
 
 function normalizeRegisterName(body) {
-  const direct = normalizeRegisterText(body.name || body.lolName || body.riotName || body.summonerName || body.nickname, 120);
+  const direct = normalizeRegisterText(body.name || body.lolName || body.lolNickname || body.riotName || body.riotNickname || body.riotId || body.summonerName || body.nickname || body['룰닉'] || body['롤닉'], 120);
   if (direct) return direct;
-  const gameName = normalizeRegisterText(body.gameName || body.lolId, 80);
+  const gameName = normalizeRegisterText(body.gameName || body.lolId || body.game_name, 80);
   const tagLine = normalizeRegisterText(body.tagLine || body.tag || body.riotTag, 30).replace(/^#/, '');
   if (gameName && tagLine) return `${gameName}#${tagLine}`;
   return gameName;
@@ -245,8 +252,8 @@ function upsertViewerFromDiscordRegistration(body) {
   const db = readInhouseDB();
   const discordId = normalizeRegisterText(body.discordId || body.discordUserId || body.userId || body.memberId, 40).replace(/\D/g, '');
   const name = normalizeRegisterName(body);
-  const chzzk = normalizeRegisterText(body.chzzk || body.chzzkNick || body.chzzkNickname || body.chatName, 120);
-  const tier = normalizeRegisterTier(body.tier || body.rank || body.lolTier);
+  const chzzk = normalizeRegisterText(body.chzzk || body.chzzkNick || body.chzzkNickname || body.chatName || body['치지직'], 120);
+  const tier = normalizeRegisterTier(body.tier || body.rank || body.lolTier || body['티어']);
   const memo = normalizeRegisterText(body.memo || body.note, 500);
   const positions = normalizeRegisterPositions(body);
   const now = Date.now();

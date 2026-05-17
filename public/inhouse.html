@@ -989,7 +989,8 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
   <div class="card">
     <div class="card-title">🔍 검색 · 필터</div>
     <div class="vdb-toolbar">
-      <input type="text" id="vSearch" class="vdb-search" placeholder="닉네임 검색..." oninput="renderViewers()">
+      <input type="text" id="vSearch" class="vdb-search" placeholder="닉네임 검색..." onfocus="refreshFromServer(true)" oninput="renderViewers()">
+      <button class="btn btn-o" onclick="refreshFromServer(false)">DB 새로고침</button>
       <select id="vFilterTier" class="vdb-sort" onchange="renderViewers()">
         <option value="">전체 티어</option>
       </select>
@@ -1706,7 +1707,7 @@ function goTab(name,btn){
   setTimeout(()=>{
     if(name==='draft')   initDraft();
     if(name==='records') renderRecords();
-    if(name==='viewers') renderViewers();
+    if(name==='viewers') refreshFromServer(true).then(()=>renderViewers());
     if(name==='auto')    autoIfReady();
     if(name==='main')    renderMainAll();
     if(name==='shop')    renderShop();
@@ -2027,6 +2028,31 @@ async function connectBotChannel(){
     toast(err.message||'치지직 연결 실패');
     refreshBotState();
   }
+}
+
+let remoteRefreshBusy=false;
+async function refreshFromServer(silent=false){
+  if(remoteRefreshBusy) return false;
+  remoteRefreshBusy=true;
+  try{
+    const r=await fetch('/api/inhouse-db?ts='+Date.now(), { cache:'no-store' });
+    if(!r.ok) throw new Error('server_db_load_failed');
+    const data=await r.json();
+    if(Array.isArray(data.viewers)){
+      applyData(data);
+      normalizeLoadedData();
+      saveLocal();
+      if(document.getElementById('tab-viewers')?.classList.contains('on')) renderViewers();
+      if(document.getElementById('tab-main')?.classList.contains('on')) renderMainAll();
+      if(!silent) toast('서버 DB 새로고침 완료');
+      return true;
+    }
+  }catch(e){
+    if(!silent) toast('서버 DB 새로고침 실패');
+  }finally{
+    remoteRefreshBusy=false;
+  }
+  return false;
 }
 async function disconnectBotChannel(){
   await botAction('disconnect_chzzk');
