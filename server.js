@@ -176,6 +176,15 @@ function writeInhouseDB(data, options = {}) {
   backupInhouseDB(existing);
 
   const incoming = normalizeInhouseDB(data || {});
+  if (options.mergeViewers !== true && existing.updatedAt) {
+    const baseUpdatedAt = data?.baseUpdatedAt || data?.updatedAt || null;
+    if (!baseUpdatedAt || baseUpdatedAt !== existing.updatedAt) {
+      const err = new Error('stale_db_snapshot');
+      err.statusCode = 409;
+      err.currentUpdatedAt = existing.updatedAt;
+      throw err;
+    }
+  }
   const viewers = options.mergeViewers === true
     ? mergeViewers(existing.viewers, incoming.viewers)
     : incoming.viewers;
@@ -397,7 +406,11 @@ app.post('/api/inhouse-db', (req, res) => {
     res.json({ ok: true, data: writeInhouseDB(req.body || {}, { mergeViewers: false }) });
   } catch (err) {
     console.error('[INHOUSE_DB] write failed:', err.message);
-    res.status(500).json({ ok: false, error: 'write_failed' });
+    res.status(err.statusCode || 500).json({
+      ok: false,
+      error: err.message || 'write_failed',
+      currentUpdatedAt: err.currentUpdatedAt,
+    });
   }
 });
 

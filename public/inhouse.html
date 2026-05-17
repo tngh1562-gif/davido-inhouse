@@ -1379,6 +1379,7 @@ let players=[],history=[],viewers=[];
 let curBlue=[],curRed=[];
 let pid=0,vid=0;
 let remoteSaveTimer=null;
+let serverUpdatedAt=null;
 
 function normalizeStoredData(){
   const usedViewerIds = new Set();
@@ -1424,7 +1425,7 @@ function normalizeStoredData(){
 }
 
 function snapshotData(){
-  return { players, history, viewers, curBlue, curRed, pid, vid };
+  return { players, history, viewers, curBlue, curRed, pid, vid, baseUpdatedAt: serverUpdatedAt };
 }
 
 function applyData(data){
@@ -1435,6 +1436,7 @@ function applyData(data){
   curRed = Array.isArray(data?.curRed) ? data.curRed : [];
   pid = parseInt(data?.pid || '0');
   vid = parseInt(data?.vid || '0');
+  serverUpdatedAt = data?.updatedAt || null;
 }
 
 function saveLocal(){
@@ -1480,6 +1482,8 @@ function syncOverlayTeams(){
 }
 
 function saveRemoteNow(){
+  clearTimeout(remoteSaveTimer);
+  remoteSaveTimer=null;
   return fetch('/api/inhouse-db', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -1487,11 +1491,21 @@ function saveRemoteNow(){
   })
   .then(async r=>{
     const payload=await r.json().catch(()=>null);
-    if(!r.ok || payload?.ok===false) throw new Error(payload?.error || 'server_save_failed');
+    if(!r.ok || payload?.ok===false){
+      const err=new Error(payload?.error || 'server_save_failed');
+      err.status=r.status;
+      err.payload=payload;
+      throw err;
+    }
+    if(payload?.data?.updatedAt) serverUpdatedAt=payload.data.updatedAt;
     return payload;
   })
   .catch(err=>{
     console.error('[INHOUSE_DB] remote save failed', err);
+    if(err.message==='stale_db_snapshot' || err.status===409){
+      toast('서버 DB가 더 최신입니다. DB 새로고침 후 다시 수정해주세요');
+      return;
+    }
     toast('서버 DB 저장 실패: 새로고침 전에 다시 저장을 확인해주세요');
   });
 }
@@ -1548,7 +1562,7 @@ async function load(){
   normalizeLoadedData();
 
   if(!loadedFromServer){
-    save();
+    saveLocal();
   } else {
     saveLocal();
   }
@@ -2051,6 +2065,7 @@ async function refreshFromServer(silent=false){
   if(remoteRefreshBusy) return false;
   remoteRefreshBusy=true;
   try{
+    if(remoteSaveTimer) await saveRemoteNow();
     const r=await fetch('/api/inhouse-db?ts='+Date.now(), { cache:'no-store' });
     if(!r.ok) throw new Error('server_db_load_failed');
     const data=await r.json();
