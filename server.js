@@ -448,7 +448,6 @@ function readDiscordConfig() {
 
 function writeDiscordConfig(data) {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  backupInhouseDB(readInhouseDB());
   const payload = normalizeDiscordConfig({ ...readDiscordConfig(), ...(data || {}), updatedAt: new Date().toISOString() });
   const tmp = DISCORD_CONFIG_FILE + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(payload, null, 2), 'utf8');
