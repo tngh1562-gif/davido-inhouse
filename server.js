@@ -668,6 +668,7 @@ const state = {
 let chzzkWs = null;
 let chzzkPing = null;
 let chzzkChatChannelId = null;
+let chzzkExtraToken = null;
 let chzzkTid = 10;
 let chzzkReconnectTimer = null;
 let chzzkReconnectDelay = 5000;
@@ -1074,10 +1075,11 @@ function scheduleChzzkReconnect(chatChannelId, originalChannelId) {
       );
       newToken = json?.content?.accessToken || null;
       newUid = json?.content?.userIdHash || null;
+      chzzkExtraToken = json?.content?.extraToken || null;
     } catch (err) {
       state.bot.lastSendError = err.message || '치지직 토큰 갱신 실패';
     }
-    connectChatWs(chatChannelId, originalChannelId, newToken, newUid);
+    connectChatWs(chatChannelId, originalChannelId, newToken, newUid, chzzkExtraToken);
   }, delay);
 }
 
@@ -1132,6 +1134,7 @@ async function connectChzzk(channelId) {
     const content = json?.content || {};
     accessToken = content.accessToken || null;
     botUid = content.userIdHash || null;
+    chzzkExtraToken = content.extraToken || null;
     console.log('[CHZZK] token response:', JSON.stringify({
       hasToken: !!accessToken,
       temporaryRestrict: content.temporaryRestrict,
@@ -1162,10 +1165,10 @@ async function connectChzzk(channelId) {
   }
   console.log('[CHZZK] final uid:', botUid || 'null');
 
-  connectChatWs(chatChannelId, channelId, accessToken, botUid);
+  connectChatWs(chatChannelId, channelId, accessToken, botUid, chzzkExtraToken);
 }
 
-function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = null) {
+function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = null, extraToken = null) {
   const WS = require('ws');
   chzzkAuthed = false;
   const chatAuthMode = state.bot.sendToChat && hasChzzkAuth() ? 'SEND' : 'READ';
@@ -1197,7 +1200,7 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
         ver: '3', cmd: CHZZK_CMD.CONNECT, svcid: 'game', cid: chatChannelId,
         bdy: { uid: chatAuthMode === 'SEND' ? botUid : null, devType: 2001, accTkn: accessToken, auth: chatAuthMode,
                libVer: '4.9.1', osVer: 'Windows/10', devName: 'Chrome/120.0.0.0',
-               locale: 'ko', chzzkTk: null },
+               locale: 'ko', chzzkTk: extraToken },
         tid: 1,
       }));
     }, 500);
