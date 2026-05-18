@@ -1978,17 +1978,36 @@ async function moveDiscordVoiceTeams(){
     toast(res.error||'팀 음성방 이동 실패');
   }
 }
+function cleanDiscordMoveKey(value){
+  return String(value||'').trim().toLowerCase();
+}
+function stripLolTag(value){
+  return String(value||'').split('#')[0].trim().toLowerCase();
+}
+function uniqueDiscordViewerMatch(key,label,matcher){
+  if(!key) return null;
+  const matches=viewers.filter(matcher);
+  if(matches.length===1) return {viewer:matches[0],source:label};
+  if(matches.length>1) return {viewer:null,ambiguous:true,source:label,matches};
+  return null;
+}
 function findDiscordViewerForPlayerSafe(p){
   if(!p) return {viewer:null};
-  if(p.viewerId){
-    const byId=viewers.find(v=>v.id===p.viewerId);
-    if(byId) return {viewer:byId};
-  }
-  const name=(p.name||'').trim().toLowerCase();
-  if(!name) return {viewer:null};
-  const matches=viewers.filter(v=>(v.name||'').trim().toLowerCase()===name);
-  if(matches.length===1) return {viewer:matches[0]};
-  if(matches.length>1) return {viewer:null,ambiguous:true,matches};
+  const byId=Number(p.viewerId) ? viewers.find(v=>Number(v.id)===Number(p.viewerId)) : null;
+  if(byId) return {viewer:byId,source:'viewerId'};
+
+  const chzzkKey=cleanDiscordMoveKey(p.chzzk);
+  const byChzzk=uniqueDiscordViewerMatch(chzzkKey,'치지직 닉네임',v=>cleanDiscordMoveKey(v.chzzk)===chzzkKey);
+  if(byChzzk) return byChzzk;
+
+  const fullNameKey=cleanDiscordMoveKey(p.name);
+  const byFullName=uniqueDiscordViewerMatch(fullNameKey,'롤 닉네임',v=>cleanDiscordMoveKey(v.name)===fullNameKey);
+  if(byFullName) return byFullName;
+
+  const taglessKey=stripLolTag(p.name);
+  const byTagless=uniqueDiscordViewerMatch(taglessKey,'태그 제외 롤 닉네임',v=>stripLolTag(v.name)===taglessKey);
+  if(byTagless) return byTagless;
+
   return {viewer:null};
 }
 function discordMoveReasonText(reason){
@@ -2005,10 +2024,10 @@ function buildDiscordMoveEntries(teamName,players){
     const name=player?.name||found.viewer?.name||'?';
     const discordId=String(found.viewer?.discordId||'').replace(/\D/g,'');
     let issue='';
-    if(found.ambiguous) issue='같은 닉네임 DB가 여러 개라 디스코드 ID를 확정할 수 없음';
+    if(found.ambiguous) issue=`${found.source||'DB'} 기준으로 같은 사람이 여러 명이라 디스코드 ID를 확정할 수 없음`;
     else if(!found.viewer) issue='시청자 DB 매칭 없음';
     else if(!discordId) issue='디스코드 ID 미연동';
-    return {teamName,player,name,discordId,issue};
+    return {teamName,player,name,discordId,issue,source:found.source||''};
   });
 }
 function prepareDiscordMovePayload(){
@@ -2022,18 +2041,23 @@ function prepareDiscordMovePayload(){
     if(!byId.has(entry.discordId)) byId.set(entry.discordId,[]);
     byId.get(entry.discordId).push(entry);
   });
-  const duplicateIds=new Set([...byId.entries()].filter(([,items])=>items.length>1).map(([id])=>id));
+  const conflictIds=new Set(
+    [...byId.entries()]
+      .filter(([,items])=>new Set(items.map(item=>item.teamName)).size>1)
+      .map(([id])=>id)
+  );
   const excluded=[];
   entries.forEach(entry=>{
     if(entry.issue) excluded.push({name:entry.name,reason:entry.issue,discordId:entry.discordId});
-    else if(duplicateIds.has(entry.discordId)){
+    else if(conflictIds.has(entry.discordId)){
       const names=byId.get(entry.discordId).map(item=>item.name).join(' / ');
-      excluded.push({name:entry.name,discordId:entry.discordId,reason:`같은 디스코드 ID 중복: ${names}`});
+      excluded.push({name:entry.name,discordId:entry.discordId,reason:`양 팀에 같은 디스코드 ID가 잡힘: ${names}`});
     }
   });
-  const movable=entries.filter(entry=>!entry.issue && entry.discordId && !duplicateIds.has(entry.discordId));
-  const blueDiscordIds=movable.filter(entry=>entry.teamName==='blue').map(entry=>entry.discordId);
-  const redDiscordIds=movable.filter(entry=>entry.teamName==='red').map(entry=>entry.discordId);
+  const movable=entries.filter(entry=>!entry.issue && entry.discordId && !conflictIds.has(entry.discordId));
+  const uniqueIdsForTeam=teamName=>[...new Set(movable.filter(entry=>entry.teamName===teamName).map(entry=>entry.discordId))];
+  const blueDiscordIds=uniqueIdsForTeam('blue');
+  const redDiscordIds=uniqueIdsForTeam('red');
   const playersByDiscordId={};
   movable.forEach(entry=>{playersByDiscordId[entry.discordId]=entry.name;});
   return {blueDiscordIds,redDiscordIds,playersByDiscordId,excluded};

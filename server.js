@@ -1364,6 +1364,9 @@ app.post('/api/action', async (req, res) => {
       if (!lobbyChannelId || !blueChannelId || !redChannelId) {
         return res.json({ ok: false, error: '내전대기방 / 1팀 / 2팀 음성채널 ID를 먼저 저장하세요.' });
       }
+      if (blueChannelId === redChannelId || lobbyChannelId === blueChannelId || lobbyChannelId === redChannelId) {
+        return res.json({ ok: false, error: '내전대기방, 1팀, 2팀 음성채널 ID는 서로 다른 채널이어야 합니다.' });
+      }
       if (!blueDiscordIds.length && !redDiscordIds.length) {
         return res.json({ ok: false, error: '팀원 중 디스코드 등록이 안 된 사람이 있습니다.' });
       }
