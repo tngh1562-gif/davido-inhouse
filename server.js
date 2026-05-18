@@ -1210,7 +1210,20 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
           state.bot.lastSendError = '봇 계정 인증이 없어 채팅 읽기만 연결됐습니다.';
         }
         console.log('[CHZZK] connected:', chatAuthMode, '| sid:', chzzkSid ? '획득' : 'null');
-        // READ 모드에서만 최근 채팅 요청 (SEND 모드에서는 오프라인 채널 시 연결 끊김 유발)
+
+        // SEND 모드인데 sid가 없으면 → 인증 실패, READ로 폴백
+        if (chatAuthMode === 'SEND' && !chzzkSid) {
+          console.log('[CHZZK] SEND 인증 실패(sid 없음) - 봇 계정 NID 확인 필요');
+          state.bot.sendToChat = false;
+          state.bot.status = 'connected-read';
+          state.bot.lastSendError = '채팅 답장 연결 실패. 봇 계정 NID_AUT/NID_SES를 다시 입력해주세요.';
+          broadcastState();
+          // READ 모드로 재연결
+          try { ws.terminate(); } catch(e) {}
+          return;
+        }
+
+        // READ 모드에서만 최근 채팅 구독
         if (chatAuthMode === 'READ') {
           try {
             ws.send(JSON.stringify({
