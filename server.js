@@ -855,6 +855,12 @@ function sendChzzkChat(text) {
   }
 
   try {
+    const extras = JSON.stringify({
+      chatType: 'STREAMING',
+      emojis: {},
+      osType: 'PC',
+      streamingChannelId: state.channelId || chzzkChatChannelId,
+    });
     chzzkWs.send(JSON.stringify({
       ver: '3',
       cmd: 3101,
@@ -863,10 +869,11 @@ function sendChzzkChat(text) {
       bdy: {
         msg,
         msgTypeCode: 1,
-        extras: '{}',
+        extras,
       },
       tid: ++chzzkTid,
     }));
+    console.log('[CHZZK] chat sent:', msg.slice(0, 30));
     state.bot.lastSendError = null;
     return true;
   } catch (err) {
