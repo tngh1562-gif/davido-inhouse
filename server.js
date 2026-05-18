@@ -873,9 +873,7 @@ function sendChzzkChat(text) {
       ...(chzzkSid ? { sid: chzzkSid } : {}),
       tid: ++chzzkTid,
     };
-    console.log('[CHZZK] sending packet:', JSON.stringify(packet).slice(0, 300));
     chzzkWs.send(JSON.stringify(packet));
-    console.log('[CHZZK] chat sent:', msg.slice(0, 30));
     state.bot.lastSendError = null;
     return true;
   } catch (err) {
@@ -1138,35 +1136,18 @@ async function connectChzzk(channelId) {
     accessToken = content.accessToken || null;
     botUid = content.userIdHash || null;
     chzzkExtraToken = content.extraToken || null;
-    console.log('[CHZZK] token response:', JSON.stringify({
-      hasToken: !!accessToken,
-      temporaryRestrict: content.temporaryRestrict,
-      realNameAuth: content.realNameAuth,
-      chatTime: content.chatTime,
-      uid: botUid || 'null',
-    }));
   } catch (e) { console.log('[CHZZK] token failed:', e.message); }
 
-  // uid가 없으면 여러 방법으로 시도
+  // uid가 없으면 봇 계정 프로필 API로 조회
   if (!botUid && hasChzzkAuth()) {
-    const uidEndpoints = [
-      'https://api.chzzk.naver.com/service/v2/user',
-      'https://api.chzzk.naver.com/service/v1/user',
-      'https://api.chzzk.naver.com/service/v2/channels/me',
-      'https://comm-api.game.naver.com/nng_main/v1/user/getUserStatus',
-      'https://comm-api.game.naver.com/nng_main/v1/user',
-    ];
-    for (const ep of uidEndpoints) {
-      try {
-        const j = await fetchChzzkJson(ep, { headers: chzzkHeaders() });
-        console.log('[CHZZK] uid try', ep, ':', JSON.stringify(j?.content || j).slice(0, 200));
-        const content = j?.content || j?.data || j;
-        botUid = content?.channelId || content?.userIdHash || content?.userId || content?.id || content?.hashId || null;
-        if (botUid) { console.log('[CHZZK] uid found:', botUid); break; }
-      } catch (e) { console.log('[CHZZK] uid endpoint failed:', ep, e.message); }
-    }
+    try {
+      const j = await fetchChzzkJson(
+        'https://comm-api.game.naver.com/nng_main/v1/user/getUserStatus',
+        { headers: chzzkHeaders() }
+      );
+      botUid = (j?.content || j)?.userIdHash || null;
+    } catch (e) { console.log('[CHZZK] uid fetch failed:', e.message); }
   }
-  console.log('[CHZZK] final uid:', botUid || 'null');
 
   connectChatWs(chatChannelId, channelId, accessToken, botUid, chzzkExtraToken);
 }
@@ -1216,13 +1197,9 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
   ws.on('message', (raw) => {
     try {
       const msg = JSON.parse(Buffer.isBuffer(raw) ? raw.toString('utf8') : String(raw));
-      if (msg.cmd !== 0 && msg.cmd !== 10 && msg.cmd !== CHZZK_CMD.PING && msg.cmd !== CHZZK_CMD.PONG) {
-        console.log('[CHZZK] recv cmd:', msg.cmd, msg.bdy ? JSON.stringify(msg.bdy).slice(0,150) : '');
-      }
       if (msg.cmd === CHZZK_CMD.PING) { ws.send(JSON.stringify({ ver: '3', cmd: CHZZK_CMD.PONG })); return; }
       if (msg.cmd === CHZZK_CMD.PONG) return;
       if (msg.cmd === CHZZK_CMD.CONNECTED || msg.cmd === CHZZK_CMD.CONNECT) {
-        console.log('[CHZZK] auth response:', JSON.stringify(msg.bdy));
         clearTimeout(connectGuard);
         chzzkAuthed = true;
         chzzkSid = msg.bdy?.sid || null;
@@ -1232,19 +1209,18 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
         if (chatAuthMode === 'READ' && state.bot.sendToChat && !hasChzzkAuth()) {
           state.bot.lastSendError = '봇 계정 인증이 없어 채팅 읽기만 연결됐습니다.';
         }
-        // 채팅방 구독 (최근 채팅 요청) - 전송 권한 활성화를 위해 필요
+        console.log('[CHZZK] connected:', chatAuthMode, '| sid:', chzzkSid ? '획득' : 'null');
         try {
           ws.send(JSON.stringify({
             ver: '3', cmd: CHZZK_CMD.REQUEST_RECENT_CHAT, svcid: 'game', cid: chatChannelId,
             bdy: { recentMessageCount: 30, userCount: 0 }, tid: 2,
           }));
-          console.log('[CHZZK] sent REQUEST_RECENT_CHAT');
         } catch(e) {}
         broadcastState();
         return;
       }
-      if (msg.cmd === 100) { console.log('[CHZZK] 인증 응답:', JSON.stringify(msg.bdy)); return; }
-      if (msg.cmd === 93101) { console.log('[CHZZK] chat raw:', JSON.stringify(msg.bdy).slice(0,200)); handleChat(msg); }
+      if (msg.cmd === 100) return;
+      if (msg.cmd === 93101) { handleChat(msg); }
     } catch (e) { console.log('[CHZZK] parse error:', e.message); }
   });
 
