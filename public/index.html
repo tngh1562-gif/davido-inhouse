@@ -58,7 +58,11 @@ iframe#inhouse-frame{width:100%;height:100%;border:none;display:block}
 
 /* ── VOTE PANEL ── */
 #panel-vote{gap:0}
-.vote-left{width:280px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.vote-left{width:280px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,min-width .25s ease;position:relative}
+.vote-left.collapsed{width:36px;min-width:36px}
+.vote-left.collapsed .section,.vote-left.collapsed .chat-section{display:none}
+.vote-left-toggle{position:absolute;top:50%;right:-1px;transform:translateY(-50%);z-index:10;width:18px;height:48px;background:var(--bg3);border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt2);font-size:11px;transition:background .15s}
+.vote-left-toggle:hover{background:var(--border2);color:var(--txt)}
 .vote-right{flex:1;overflow:auto;padding:28px 36px;display:flex;flex-direction:column}
 .section{padding:16px;border-bottom:1px solid var(--border)}
 .section-title{font-size:12px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
@@ -224,7 +228,8 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
     <!-- 투표 탭 -->
     <div class="panel" id="panel-vote">
       <!-- 왼쪽 설정 -->
-      <div class="vote-left">
+      <div class="vote-left" id="vote-left">
+        <button class="vote-left-toggle" id="vote-left-toggle" onclick="toggleVoteLeft()" title="패널 접기/펼치기">◀</button>
         <div class="section">
           <div class="section-title">📊 투표 설정</div>
           <label class="lbl">제목</label>
@@ -686,6 +691,13 @@ function toggleVoteNotice() {
 }
 
 function toggleHideVoteContent() { renderVote(); }
+
+function toggleVoteLeft() {
+  const el = document.getElementById('vote-left');
+  const btn = document.getElementById('vote-left-toggle');
+  const collapsed = el.classList.toggle('collapsed');
+  btn.textContent = collapsed ? '▶' : '◀';
+}
 
 function openDeeplolVoteModal() {
   const modal = document.getElementById('deeplol-vote-modal');
