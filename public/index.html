@@ -477,7 +477,6 @@ async function downloadBackup() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast('💾 백업 다운로드 완료!');
   } catch (e) {
     alert('백업 실패: ' + (e.message || e));
   }
@@ -506,8 +505,8 @@ async function uploadBackup(input) {
     });
     const result = await res.json();
     if (result.ok) {
-      toast(`✅ 복원 완료 (시청자 ${result.restored.viewers}명) — 새로고침합니다...`);
-      setTimeout(() => location.reload(), 1800);
+      alert(`✅ 복원 완료 (시청자 ${result.restored.viewers}명)\n페이지를 새로고침합니다.`);
+      location.reload();
     } else {
       alert('복원 실패: ' + result.error);
     }
