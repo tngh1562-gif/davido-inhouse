@@ -1635,7 +1635,7 @@ const SHOP_ITEMS=[
   {id:'extend',name:'연장권',price:200,desc:'방송/내전 흐름에 맞춰 한 번 더 기회를 여는 최고가 상품. 포인트를 아끼면 한 달 목표치.'},
 ];
 let shopSelectedViewerId=null;
-function viewerPoints(v){ return Math.max(0, parseInt(v?.pass||0)||0); }
+function viewerPoints(v){ return Math.max(0, Number(v?.pass)||0); }
 function findViewerForPlayer(p){
   if(!p) return null;
   if(p.viewerId){
@@ -3229,11 +3229,11 @@ function swapTeams(){
 
 function confirmMainTeams(){
   if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정하세요');return}
-  const joinedCount=grantInhousePoints([...curBlue,...curRed],1,'팀 확정 참가');
+  const joinedCount=grantInhousePoints([...curBlue,...curRed],3.5,'팀 확정 참가');
   save();
   renderViewers();
   if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
-  toast(joinedCount?`포인트 지급! 참가자 ${joinedCount}명 +1P`:'포인트 지급 완료');
+  toast(joinedCount?`포인트 지급! 참가자 ${joinedCount}명 +3.5P`:'포인트 지급 완료');
 }
 
 function record(res){
@@ -3258,8 +3258,8 @@ function record(res){
   }
   updateViewerStat(curBlue,'blue'); updateViewerStat(curRed,'red');
   let bonusCount=0;
-  if(res==='blue') bonusCount=grantInhousePoints(curBlue,1,'승리 보너스');
-  if(res==='red') bonusCount=grantInhousePoints(curRed,1,'승리 보너스');
+  if(res==='blue') bonusCount=grantInhousePoints(curBlue,3.5,'승리 보너스');
+  if(res==='red') bonusCount=grantInhousePoints(curRed,3.5,'승리 보너스');
   save(); renderRecords();
   renderViewers();
   if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
@@ -3551,7 +3551,7 @@ function confirmDraft(){
   if(!dBl.length||!dRl.length){toast('양팀에 최소 1명씩 배정하세요');return}
   if(dBl.length!==dRl.length){toast('양팀 인원이 같아야 합니다 (현재 블루 '+dBl.length+'명 vs 레드 '+dRl.length+'명)');return}
   curBlue=[...dBl]; curRed=[...dRl];
-  const joinedCount=grantInhousePoints([...curBlue,...curRed],1,'팀 확정 참가');
+  const joinedCount=grantInhousePoints([...curBlue,...curRed],3.5,'팀 확정 참가');
   save();
   const bS=teamEffScore(curBlue),rS=teamEffScore(curRed),diff=Math.abs(bS-rS);
   const dc=diff<40?'d-s':diff<120?'d-a':'d-b';
