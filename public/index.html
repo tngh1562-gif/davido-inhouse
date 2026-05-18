@@ -672,7 +672,7 @@ function renderVote() {
     const labelHtml = hidden ? '<span style="filter:blur(5px);user-select:none;color:var(--txt)">● ● ●</span>' : esc(it.label);
     const excluded = drawnPeople[i] ? [...drawnPeople[i]] : [];
     const votersHtml = it.votes.length
-      ? it.votes.map(n=>`<span class="voter-chip" onclick="addToInhouse('${n.replace(/'/g,"\'")}',${i})" title="내전에 추가">${esc(n)} <span style="color:var(--acc2);font-size:10px">+</span></span>`).join('')
+      ? it.votes.map(n=>`<span class="voter-chip" onclick="addToInhouse('${n.replace(/'/g,"\'")}',${i},this)" title="내전 팀박스에 추가">${esc(n)} <span style="color:var(--acc2);font-size:10px">+</span></span>`).join('')
       : '<span style="font-size:12px;color:var(--txt2)">투표자 없음</span>';
     return `
     <div>
@@ -1154,31 +1154,22 @@ function clearManualRoulette() {
   renderManualList();
 }
 
-// ── 투표자 → 내전 추가 (시청자 DB 연동) ──
-function addToInhouse(nickname, voteIdx) {
-  // 내전 탭으로 먼저 이동
-  const inhouseTab = document.querySelector('[data-tab="inhouse"]');
+// ── 투표자 → 내전 팀박스 추가 (탭 전환 없이) ──
+function addToInhouse(nickname, voteIdx, el) {
   const iframe = document.getElementById('inhouse-frame');
-  
   if (!iframe) {
     alert('잠시 후 다시 시도해주세요');
     return;
   }
-
-  // inhouse iframe이 로드됐는지 확인 후 postMessage
-  function sendMsg() {
-    iframe.contentWindow.postMessage({
-      type: 'add_player_by_chzzk',
-      chzzkNick: nickname,  // 치지직 닉네임으로 DB 검색
-    }, '*');
-  }
-
-  // 내전 탭이 활성화 안됐으면 전환 후 전송
-  if (!document.getElementById('panel-inhouse').classList.contains('active')) {
-    inhouseTab.click();
-    setTimeout(sendMsg, 300);
-  } else {
-    sendMsg();
+  iframe.contentWindow.postMessage({
+    type: 'add_player_by_chzzk',
+    chzzkNick: nickname,
+  }, '*');
+  // 클릭 칩 시각적 피드백 (민트색으로 잠깐 변했다가 복귀)
+  if (el) {
+    el.style.borderColor = 'var(--acc2)';
+    el.style.color = 'var(--acc2)';
+    setTimeout(() => { el.style.borderColor = ''; el.style.color = ''; }, 800);
   }
 }
 </script>
