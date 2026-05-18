@@ -1978,6 +1978,90 @@ async function moveDiscordVoiceTeams(){
     toast(res.error||'팀 음성방 이동 실패');
   }
 }
+function findDiscordViewerForPlayerSafe(p){
+  if(!p) return {viewer:null};
+  if(p.viewerId){
+    const byId=viewers.find(v=>v.id===p.viewerId);
+    if(byId) return {viewer:byId};
+  }
+  const name=(p.name||'').trim().toLowerCase();
+  if(!name) return {viewer:null};
+  const matches=viewers.filter(v=>(v.name||'').trim().toLowerCase()===name);
+  if(matches.length===1) return {viewer:matches[0]};
+  if(matches.length>1) return {viewer:null,ambiguous:true,matches};
+  return {viewer:null};
+}
+function discordMoveReasonText(reason){
+  const text=String(reason||'');
+  if(text==='not_in_lobby') return '내전대기방에 없음';
+  if(text==='missing_permission') return '봇 권한 부족';
+  if(text==='duplicate_team_assignment') return '같은 디스코드 ID가 양 팀/여러 명에 중복됨';
+  if(text.includes('Unknown Member')) return '서버 멤버를 찾을 수 없음';
+  return text || '이유 없음';
+}
+function buildDiscordMoveEntries(teamName,players){
+  return players.map(player=>{
+    const found=findDiscordViewerForPlayerSafe(player);
+    const name=player?.name||found.viewer?.name||'?';
+    const discordId=String(found.viewer?.discordId||'').replace(/\D/g,'');
+    let issue='';
+    if(found.ambiguous) issue='같은 닉네임 DB가 여러 개라 디스코드 ID를 확정할 수 없음';
+    else if(!found.viewer) issue='시청자 DB 매칭 없음';
+    else if(!discordId) issue='디스코드 ID 미연동';
+    return {teamName,player,name,discordId,issue};
+  });
+}
+function prepareDiscordMovePayload(){
+  const entries=[
+    ...buildDiscordMoveEntries('blue',curBlue),
+    ...buildDiscordMoveEntries('red',curRed),
+  ];
+  const byId=new Map();
+  entries.forEach(entry=>{
+    if(!entry.discordId) return;
+    if(!byId.has(entry.discordId)) byId.set(entry.discordId,[]);
+    byId.get(entry.discordId).push(entry);
+  });
+  const duplicateIds=new Set([...byId.entries()].filter(([,items])=>items.length>1).map(([id])=>id));
+  const excluded=[];
+  entries.forEach(entry=>{
+    if(entry.issue) excluded.push({name:entry.name,reason:entry.issue,discordId:entry.discordId});
+    else if(duplicateIds.has(entry.discordId)){
+      const names=byId.get(entry.discordId).map(item=>item.name).join(' / ');
+      excluded.push({name:entry.name,discordId:entry.discordId,reason:`같은 디스코드 ID 중복: ${names}`});
+    }
+  });
+  const movable=entries.filter(entry=>!entry.issue && entry.discordId && !duplicateIds.has(entry.discordId));
+  const blueDiscordIds=movable.filter(entry=>entry.teamName==='blue').map(entry=>entry.discordId);
+  const redDiscordIds=movable.filter(entry=>entry.teamName==='red').map(entry=>entry.discordId);
+  const playersByDiscordId={};
+  movable.forEach(entry=>{playersByDiscordId[entry.discordId]=entry.name;});
+  return {blueDiscordIds,redDiscordIds,playersByDiscordId,excluded};
+}
+async function moveDiscordVoiceTeams(){
+  if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정해주세요');return}
+  await saveDiscordVoiceConfig();
+  const {blueDiscordIds,redDiscordIds,playersByDiscordId,excluded}=prepareDiscordMovePayload();
+  if(!blueDiscordIds.length&&!redDiscordIds.length){
+    alert('이동 가능한 디스코드 연동 인원이 없습니다.\n\n제외된 인원\n- '+excluded.map(item=>`${item.name}: ${item.reason}`).join('\n- '));
+    return;
+  }
+  const res=await botAction('move_discord_voice_teams',{blueDiscordIds,redDiscordIds});
+  if(res.ok){
+    const moved=(res.moved?.blue||0)+(res.moved?.red||0);
+    const skipped=(res.skipped||[]).map(item=>{
+      const id=String(item.discordId||'');
+      return `${playersByDiscordId[id]||id}: ${discordMoveReasonText(item.reason)}`;
+    });
+    const lines=[`이동 완료: ${moved}명`];
+    if(excluded.length) lines.push('', '요청 제외', ...excluded.map(item=>`- ${item.name}: ${item.reason}`));
+    if(skipped.length) lines.push('', '이동 실패/건너뜀', ...skipped.map(text=>'- '+text));
+    alert(lines.join('\n'));
+    toast(`팀 음성방 이동: ${moved}명 이동, ${excluded.length+skipped.length}명 제외`);
+  } else {
+    toast(res.error||'팀 음성방 이동 실패');
+  }
+}
 async function saveDiscordChannelOverride(){
   const input=document.getElementById('discordChannelIdInput');
   const enabled=document.getElementById('discordChannelEnabled');
