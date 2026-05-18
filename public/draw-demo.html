@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>추첨 데모</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#111;color:#fff;font-family:'Noto Sans KR',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px 20px}
+  h1{font-size:22px;font-weight:800;color:#aaa;letter-spacing:2px}
+  .demo-box{background:#1a1a1a;border:1px solid #333;border-radius:16px;padding:32px;width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;gap:20px}
+  .pool-label{font-size:12px;color:#666;letter-spacing:2px;text-transform:uppercase}
+  .name-box{width:100%;height:110px;background:rgba(255,255,255,.05);border:1px solid #333;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .spinning{font-size:54px;font-weight:900;letter-spacing:-1px;transition:opacity .06s}
+  .winner-badge{font-size:12px;font-weight:700;color:#00e5a0;letter-spacing:4px;text-transform:uppercase;height:18px;opacity:0;transition:opacity .5s}
+  .winner-badge.show{opacity:1}
+  .winner-name{font-size:22px;font-weight:900;color:#fff;height:32px;transition:all .3s}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  button{border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+  .btn-start{background:#00e5a0;color:#111}
+  .btn-start:hover{background:#00c880}
+  .btn-again{background:#2a2a2a;color:#fff;border:1px solid #444}
+  .btn-again:hover{background:#333}
+  .btn-excl{background:rgba(255,80,80,.15);color:#ff8080;border:1px solid rgba(255,80,80,.3)}
+  .btn-excl:hover{background:rgba(255,80,80,.25)}
+  .pool-edit{width:100%;background:#141414;border:1px solid #333;border-radius:8px;padding:10px 14px;color:#fff;font-size:13px;font-family:'Noto Sans KR',sans-serif;resize:vertical;min-height:100px;outline:none}
+  .pool-edit:focus{border-color:#00e5a0}
+  .excluded-wrap{display:flex;flex-wrap:wrap;gap:6px;width:100%;min-height:24px}
+  .excl-chip{background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.3);border-radius:4px;padding:3px 10px;font-size:12px;color:#ff8080;cursor:pointer;display:flex;align-items:center;gap:4px}
+  .excl-chip:hover{background:rgba(255,80,80,.24)}
+  .info{font-size:12px;color:#555;text-align:center}
+  .section-title{font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase;align-self:flex-start}
+</style>
+</head>
+<body>
+<h1>🎰 추첨 데모</h1>
+
+<div class="demo-box">
+  <div class="pool-label">참여자 목록 (한 줄에 한 명)</div>
+  <textarea class="pool-edit" id="pool-input">시청자A
+시청자B
+시청자C
+다비도팬1
+다비도팬2
+구독자짱
+열혈시청자
+첫참챔피언
+선착순왕
+내전고수</textarea>
+
+  <div class="winner-badge" id="winner-badge">🎉 당첨!</div>
+  <div class="name-box">
+    <div class="spinning" id="spinning">-</div>
+  </div>
+  <div class="winner-name" id="winner-name">&nbsp;</div>
+
+  <div class="btns" id="btns-start">
+    <button class="btn-start" onclick="startDraw()">🎰 추첨하기</button>
+  </div>
+  <div class="btns" id="btns-result" style="display:none">
+    <button class="btn-again" onclick="redraw()">↺ 다시 뽑기</button>
+    <button class="btn-excl" onclick="excludeWinner()">⊘ 뽑힌사람 제외</button>
+    <button class="btn-start" onclick="startDraw()">🎰 새 추첨</button>
+  </div>
+
+  <div style="width:100%;border-top:1px solid #222;padding-top:16px">
+    <div class="section-title" style="margin-bottom:8px">제외된 참여자</div>
+    <div class="excluded-wrap" id="excluded-wrap">
+      <span class="info">없음</span>
+    </div>
+  </div>
+  <div class="info" id="pool-info"></div>
+</div>
+
+<script>
+let excluded = new Set();
+let lastWinner = null;
+let animTimer = null;
+let running = false;
+
+function getPool() {
+  const lines = document.getElementById('pool-input').value
+    .split('\n').map(s=>s.trim()).filter(Boolean);
+  return lines.filter(n => !excluded.has(n));
+}
+
+function startDraw() {
+  if (running) return;
+  const pool = getPool();
+  if (!pool.length) { alert('추첨 가능한 참가자가 없습니다'); return; }
+  lastWinner = null;
+  document.getElementById('winner-badge').className = 'winner-badge';
+  document.getElementById('winner-name').textContent = '';
+  document.getElementById('btns-start').style.display = 'none';
+  document.getElementById('btns-result').style.display = 'none';
+  runAnim(pool);
+}
+
+function runAnim(pool) {
+  if (animTimer) clearTimeout(animTimer);
+  running = true;
+  const winner = pool[Math.floor(Math.random() * pool.length)];
+  const display = document.getElementById('spinning');
+  const TOTAL = 55;
+  let frame = 0;
+
+  function delay(f) {
+    const t = f / TOTAL;
+    if (t < 0.25) return Math.round(180 - t * 4 * 150);
+    if (t < 0.65) return 30;
+    return Math.round(30 + ((t - 0.65) / 0.35) * 370);
+  }
+
+  function step() {
+    if (frame < TOTAL) {
+      display.textContent = pool[Math.floor(Math.random() * pool.length)];
+      frame++;
+      animTimer = setTimeout(step, delay(frame));
+    } else {
+      display.textContent = winner;
+      lastWinner = winner;
+      running = false;
+      setTimeout(() => {
+        document.getElementById('winner-badge').className = 'winner-badge show';
+        document.getElementById('winner-name').textContent = winner;
+        document.getElementById('btns-result').style.display = 'flex';
+        document.getElementById('pool-info').textContent =
+          `전체 ${pool.length}명 중 추첨 (제외: ${excluded.size}명)`;
+      }, 300);
+    }
+  }
+  step();
+}
+
+function redraw() {
+  if (running) return;
+  document.getElementById('winner-badge').className = 'winner-badge';
+  document.getElementById('winner-name').textContent = '';
+  document.getElementById('btns-result').style.display = 'none';
+  const pool = getPool();
+  if (!pool.length) { alert('추첨 가능한 참가자가 없습니다'); document.getElementById('btns-start').style.display = 'flex'; return; }
+  runAnim(pool);
+}
+
+function excludeWinner() {
+  if (!lastWinner) return;
+  excluded.add(lastWinner);
+  renderExcluded();
+  document.getElementById('pool-info').textContent =
+    `남은 참여자 ${getPool().length}명`;
+}
+
+function renderExcluded() {
+  const wrap = document.getElementById('excluded-wrap');
+  if (!excluded.size) { wrap.innerHTML = '<span class="info">없음</span>'; return; }
+  wrap.innerHTML = [...excluded].map(n =>
+    `<span class="excl-chip" onclick="unexclude('${n.replace(/'/g,"\\'")}')">⊘ ${n} ✕</span>`
+  ).join('');
+}
+
+function unexclude(name) {
+  excluded.delete(name);
+  renderExcluded();
+}
+</script>
+</body>
+</html>

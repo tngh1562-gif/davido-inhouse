@@ -102,6 +102,26 @@ input.inp:focus,textarea.inp:focus{border-color:var(--acc)}
 .vote-hide-label input[type=checkbox]{accent-color:var(--acc2);width:14px;height:14px;cursor:pointer}
 .empty-msg{text-align:center;padding:60px 20px;color:var(--txt2);font-size:14px}
 
+/* draw panel (expanded under vote item) */
+.vote-item-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.vote-draw-panel{padding:10px 0 4px 126px;display:none;flex-wrap:wrap;gap:10px;align-items:center}
+.vote-draw-panel.open{display:flex}
+.draw-check-label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;user-select:none}
+.draw-check-label input{accent-color:var(--acc2);cursor:pointer}
+.draw-excluded-wrap{padding:6px 0 8px 126px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.draw-excluded-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.3);border-radius:4px;padding:2px 8px;font-size:11px;color:#ff8080;cursor:pointer}
+.draw-excluded-chip:hover{background:rgba(255,80,80,.22)}
+
+/* draw modal */
+#draw-modal{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center}
+.draw-modal-label{font-size:12px;font-weight:700;color:var(--txt2);letter-spacing:3px;text-transform:uppercase;margin-bottom:32px}
+.draw-name-box{width:480px;height:110px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:16px;margin-bottom:32px;overflow:hidden}
+.draw-spinning{font-size:56px;font-weight:900;color:#fff;letter-spacing:-1px;padding:0 24px;text-align:center;transition:opacity .06s}
+.draw-winner-badge{font-size:13px;font-weight:700;color:var(--acc2);letter-spacing:4px;text-transform:uppercase;margin-bottom:-8px;opacity:0;transition:opacity .5s;height:20px}
+.draw-winner-badge.show{opacity:1}
+.draw-modal-btns{display:flex;gap:12px;margin-top:32px}
+.draw-pool-info{font-size:12px;color:var(--txt2);margin-top:16px}
+
 /* ── ROULETTE ── */
 .roulette-wrap{margin-top:24px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px}
 .roulette-title{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:14px;display:flex;align-items:center;gap:8px}
@@ -337,6 +357,21 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
   </div>
 </div>
 
+<!-- 추첨 모달 -->
+<div id="draw-modal" onclick="e=>{if(e.target===this)closeDrawModal()}">
+  <div class="draw-winner-badge" id="draw-winner-badge">🎉 당첨!</div>
+  <div class="draw-modal-label" id="draw-modal-label">추첨 중...</div>
+  <div class="draw-name-box">
+    <div class="draw-spinning" id="draw-spinning">-</div>
+  </div>
+  <div class="draw-pool-info" id="draw-pool-info"></div>
+  <div class="draw-modal-btns" id="draw-modal-btns" style="display:none">
+    <button class="btn" onclick="redraw()" style="padding:10px 24px;font-size:14px">다시 뽑기</button>
+    <button class="btn danger" onclick="excludeAndClose()" style="padding:10px 24px;font-size:14px">뽑힌사람 제외 후 닫기</button>
+    <button class="btn" onclick="closeDrawModal()" style="padding:10px 24px;font-size:14px;background:var(--bg3)">닫기</button>
+  </div>
+</div>
+
 <script>
 // ── 상태 ──
 let state = { channelId: null, chzzkConnected: false, vote: { active: false, title: '', items: [], startedAt: null }, roulette: { items: [] }, music: { queue: [], currentIdx: 0, playing: false }, chatLog: [] };
@@ -345,6 +380,12 @@ let rouletteAngle = 0;
 let spinning = false;
 let currentVideoId = null;
 let expandedVoteIdx = null;
+const voterListMode = new Set(); // 투표자 목록 보기 모드인 항목
+const drawnPeople = {}; // voteIdx -> Set<nickname>
+let currentDrawVoteIdx = null;
+let currentDrawPool = [];
+let lastDrawWinner = null;
+let drawAnimTimer = null;
 
 async function initInhouseFrame() {
   const iframe = document.getElementById('inhouse-frame');
@@ -490,27 +531,54 @@ function renderVote() {
   list.innerHTML = v.items.map((it, i) => {
     const pct = total > 0 ? Math.round(it.votes.length / total * 100) : 0;
     const isOpen = expandedVoteIdx === i;
+    const isList = voterListMode.has(i);
     const labelHtml = hidden ? '<span style="filter:blur(6px);user-select:none">●●●●</span>' : esc(it.label);
+    const excluded = drawnPeople[i] ? [...drawnPeople[i]] : [];
+
+    const votersHtml = it.votes.length
+      ? it.votes.map(n=>`<span class="voter-chip" onclick="addToInhouse('${n.replace(/'/g,"\'")}',${i})" title="내전에 추가">${esc(n)} <span style="color:var(--acc2);font-size:10px">+</span></span>`).join('')
+      : '<span style="font-size:12px;color:var(--txt2)">투표자 없음</span>';
+
     return `
     <div>
       <div class="vote-item">
-        <div class="vote-item-left">
+        <div class="vote-item-left" onclick="toggleVoter(${i})" style="cursor:pointer">
           <div class="vote-cmd">!투표${i+1}</div>
           <div class="vote-label">${labelHtml}</div>
         </div>
+        ${isOpen ? `
+        <div class="vote-item-actions">
+          <button class="btn" onclick="switchToList(event,${i})" style="border:2px solid var(--acc2);color:var(--acc2);background:transparent;padding:9px 18px;font-size:13px;font-weight:700">목록으로</button>
+          <button class="btn success" onclick="openDrawModal(event,${i})" style="padding:9px 18px;font-size:13px;font-weight:700">추첨하기</button>
+        </div>
+        ` : `
         <div class="vote-item-bar-wrap" onclick="toggleVoter(${i})">
           <div class="vote-bar-fill" style="width:${pct}%"></div>
           <span class="vote-bar-text">${it.votes.length}표&nbsp;&nbsp;${pct}%</span>
-        </div>
+        </div>`}
       </div>
-      <div class="vote-voters ${isOpen?'open':''}" style="padding-left:126px">
-        ${it.votes.length ? it.votes.map(n=>`<span class="voter-chip" onclick="addToInhouse('${n.replace(/'/g,"\'")}',${i})" title="내전에 추가">${esc(n)} <span style="color:var(--acc2);font-size:10px">+</span></span>`).join('') : '<span style="font-size:12px;color:var(--txt2)">투표자 없음</span>'}
+      <div class="vote-draw-panel ${isOpen?'open':''}">
+        ${isOpen && isList ? votersHtml : isOpen ? `
+          <label class="draw-check-label"><input type="checkbox" id="draw-sub-${i}"> 구독자만 추첨하기</label>
+          <label class="draw-check-label"><input type="checkbox" id="draw-excl-${i}" ${excluded.length?'checked':''}> 이미 뽑힌 참여자 제외하기</label>
+        ` : ''}
       </div>
+      ${excluded.length ? `
+      <div class="draw-excluded-wrap">
+        <span style="font-size:11px;color:var(--txt2);margin-right:4px">제외됨:</span>
+        ${excluded.map(n=>`<span class="draw-excluded-chip" onclick="removeDrawnPerson(${i},'${n.replace(/'/g,"\\'")}')" title="제외 해제">⊘ ${esc(n)}</span>`).join('')}
+      </div>` : ''}
     </div>`;
   }).join('');
 }
 
-function toggleVoter(i) { expandedVoteIdx = expandedVoteIdx === i ? null : i; renderVote(); }
+function toggleVoter(i) {
+  if (expandedVoteIdx === i) { expandedVoteIdx = null; voterListMode.delete(i); }
+  else { expandedVoteIdx = i; voterListMode.delete(i); }
+  renderVote();
+}
+
+function switchToList(e, i) { e.stopPropagation(); voterListMode.add(i); renderVote(); }
 
 function toggleVoteNotice() {
   voteNoticeOpen = !voteNoticeOpen;
@@ -521,6 +589,112 @@ function toggleVoteNotice() {
 }
 
 function toggleHideVoteContent() { renderVote(); }
+
+// ── 추첨 ──
+function buildDrawPool(voteIdx) {
+  const it = state.vote.items[voteIdx];
+  if (!it) return [];
+  const exclEl = document.getElementById(`draw-excl-${voteIdx}`);
+  const subEl  = document.getElementById(`draw-sub-${voteIdx}`);
+  let pool = [...it.votes];
+  if (exclEl?.checked && drawnPeople[voteIdx]?.size) {
+    pool = pool.filter(n => !drawnPeople[voteIdx].has(n));
+  }
+  // 구독자 필터: votes 배열이 객체 {name, subscriber} 형태이면 필터 적용
+  if (subEl?.checked) {
+    const subPool = pool.filter(n => typeof n === 'object' && n.subscriber);
+    if (subPool.length) pool = subPool;
+  }
+  return pool.map(n => typeof n === 'object' ? n.name : n);
+}
+
+function openDrawModal(e, voteIdx) {
+  e.stopPropagation();
+  const pool = buildDrawPool(voteIdx);
+  if (!pool.length) { toast('추첨 가능한 참가자가 없습니다'); return; }
+  currentDrawVoteIdx = voteIdx;
+  currentDrawPool = pool;
+  lastDrawWinner = null;
+  const modal = document.getElementById('draw-modal');
+  modal.style.display = 'flex';
+  document.getElementById('draw-winner-badge').className = 'draw-winner-badge';
+  document.getElementById('draw-modal-btns').style.display = 'none';
+  document.getElementById('draw-modal-label').textContent = '추첨 중...';
+  startDrawAnim(pool);
+}
+
+function startDrawAnim(pool) {
+  if (drawAnimTimer) clearTimeout(drawAnimTimer);
+  const display = document.getElementById('draw-spinning');
+  const winner = pool[Math.floor(Math.random() * pool.length)];
+  const TOTAL = 55;
+  let frame = 0;
+
+  function delay(f) {
+    const t = f / TOTAL;
+    if (t < 0.25) return Math.round(180 - t * 4 * 150); // 180→30ms
+    if (t < 0.65) return 30;
+    return Math.round(30 + ((t - 0.65) / 0.35) * 370); // 30→400ms
+  }
+
+  function step() {
+    if (frame < TOTAL) {
+      display.textContent = pool[Math.floor(Math.random() * pool.length)];
+      frame++;
+      drawAnimTimer = setTimeout(step, delay(frame));
+    } else {
+      display.textContent = winner;
+      lastDrawWinner = winner;
+      setTimeout(() => {
+        const badge = document.getElementById('draw-winner-badge');
+        badge.className = 'draw-winner-badge show';
+        document.getElementById('draw-modal-label').textContent = winner;
+        document.getElementById('draw-modal-label').style.fontSize = '28px';
+        document.getElementById('draw-modal-label').style.color = 'var(--txt)';
+        document.getElementById('draw-modal-label').style.fontWeight = '900';
+        document.getElementById('draw-pool-info').textContent =
+          `전체 ${pool.length}명 중 추첨`;
+        document.getElementById('draw-modal-btns').style.display = 'flex';
+      }, 300);
+    }
+  }
+  step();
+}
+
+function redraw() {
+  const pool = buildDrawPool(currentDrawVoteIdx);
+  if (!pool.length) { toast('추첨 가능한 참가자가 없습니다'); closeDrawModal(); return; }
+  currentDrawPool = pool;
+  lastDrawWinner = null;
+  document.getElementById('draw-winner-badge').className = 'draw-winner-badge';
+  document.getElementById('draw-modal-btns').style.display = 'none';
+  const label = document.getElementById('draw-modal-label');
+  label.textContent = '추첨 중...'; label.style.fontSize = ''; label.style.color = ''; label.style.fontWeight = '';
+  document.getElementById('draw-pool-info').textContent = '';
+  startDrawAnim(pool);
+}
+
+function excludeAndClose() {
+  if (lastDrawWinner && currentDrawVoteIdx !== null) {
+    if (!drawnPeople[currentDrawVoteIdx]) drawnPeople[currentDrawVoteIdx] = new Set();
+    drawnPeople[currentDrawVoteIdx].add(lastDrawWinner);
+  }
+  closeDrawModal();
+  renderVote();
+}
+
+function closeDrawModal() {
+  if (drawAnimTimer) { clearTimeout(drawAnimTimer); drawAnimTimer = null; }
+  const modal = document.getElementById('draw-modal');
+  modal.style.display = 'none';
+  const label = document.getElementById('draw-modal-label');
+  if (label) { label.style.fontSize = ''; label.style.color = ''; label.style.fontWeight = ''; }
+}
+
+function removeDrawnPerson(voteIdx, name) {
+  drawnPeople[voteIdx]?.delete(name);
+  renderVote();
+}
 
 // ── 투표 액션 ──
 function startVote() {
