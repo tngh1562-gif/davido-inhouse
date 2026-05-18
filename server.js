@@ -1061,16 +1061,18 @@ function scheduleChzzkReconnect(chatChannelId, originalChannelId) {
   chzzkReconnectTimer = setTimeout(async () => {
     chzzkReconnectTimer = null;
     let newToken = null;
+    let newUid = null;
     try {
       const json = await fetchChzzkJson(
         `https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
         { headers: chzzkHeaders() }
       );
       newToken = json?.content?.accessToken || null;
+      newUid = json?.content?.userIdHash || null;
     } catch (err) {
       state.bot.lastSendError = err.message || '치지직 토큰 갱신 실패';
     }
-    connectChatWs(chatChannelId, originalChannelId, newToken);
+    connectChatWs(chatChannelId, originalChannelId, newToken, newUid);
   }, delay);
 }
 
@@ -1116,19 +1118,21 @@ async function connectChzzk(channelId) {
   } catch (e) { chzzkChatChannelId = chatChannelId; console.log('[CHZZK] chatChannelId fallback:', e.message); }
 
   let accessToken = null;
+  let botUid = null;
   try {
     const json = await fetchChzzkJson(
       `https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
       { headers: chzzkHeaders() }
     );
     accessToken = json?.content?.accessToken || null;
-    console.log('[CHZZK] accessToken:', accessToken ? '획득' : '없음');
+    botUid = json?.content?.userIdHash || null;
+    console.log('[CHZZK] accessToken:', accessToken ? '획득' : '없음', '| uid:', botUid || 'null');
   } catch (e) { console.log('[CHZZK] token failed:', e.message); }
 
-  connectChatWs(chatChannelId, channelId, accessToken);
+  connectChatWs(chatChannelId, channelId, accessToken, botUid);
 }
 
-function connectChatWs(chatChannelId, originalChannelId, accessToken) {
+function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = null) {
   const WS = require('ws');
   chzzkAuthed = false;
   const chatAuthMode = state.bot.sendToChat && hasChzzkAuth() ? 'SEND' : 'READ';
@@ -1158,7 +1162,7 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken) {
     setTimeout(() => {
       ws.send(JSON.stringify({
         ver: '3', cmd: CHZZK_CMD.CONNECT, svcid: 'game', cid: chatChannelId,
-        bdy: { uid: null, devType: 2001, accTkn: accessToken, auth: chatAuthMode,
+        bdy: { uid: chatAuthMode === 'SEND' ? botUid : null, devType: 2001, accTkn: accessToken, auth: chatAuthMode,
                libVer: '4.9.1', osVer: 'Windows/10', devName: 'Chrome/120.0.0.0',
                locale: 'ko', chzzkTk: null },
         tid: 1,
