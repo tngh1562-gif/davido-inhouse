@@ -62,6 +62,17 @@ h2{font-size:13px;font-weight:700;color:var(--txt2);letter-spacing:3px;text-tran
 @keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .rank-medal{font-size:15px;width:20px;text-align:center;flex-shrink:0}
 .rank-name{font-size:12px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.snail3d{position:relative;width:42px;height:30px;display:inline-block;flex-shrink:0;animation:waggle .5s ease-in-out infinite}
+@keyframes waggle{0%,100%{transform:rotate(0deg) scaleY(1)}50%{transform:rotate(-4deg) scaleY(.95)}}
+.s-body{position:absolute;bottom:0;left:0;width:32px;height:13px;background:linear-gradient(180deg,#96e048 0%,#5ec030 55%,#3a9018 100%);border-radius:45% 35% 30% 42%;box-shadow:inset 0 2px 4px rgba(255,255,255,.3),inset 0 -2px 3px rgba(0,0,0,.25),0 2px 4px rgba(0,0,0,.3)}
+.s-head{position:absolute;bottom:10px;left:2px;width:14px;height:12px;background:linear-gradient(145deg,#96e048,#5ec030);border-radius:50% 50% 40% 40%;box-shadow:inset 0 2px 3px rgba(255,255,255,.3),0 1px 3px rgba(0,0,0,.2)}
+.s-shell{position:absolute;right:0;bottom:7px;width:26px;height:24px;border-radius:50%;background:conic-gradient(from -15deg at 55% 45%,#f5b040 0deg,#c97a1a 55deg,#e89530 110deg,#b06515 160deg,#d88220 215deg,#a05218 265deg,#c87825 320deg,#f5b040 360deg);box-shadow:inset -4px -4px 8px rgba(0,0,0,.45),inset 3px 3px 6px rgba(255,255,255,.35),2px 3px 8px rgba(0,0,0,.4)}
+.s-shell-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:7px;height:7px;background:radial-gradient(circle at 40% 40%,#c87030,#6a3008);border-radius:50%;box-shadow:0 0 0 2.5px #b07028,0 0 0 5px rgba(140,80,15,.3)}
+.s-shine{position:absolute;top:4px;left:4px;width:8px;height:5px;background:rgba(255,255,255,.6);border-radius:50%;transform:rotate(-30deg);filter:blur(1.5px)}
+.s-stalkL,.s-stalkR{position:absolute;width:2.5px;background:linear-gradient(180deg,#6ad030,#3a9018);border-radius:2px;bottom:21px}
+.s-stalkL{left:5px;height:8px;transform:rotate(-8deg)}
+.s-stalkR{left:10px;height:9px;transform:rotate(5deg)}
+.s-eye{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:6px;height:6px;background:radial-gradient(circle at 32% 28%,#fff 22%,#1a1a2e 55%,#000 100%);border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.6)}
 
 /* ── 결과 ── */
 .draw-winner-badge{font-size:12px;font-weight:700;color:var(--acc2);letter-spacing:4px;text-transform:uppercase;height:16px;opacity:0;transition:opacity .5s;margin-bottom:8px}
@@ -128,6 +139,7 @@ const RACE_EVENTS=[
 ];
 const MEDALS=['🥇','🥈','🥉'];
 const STOP_IDS=['alien','sleep','banana'];
+const SNAIL_HTML=`<div class="snail3d"><div class="s-shell"><div class="s-shell-center"></div><div class="s-shine"></div></div><div class="s-body"></div><div class="s-head"></div><div class="s-stalkL"><div class="s-eye"></div></div><div class="s-stalkR"><div class="s-eye"></div></div></div>`;
 
 function render(){
   const hidden=document.getElementById('hide-cb').checked;
@@ -202,7 +214,7 @@ function startRace(pool){
       <div class="race-finish"></div>
       <div class="racer" id="rc${i}">
         <div class="racer-nametag">${s.name.slice(0,10)}</div>
-        <div class="racer-snail" id="re${i}">🐌</div>
+        <div class="racer-snail" id="re${i}">${SNAIL_HTML}</div>
         <div class="event-pop" id="ev${i}"></div>
       </div>
       <div class="rank-badge" id="rb${i}"></div>`;
@@ -253,7 +265,7 @@ function startRace(pool){
       // 이벤트 발동
       if(!s.eventStarted&&elapsed>=s.eventAt){
         s.eventStarted=true;s.eventActive=true;s.eventEndAt=elapsed+s.event.dur;
-        if(reEl)reEl.textContent=s.event.emoji;
+        if(reEl)reEl.innerHTML=`<span style="font-size:22px;line-height:1">${s.event.emoji}</span>`;
         if(evEl){evEl.textContent=s.event.label;evEl.style.display='block';}
         if(s.event.id==='alien'&&!s.warpDone){
           s.warpDone=true;
@@ -268,7 +280,7 @@ function startRace(pool){
       // 이벤트 종료
       if(s.eventActive&&elapsed>=s.eventEndAt){
         s.eventActive=false;
-        if(reEl)reEl.textContent='🐌';
+        if(reEl)reEl.innerHTML=SNAIL_HTML;
         if(evEl)evEl.style.display='none';
       }
 
@@ -292,7 +304,7 @@ function startRace(pool){
       if(s.pos>=TRACK_FINISH&&!s.finished){
         s.finished=true;
         s.rank=rankings.length+1;rankings.push(s.name);
-        if(reEl)reEl.textContent=s.isWinner?'🎉':'🐌';
+        if(reEl)reEl.innerHTML=s.isWinner?'<span style="font-size:22px">🎉</span>':SNAIL_HTML;
         if(evEl)evEl.style.display='none';
         const medal=MEDALS[s.rank-1]||(s.rank+'위');
         if(rbEl){rbEl.textContent=medal;rbEl.style.display='block';rbEl.style.color=s.rank===1?'#ffd700':s.rank===2?'#c0c0c0':s.rank===3?'#cd7f32':'#aaa';}
