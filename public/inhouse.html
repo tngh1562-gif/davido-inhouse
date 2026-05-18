@@ -559,13 +559,13 @@ body { background: #f0f4f8; }
    기존 기능/정보는 유지하고 시각 스타일만 덮어쓴다.
 ══════════════════════════════════════════ */
 :root{
-  --ink:#e5e7eb;
-  --s1:#f3f4f6;
-  --s2:#e9ecef;
-  --s3:#dde1e6;
-  --s4:#cfd5dc;
-  --line:#c8ced6;
-  --line2:#9aa3af;
+  --ink:#cdd2da;
+  --s1:#d0d4db;
+  --s2:#c4c9d2;
+  --s3:#b8bec8;
+  --s4:#acb4be;
+  --line:#8a96a6;
+  --line2:#6e7d90;
   --txt:#171a20;
   --txt2:#59616d;
   --txt3:#343b46;
@@ -609,8 +609,8 @@ body{
   border-radius:99px;background:linear-gradient(90deg,var(--bl),var(--a));
 }
 .card{
-  border:1px solid rgba(182,196,214,.72) !important;
-  border-radius:12px !important;background:rgba(244,245,247,.94) !important;
+  border:1px solid rgba(120,140,165,.8) !important;
+  border-radius:12px !important;background:rgba(200,205,212,.96) !important;
   box-shadow:var(--shadow) !important;
 }
 .card-title{
@@ -619,7 +619,7 @@ body{
 }
 input[type=text],input[type=number],select,textarea,#quickSearch{
   border-radius:8px !important;border-color:#d4dfeb !important;
-  background:#eceff3 !important;color:#111827 !important;
+  background:#c0c5ce !important;color:#111827 !important;
 }
 input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#quickSearch:focus{
   border-color:#8b96a3 !important;box-shadow:0 0 0 3px rgba(100,116,139,.16) !important;
@@ -645,18 +645,18 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 .bl-box{border:2px solid rgba(34,104,232,.5) !important}
 .rl-box{border:2px solid rgba(225,63,67,.45) !important}
 .team-hdr{
-  background:linear-gradient(180deg,#eceff3,#dde2e8) !important;
-  border-bottom:1px solid #c8ced6 !important;
+  background:linear-gradient(180deg,#c4c9d2,#b8bec8) !important;
+  border-bottom:1px solid #8a96a6 !important;
 }
 .team-name-lbl{font-weight:950 !important;letter-spacing:.2px}
 .t-player,.p-row,.hist-item,.vdb-table td,.drop-z,.wait-pool > *{
   border-color:#dce5ef !important;
 }
 .p-row{
-  background:#eceff3 !important;border-radius:9px !important;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);
+  background:#bcc2cc !important;border-radius:9px !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);
 }
-.p-row:hover,.vdb-table tr:hover td{background:#e1e6eb !important}
+.p-row:hover,.vdb-table tr:hover td{background:#b0b8c4 !important}
 .bal-track{height:6px !important;background:#cfd5dc !important}
 .bal-fill{background:linear-gradient(90deg,var(--bl),#765fc8,var(--rl)) !important}
 #toast{
@@ -664,7 +664,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
   box-shadow:0 18px 44px rgba(16,24,40,.22) !important;
 }
 .overlay-dashboard{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:14px}
-.overlay-setting{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid #c8ced6;border-radius:12px;background:#eceff3;margin-bottom:10px}
+.overlay-setting{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid #c8ced6;border-radius:12px;background:#c0c5ce;margin-bottom:10px}
 .overlay-setting b{display:block;font-size:.9rem;color:#142033}
 .overlay-setting span{display:block;margin-top:4px;font-size:.75rem;color:var(--txt2);line-height:1.45}
 .overlay-switch{width:54px;height:30px;border:0;border-radius:999px;background:#cbd5e1;padding:4px;cursor:pointer}
@@ -685,14 +685,14 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 .shop-user span{font-size:.72rem;color:var(--txt2)}
 .shop-points{font-size:1.9rem;font-weight:950;color:var(--a);line-height:1}
 .shop-products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.shop-product{border:1px solid #c8ced6;border-radius:14px;background:#eceff3;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:190px}
+.shop-product{border:1px solid #c8ced6;border-radius:14px;background:#c0c5ce;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:190px}
 .shop-product h3{margin:0;font-size:1rem;color:#121826}
 .shop-product p{margin:0;color:var(--txt2);font-size:.76rem;line-height:1.5;flex:1}
 .shop-price{font-size:1.35rem;font-weight:950;color:var(--a)}
 .shop-buy{width:100%;justify-content:center}
 .shop-buy:disabled{opacity:.45;cursor:not-allowed}
 .shop-log{display:flex;flex-direction:column;gap:7px;max-height:260px;overflow:auto}
-.shop-log-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#eef1f5;font-size:.78rem}
+.shop-log-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#bcc2cc;font-size:.78rem}
 @media(max-width:980px){.shop-layout{grid-template-columns:1fr}.shop-products{grid-template-columns:1fr 1fr}}
 @media(max-width:980px){.overlay-dashboard{grid-template-columns:1fr}.nav{position:relative}.page,.wrap{padding:10px !important}}
 </style>
@@ -1174,7 +1174,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
     <div class="card">
       <div class="card-title">버튼 메시지 미리보기</div>
       <textarea id="discordMessageContent" rows="8" placeholder="# 내전 규칙&#10;원하는 글을 디스코드 마크다운 그대로 입력하세요." style="width:100%;resize:vertical"></textarea>
-      <div style="margin-top:12px;border:1px solid var(--line);border-radius:12px;background:#eceff3;padding:14px">
+      <div style="margin-top:12px;border:1px solid var(--line);border-radius:12px;background:#c0c5ce;padding:14px">
         <div id="discordPreviewDesc" style="white-space:pre-line;color:var(--txt2);font-size:.82rem;line-height:1.55;margin-bottom:12px"></div>
         <button id="discordPreviewButton" class="btn btn-bl" style="pointer-events:none">내전 참가 등록</button>
         <button class="btn btn-g" style="pointer-events:none;margin-left:6px">디코 연동</button>
@@ -1865,7 +1865,7 @@ async function renderDiscordTab(){
           <button class="btn btn-o" style="padding:6px 10px;font-size:.72rem;color:var(--rl2)" onclick="removeDiscordChannelOverride('${esc(id)}')">삭제</button>
         </div>
       </div>
-    `).join(''):'<div style="font-size:.78rem;color:var(--txt2);padding:10px;border:1px solid var(--line);border-radius:10px;background:#eceff3">채널별 설정 없음 · 전체 ON/OFF 설정을 따릅니다.</div>';
+    `).join(''):'<div style="font-size:.78rem;color:var(--txt2);padding:10px;border:1px solid var(--line);border-radius:10px;background:#c0c5ce">채널별 설정 없음 · 전체 ON/OFF 설정을 따릅니다.</div>';
   }
   [label,style,desc].forEach(el=>{ if(el && !el.dataset.discordBound){ el.dataset.discordBound='1'; el.addEventListener('input',syncDiscordPreview); el.addEventListener('change',syncDiscordPreview); }});
   const state=document.getElementById('discordConfigState');
