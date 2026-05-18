@@ -2,166 +2,219 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>추첨 데모</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>채팅투표 추첨 데모</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#111;color:#fff;font-family:'Noto Sans KR',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px 20px}
-  h1{font-size:22px;font-weight:800;color:#aaa;letter-spacing:2px}
-  .demo-box{background:#1a1a1a;border:1px solid #333;border-radius:16px;padding:32px;width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;gap:20px}
-  .pool-label{font-size:12px;color:#666;letter-spacing:2px;text-transform:uppercase}
-  .name-box{width:100%;height:110px;background:rgba(255,255,255,.05);border:1px solid #333;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .spinning{font-size:54px;font-weight:900;letter-spacing:-1px;transition:opacity .06s}
-  .winner-badge{font-size:12px;font-weight:700;color:#00e5a0;letter-spacing:4px;text-transform:uppercase;height:18px;opacity:0;transition:opacity .5s}
-  .winner-badge.show{opacity:1}
-  .winner-name{font-size:22px;font-weight:900;color:#fff;height:32px;transition:all .3s}
-  .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-  button{border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
-  .btn-start{background:#00e5a0;color:#111}
-  .btn-start:hover{background:#00c880}
-  .btn-again{background:#2a2a2a;color:#fff;border:1px solid #444}
-  .btn-again:hover{background:#333}
-  .btn-excl{background:rgba(255,80,80,.15);color:#ff8080;border:1px solid rgba(255,80,80,.3)}
-  .btn-excl:hover{background:rgba(255,80,80,.25)}
-  .pool-edit{width:100%;background:#141414;border:1px solid #333;border-radius:8px;padding:10px 14px;color:#fff;font-size:13px;font-family:'Noto Sans KR',sans-serif;resize:vertical;min-height:100px;outline:none}
-  .pool-edit:focus{border-color:#00e5a0}
-  .excluded-wrap{display:flex;flex-wrap:wrap;gap:6px;width:100%;min-height:24px}
-  .excl-chip{background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.3);border-radius:4px;padding:3px 10px;font-size:12px;color:#ff8080;cursor:pointer;display:flex;align-items:center;gap:4px}
-  .excl-chip:hover{background:rgba(255,80,80,.24)}
-  .info{font-size:12px;color:#555;text-align:center}
-  .section-title{font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase;align-self:flex-start}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#111;--bg2:#1a1a1a;--bg3:#222;--txt:#fff;--txt2:#888;--txt3:#aaa;--border:#2a2a2a;--border2:#333;--acc2:#00e5a0}
+body{background:var(--bg);color:var(--txt);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding:40px 32px}
+h2{font-size:13px;font-weight:700;color:var(--txt2);letter-spacing:3px;text-transform:uppercase;margin-bottom:32px}
+
+/* top bar */
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.total-large{font-size:32px;font-weight:900;color:var(--txt)}
+.timer{font-family:monospace;font-size:32px;font-weight:700;color:var(--txt)}
+
+/* vote item */
+.vote-item{display:flex;align-items:center;gap:20px;margin-bottom:14px}
+.vote-item-left{width:130px;flex-shrink:0}
+.vote-cmd{font-size:13px;font-weight:700;color:var(--txt2);margin-bottom:6px}
+.vote-label{font-size:28px;font-weight:900;color:var(--txt);line-height:1}
+.vote-bar-outer{flex:1;position:relative}
+.vote-item-bar-wrap{width:100%;height:56px;background:var(--bg3);border-radius:10px;overflow:hidden;cursor:pointer;display:flex;align-items:center;transition:filter .15s}
+.vote-item-bar-wrap:hover{filter:brightness(1.1)}
+.vote-bar-fill{position:absolute;left:0;top:0;height:100%;background:rgba(255,255,255,.13);transition:width .5s ease;border-radius:10px;pointer-events:none}
+.vote-bar-text{position:relative;z-index:1;padding:0 110px 0 20px;font-size:16px;font-weight:700;color:var(--txt);white-space:nowrap}
+.vote-draw-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:3;background:#00e5a0;color:#111;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.3px}
+.vote-draw-btn:hover{background:#00c880;transform:translateY(-50%) scale(1.03)}
+
+/* voter chips */
+.vote-voters{padding:8px 0 4px 150px;display:none;flex-wrap:wrap;gap:4px}
+.vote-voters.open{display:flex}
+.voter-chip{display:inline-flex;align-items:center;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 9px;font-size:12px;color:var(--txt3);cursor:pointer}
+.voter-chip:hover{border-color:var(--acc2);color:var(--txt)}
+
+/* excluded */
+.draw-excluded-wrap{padding:4px 0 10px 150px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.draw-excluded-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.3);border-radius:4px;padding:3px 10px;font-size:12px;color:#ff8080;cursor:pointer}
+.draw-excluded-chip:hover{background:rgba(255,80,80,.22)}
+
+/* bottom bar */
+.bottom-bar{display:flex;justify-content:space-between;align-items:center;margin-top:28px;padding-top:20px;border-top:1px solid var(--border)}
+.hide-label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--txt2);cursor:pointer;user-select:none}
+.hide-label input{accent-color:var(--acc2);width:14px;height:14px;cursor:pointer}
+.btn-end{background:#00e5a0;color:#111;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+
+/* draw modal */
+#draw-modal{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;display:none;align-items:center;justify-content:center}
+.draw-card{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:24px;padding:44px 52px;display:flex;flex-direction:column;align-items:center;min-width:460px;max-width:560px;box-shadow:0 32px 80px rgba(0,0,0,.6)}
+.draw-card-title{font-size:11px;font-weight:700;color:#666;letter-spacing:3px;text-transform:uppercase;margin-bottom:28px}
+.draw-name-box{width:100%;height:100px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:1px solid #2a2a2a;border-radius:14px;margin-bottom:16px;overflow:hidden}
+.draw-spinning{font-size:52px;font-weight:900;color:#fff;padding:0 20px;text-align:center}
+.draw-winner-badge{font-size:12px;font-weight:700;color:var(--acc2);letter-spacing:4px;text-transform:uppercase;height:16px;opacity:0;transition:opacity .5s;margin-bottom:8px}
+.draw-winner-badge.show{opacity:1}
+.draw-winner-name{font-size:22px;font-weight:900;color:var(--txt);min-height:30px;text-align:center}
+.draw-pool-info{font-size:12px;color:#555;margin-top:12px}
+.draw-modal-btns{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap;justify-content:center}
+.btn{background:var(--bg3);color:var(--txt);border:1px solid var(--border2);border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{filter:brightness(1.2)}
+.btn-danger{background:rgba(255,60,60,.15);color:#ff6060;border-color:rgba(255,60,60,.3)}
 </style>
 </head>
 <body>
-<h1>🎰 추첨 데모</h1>
+<h2>📊 채팅투표 추첨 데모</h2>
 
-<div class="demo-box">
-  <div class="pool-label">참여자 목록 (한 줄에 한 명)</div>
-  <textarea class="pool-edit" id="pool-input">시청자A
-시청자B
-시청자C
-다비도팬1
-다비도팬2
-구독자짱
-열혈시청자
-첫참챔피언
-선착순왕
-내전고수</textarea>
+<div class="top-bar">
+  <div class="total-large">총 <span id="total-count">15</span>표</div>
+  <div class="timer" id="timer">00:03:01</div>
+</div>
 
-  <div class="winner-badge" id="winner-badge">🎉 당첨!</div>
-  <div class="name-box">
-    <div class="spinning" id="spinning">-</div>
-  </div>
-  <div class="winner-name" id="winner-name">&nbsp;</div>
+<div id="vote-list"></div>
 
-  <div class="btns" id="btns-start">
-    <button class="btn-start" onclick="startDraw()">🎰 추첨하기</button>
-  </div>
-  <div class="btns" id="btns-result" style="display:none">
-    <button class="btn-again" onclick="redraw()">↺ 다시 뽑기</button>
-    <button class="btn-excl" onclick="excludeWinner()">⊘ 뽑힌사람 제외</button>
-    <button class="btn-start" onclick="startDraw()">🎰 새 추첨</button>
-  </div>
+<div class="bottom-bar">
+  <label class="hide-label"><input type="checkbox" id="hide-cb" onchange="render()"> 투표 내용 가리기</label>
+  <button class="btn-end">투표 종료</button>
+</div>
 
-  <div style="width:100%;border-top:1px solid #222;padding-top:16px">
-    <div class="section-title" style="margin-bottom:8px">제외된 참여자</div>
-    <div class="excluded-wrap" id="excluded-wrap">
-      <span class="info">없음</span>
+<!-- 추첨 모달 -->
+<div id="draw-modal" onclick="if(event.target===this)closeModal()">
+  <div class="draw-card">
+    <div class="draw-card-title" id="modal-title">추첨</div>
+    <div class="draw-name-box">
+      <div class="draw-spinning" id="draw-spinning">-</div>
+    </div>
+    <div class="draw-winner-badge" id="winner-badge">🎉 당첨!</div>
+    <div class="draw-winner-name" id="winner-name"></div>
+    <div class="draw-pool-info" id="pool-info"></div>
+    <div class="draw-modal-btns" id="modal-btns" style="display:none">
+      <button class="btn" onclick="redraw()">↺ 다시 뽑기</button>
+      <button class="btn btn-danger" onclick="excludeAndClose()">⊘ 뽑힌사람 제외</button>
+      <button class="btn" onclick="closeModal()">닫기</button>
     </div>
   </div>
-  <div class="info" id="pool-info"></div>
 </div>
 
 <script>
-let excluded = new Set();
+const ITEMS = [
+  { label:'첫참', votes:['시청자A','시청자B','시청자C','다비도팬1','구독자짱'] },
+  { label:'선참권', votes:['열혈시청자','첫참챔피언','선착순왕','내전고수','다비도팬2','하루카','비비주민','병아리','해스크','싹뚝잉'] },
+];
+const drawnPeople = { 0: new Set(), 1: new Set() };
+let openIdx = null;
+let currentVoteIdx = null;
 let lastWinner = null;
 let animTimer = null;
-let running = false;
 
-function getPool() {
-  const lines = document.getElementById('pool-input').value
-    .split('\n').map(s=>s.trim()).filter(Boolean);
-  return lines.filter(n => !excluded.has(n));
+function render() {
+  const hidden = document.getElementById('hide-cb').checked;
+  const total = ITEMS.reduce((s,it)=>s+it.votes.length,0);
+  document.getElementById('total-count').textContent = total;
+  document.getElementById('vote-list').innerHTML = ITEMS.map((it,i)=>{
+    const pct = total>0?Math.round(it.votes.length/total*100):0;
+    const isOpen = openIdx===i;
+    const label = hidden ? '<span style="filter:blur(5px);user-select:none;color:#fff">● ● ●</span>' : it.label;
+    const excl = [...drawnPeople[i]];
+    const voters = it.votes.map(n=>`<span class="voter-chip">${n}</span>`).join('');
+    return `<div>
+      <div class="vote-item">
+        <div class="vote-item-left">
+          <div class="vote-cmd">!투표${i+1}</div>
+          <div class="vote-label">${label}</div>
+        </div>
+        <div class="vote-bar-outer">
+          <div class="vote-item-bar-wrap" onclick="toggleOpen(${i})">
+            <div class="vote-bar-fill" style="width:${pct}%"></div>
+            <span class="vote-bar-text">${it.votes.length}표&nbsp;&nbsp;${pct}%</span>
+          </div>
+          <button class="vote-draw-btn" onclick="openDraw(event,${i})">추첨</button>
+        </div>
+      </div>
+      <div class="vote-voters ${isOpen?'open':''}">${voters}</div>
+      ${excl.length?`<div class="draw-excluded-wrap">
+        <span style="font-size:11px;color:#666;margin-right:4px">제외됨:</span>
+        ${excl.map(n=>`<span class="draw-excluded-chip" onclick="unexclude(${i},'${n}')">⊘ ${n}</span>`).join('')}
+      </div>`:''}
+    </div>`;
+  }).join('');
 }
 
-function startDraw() {
-  if (running) return;
-  const pool = getPool();
-  if (!pool.length) { alert('추첨 가능한 참가자가 없습니다'); return; }
-  lastWinner = null;
-  document.getElementById('winner-badge').className = 'winner-badge';
-  document.getElementById('winner-name').textContent = '';
-  document.getElementById('btns-start').style.display = 'none';
-  document.getElementById('btns-result').style.display = 'none';
-  runAnim(pool);
+function toggleOpen(i){ openIdx=openIdx===i?null:i; render(); }
+
+function buildPool(i){
+  return ITEMS[i].votes.filter(n=>!drawnPeople[i].has(n));
 }
 
-function runAnim(pool) {
-  if (animTimer) clearTimeout(animTimer);
-  running = true;
-  const winner = pool[Math.floor(Math.random() * pool.length)];
-  const display = document.getElementById('spinning');
-  const TOTAL = 55;
-  let frame = 0;
+function openDraw(e,i){
+  e.stopPropagation();
+  const pool = buildPool(i);
+  if(!pool.length){ alert('추첨 가능한 참가자가 없습니다'); return; }
+  currentVoteIdx=i; lastWinner=null;
+  document.getElementById('modal-title').textContent = ITEMS[i].label+' 추첨';
+  document.getElementById('winner-badge').className='draw-winner-badge';
+  document.getElementById('winner-name').textContent='';
+  document.getElementById('pool-info').textContent='';
+  document.getElementById('modal-btns').style.display='none';
+  document.getElementById('draw-modal').style.display='flex';
+  startAnim(pool);
+}
 
-  function delay(f) {
-    const t = f / TOTAL;
-    if (t < 0.25) return Math.round(180 - t * 4 * 150);
-    if (t < 0.65) return 30;
-    return Math.round(30 + ((t - 0.65) / 0.35) * 370);
+function startAnim(pool){
+  if(animTimer) clearTimeout(animTimer);
+  const winner=pool[Math.floor(Math.random()*pool.length)];
+  const disp=document.getElementById('draw-spinning');
+  const TOTAL=55; let frame=0;
+  function delay(f){
+    const t=f/TOTAL;
+    if(t<0.25) return Math.round(180-t*4*150);
+    if(t<0.65) return 30;
+    return Math.round(30+((t-0.65)/0.35)*370);
   }
-
-  function step() {
-    if (frame < TOTAL) {
-      display.textContent = pool[Math.floor(Math.random() * pool.length)];
+  function step(){
+    if(frame<TOTAL){
+      disp.textContent=pool[Math.floor(Math.random()*pool.length)];
       frame++;
-      animTimer = setTimeout(step, delay(frame));
+      animTimer=setTimeout(step,delay(frame));
     } else {
-      display.textContent = winner;
-      lastWinner = winner;
-      running = false;
-      setTimeout(() => {
-        document.getElementById('winner-badge').className = 'winner-badge show';
-        document.getElementById('winner-name').textContent = winner;
-        document.getElementById('btns-result').style.display = 'flex';
-        document.getElementById('pool-info').textContent =
-          `전체 ${pool.length}명 중 추첨 (제외: ${excluded.size}명)`;
-      }, 300);
+      disp.textContent=winner; lastWinner=winner;
+      setTimeout(()=>{
+        document.getElementById('winner-badge').className='draw-winner-badge show';
+        document.getElementById('winner-name').textContent=winner;
+        document.getElementById('pool-info').textContent=`전체 ${pool.length}명 중 추첨`;
+        document.getElementById('modal-btns').style.display='flex';
+      },300);
     }
   }
   step();
 }
 
-function redraw() {
-  if (running) return;
-  document.getElementById('winner-badge').className = 'winner-badge';
-  document.getElementById('winner-name').textContent = '';
-  document.getElementById('btns-result').style.display = 'none';
-  const pool = getPool();
-  if (!pool.length) { alert('추첨 가능한 참가자가 없습니다'); document.getElementById('btns-start').style.display = 'flex'; return; }
-  runAnim(pool);
+function redraw(){
+  const pool=buildPool(currentVoteIdx);
+  if(!pool.length){ alert('추첨 가능한 참가자가 없습니다'); closeModal(); return; }
+  lastWinner=null;
+  document.getElementById('winner-badge').className='draw-winner-badge';
+  document.getElementById('winner-name').textContent='';
+  document.getElementById('pool-info').textContent='';
+  document.getElementById('modal-btns').style.display='none';
+  startAnim(pool);
 }
 
-function excludeWinner() {
-  if (!lastWinner) return;
-  excluded.add(lastWinner);
-  renderExcluded();
-  document.getElementById('pool-info').textContent =
-    `남은 참여자 ${getPool().length}명`;
+function excludeAndClose(){
+  if(lastWinner) drawnPeople[currentVoteIdx].add(lastWinner);
+  closeModal(); render();
 }
 
-function renderExcluded() {
-  const wrap = document.getElementById('excluded-wrap');
-  if (!excluded.size) { wrap.innerHTML = '<span class="info">없음</span>'; return; }
-  wrap.innerHTML = [...excluded].map(n =>
-    `<span class="excl-chip" onclick="unexclude('${n.replace(/'/g,"\\'")}')">⊘ ${n} ✕</span>`
-  ).join('');
+function closeModal(){
+  if(animTimer){clearTimeout(animTimer);animTimer=null;}
+  document.getElementById('draw-modal').style.display='none';
 }
 
-function unexclude(name) {
-  excluded.delete(name);
-  renderExcluded();
-}
+function unexclude(i,n){ drawnPeople[i].delete(n); render(); }
+
+// timer
+let sec=181;
+setInterval(()=>{ sec++; const h=String(Math.floor(sec/3600)).padStart(2,'0'),m=String(Math.floor((sec%3600)/60)).padStart(2,'0'),s=String(sec%60).padStart(2,'0'); document.getElementById('timer').textContent=`${h}:${m}:${s}`; },1000);
+
+render();
 </script>
 </body>
 </html>
