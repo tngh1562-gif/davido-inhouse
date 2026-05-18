@@ -861,18 +861,16 @@ function sendChzzkChat(text) {
       osType: 'PC',
       streamingChannelId: state.channelId || chzzkChatChannelId,
     });
-    chzzkWs.send(JSON.stringify({
+    const packet = {
       ver: '3',
       cmd: 3101,
       svcid: 'game',
       cid: chzzkChatChannelId,
-      bdy: {
-        msg,
-        msgTypeCode: 1,
-        extras,
-      },
+      bdy: { msg, msgTypeCode: 1, extras },
       tid: ++chzzkTid,
-    }));
+    };
+    console.log('[CHZZK] sending packet:', JSON.stringify(packet).slice(0, 300));
+    chzzkWs.send(JSON.stringify(packet));
     console.log('[CHZZK] chat sent:', msg.slice(0, 30));
     state.bot.lastSendError = null;
     return true;
@@ -1212,7 +1210,9 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
   ws.on('message', (raw) => {
     try {
       const msg = JSON.parse(Buffer.isBuffer(raw) ? raw.toString('utf8') : String(raw));
-      console.log('[CHZZK] recv cmd:', msg.cmd);
+      if (msg.cmd !== 0 && msg.cmd !== 10 && msg.cmd !== CHZZK_CMD.PING && msg.cmd !== CHZZK_CMD.PONG) {
+        console.log('[CHZZK] recv cmd:', msg.cmd, msg.bdy ? JSON.stringify(msg.bdy).slice(0,150) : '');
+      }
       if (msg.cmd === CHZZK_CMD.PING) { ws.send(JSON.stringify({ ver: '3', cmd: CHZZK_CMD.PONG })); return; }
       if (msg.cmd === CHZZK_CMD.PONG) return;
       if (msg.cmd === CHZZK_CMD.CONNECTED || msg.cmd === CHZZK_CMD.CONNECT) {
