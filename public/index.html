@@ -106,50 +106,24 @@ input.inp:focus,textarea.inp:focus{border-color:var(--acc)}
 .vote-hide-label input[type=checkbox]{accent-color:var(--acc2);width:14px;height:14px;cursor:pointer}
 .empty-msg{text-align:center;padding:60px 20px;color:var(--txt2);font-size:14px}
 
-/* draw modal */
-#draw-modal{position:fixed;inset:0;background:rgba(4,3,20,.92);z-index:9999;display:none;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0;backdrop-filter:blur(4px)}
-.draw-card{background:linear-gradient(145deg,#0a0a16 0%,#0e0e24 50%,#0a0a16 100%);border:1px solid rgba(88,69,220,.4);border-radius:22px;padding:30px 34px;display:flex;flex-direction:column;align-items:center;width:740px;max-width:96vw;box-shadow:0 0 0 1px rgba(88,69,220,.08),0 0 60px rgba(88,69,220,.18),0 40px 80px rgba(0,0,0,.9);position:relative;overflow:hidden}
-.draw-card::before{content:'';position:absolute;top:0;left:-50%;width:200%;height:1px;background:linear-gradient(90deg,transparent,rgba(88,69,220,.6),rgba(168,159,255,.4),rgba(88,69,220,.6),transparent);animation:scanLine 3s linear infinite;pointer-events:none}
-@keyframes scanLine{0%{top:-2px}100%{top:calc(100% + 2px)}}
-.draw-card-title{font-size:10px;font-weight:800;color:rgba(168,159,255,.55);letter-spacing:5px;text-transform:uppercase;margin-bottom:22px}
-.slot-container{width:100%}
-.race-scene{width:100%;background:#050510;border-radius:14px;overflow:hidden;border:1px solid rgba(88,69,220,.22);box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 0 20px rgba(88,69,220,.08);margin-bottom:16px}
-.race-lane{position:relative;height:64px;background:linear-gradient(180deg,#06061a 0%,#080820 55%,#06061a 100%);border-bottom:1px solid rgba(88,69,220,.1);overflow:visible}
-.race-lane:last-child{border-bottom:none}
-.race-lane::before{content:'';position:absolute;top:50%;left:12px;right:20px;height:1px;transform:translateY(-50%);background:repeating-linear-gradient(90deg,transparent,transparent 10px,rgba(255,255,255,.04) 10px,rgba(255,255,255,.04) 20px);animation:dashMove 1.2s linear infinite;pointer-events:none}
-@keyframes dashMove{0%{background-position:0 0}100%{background-position:-20px 0}}
-.race-finish{position:absolute;right:0;top:0;bottom:0;width:16px;z-index:2;background-image:linear-gradient(45deg,#ffd700 25%,#1a1408 25%,#1a1408 75%,#ffd700 75%),linear-gradient(45deg,#ffd700 25%,#1a1408 25%,#1a1408 75%,#ffd700 75%);background-size:8px 8px;background-position:0 0,4px 4px;background-color:#1a1408;box-shadow:-6px 0 16px rgba(255,215,0,.35)}
-.racer{position:absolute;left:2%;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;z-index:4;will-change:left;filter:drop-shadow(0 0 6px rgba(88,69,220,.55))}
-.racer-nametag{font-size:9px;font-weight:800;color:#d0c8ff;background:linear-gradient(135deg,rgba(88,69,220,.75),rgba(30,20,90,.85));border:1px solid rgba(120,100,255,.5);border-radius:7px;padding:2px 7px;white-space:nowrap;max-width:74px;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;line-height:1.4;box-shadow:0 0 8px rgba(88,69,220,.25)}
-.racer-snail{font-size:24px;line-height:1}
-.event-pop{display:none;position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;color:#fff;background:linear-gradient(135deg,rgba(88,69,220,.95),rgba(140,100,255,.85));border:1px solid rgba(160,130,255,.5);padding:3px 10px;border-radius:8px;white-space:nowrap;z-index:6;box-shadow:0 0 14px rgba(88,69,220,.5);animation:epop .25s cubic-bezier(.175,.885,.32,1.275)}
-@keyframes epop{from{opacity:0;transform:translateX(-50%) scale(.5)}to{opacity:1;transform:translateX(-50%) scale(1)}}
-.rank-badge{display:none;position:absolute;right:24px;top:50%;transform:translateY(-50%);font-size:17px;z-index:5;animation:badgeIn .4s cubic-bezier(.175,.885,.32,1.275)}
-@keyframes badgeIn{from{transform:translateY(-50%) scale(0) rotate(-20deg)}to{transform:translateY(-50%) scale(1) rotate(0deg)}}
-.rank-board{width:100%;display:none;margin-bottom:14px}
-.rank-board-title{font-size:10px;font-weight:800;color:rgba(168,159,255,.4);letter-spacing:4px;text-transform:uppercase;margin-bottom:10px;text-align:center}
-.rank-grid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-.rank-entry{display:flex;align-items:center;gap:8px;background:rgba(88,69,220,.08);border:1px solid rgba(88,69,220,.2);border-radius:8px;padding:7px 14px;animation:rankIn .35s cubic-bezier(.175,.885,.32,1.275)}
-@keyframes rankIn{from{opacity:0;transform:scale(.7) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.rank-medal{font-size:15px;flex-shrink:0}
-.rank-name{font-size:12px;font-weight:700;color:#d8d0ff}
-/* 3D 달팽이 */
-.snail3d{position:relative;width:42px;height:30px;display:inline-block;flex-shrink:0;animation:waggle .5s ease-in-out infinite}
-@keyframes waggle{0%,100%{transform:rotate(0deg) scaleY(1)}50%{transform:rotate(-4deg) scaleY(.95)}}
-.s-body{position:absolute;bottom:0;left:0;width:32px;height:13px;background:linear-gradient(180deg,#96e048 0%,#5ec030 55%,#3a9018 100%);border-radius:45% 35% 30% 42%;box-shadow:inset 0 2px 4px rgba(255,255,255,.3),inset 0 -2px 3px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.4)}
-.s-head{position:absolute;bottom:10px;left:2px;width:14px;height:12px;background:linear-gradient(145deg,#96e048,#5ec030);border-radius:50% 50% 40% 40%;box-shadow:inset 0 2px 3px rgba(255,255,255,.3)}
-.s-shell{position:absolute;right:0;bottom:7px;width:26px;height:24px;border-radius:50%;background:conic-gradient(from -15deg at 55% 45%,#f5b040 0deg,#c97a1a 55deg,#e89530 110deg,#b06515 160deg,#d88220 215deg,#a05218 265deg,#c87825 320deg,#f5b040 360deg);box-shadow:inset -4px -4px 8px rgba(0,0,0,.5),inset 3px 3px 6px rgba(255,255,255,.35),2px 3px 10px rgba(0,0,0,.5)}
-.s-shell-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:7px;height:7px;background:radial-gradient(circle at 40% 40%,#c87030,#6a3008);border-radius:50%;box-shadow:0 0 0 2.5px #b07028,0 0 0 5px rgba(140,80,15,.3)}
-.s-shine{position:absolute;top:4px;left:4px;width:8px;height:5px;background:rgba(255,255,255,.65);border-radius:50%;transform:rotate(-30deg);filter:blur(1.5px)}
-.s-stalkL,.s-stalkR{position:absolute;width:2.5px;background:linear-gradient(180deg,#6ad030,#3a9018);border-radius:2px;bottom:21px}
-.s-stalkL{left:5px;height:8px;transform:rotate(-8deg)}
-.s-stalkR{left:10px;height:9px;transform:rotate(5deg)}
-.s-eye{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:6px;height:6px;background:radial-gradient(circle at 32% 28%,#fff 22%,#1a1a2e 55%,#000 100%);border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.7)}
-.draw-winner-badge{font-size:11px;font-weight:800;color:#00e5a0;letter-spacing:5px;text-transform:uppercase;height:16px;opacity:0;transition:opacity .6s;margin-bottom:10px;text-shadow:0 0 14px rgba(0,229,160,.6)}
+/* draw overlay (슬롯) */
+#draw-modal{position:fixed;inset:0;background:rgba(4,3,20,.78);z-index:9999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.draw-card{background:linear-gradient(145deg,#0a0a16,#0e0e24);border:1px solid rgba(88,69,220,.45);border-radius:22px;width:min(640px,96vw);overflow:hidden;box-shadow:0 0 60px rgba(88,69,220,.2),0 32px 80px rgba(0,0,0,.9);animation:boxIn .35s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes boxIn{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.draw-card-title{text-align:center;font-size:10px;font-weight:800;color:rgba(168,159,255,.5);letter-spacing:5px;text-transform:uppercase;padding:26px 0 20px}
+.draw-reel-window{position:relative;height:74px;overflow:hidden}
+.draw-reel-center{position:absolute;top:0;bottom:0;left:50%;width:160px;transform:translateX(-50%);border-left:1px solid rgba(88,69,220,.5);border-right:1px solid rgba(88,69,220,.5);background:rgba(88,69,220,.1);z-index:2;pointer-events:none;box-shadow:0 0 20px rgba(88,69,220,.15) inset}
+.draw-reel-fade-l,.draw-reel-fade-r{position:absolute;top:0;bottom:0;width:120px;z-index:3;pointer-events:none}
+.draw-reel-fade-l{left:0;background:linear-gradient(90deg,#0a0a16 30%,transparent)}
+.draw-reel-fade-r{right:0;background:linear-gradient(-90deg,#0a0a16 30%,transparent)}
+.draw-reel-strip{display:flex;align-items:center;height:100%;position:absolute;top:0;left:0;will-change:transform}
+.draw-reel-item{flex-shrink:0;width:160px;height:100%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:rgba(255,255,255,.3);padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;user-select:none}
+.draw-slot-result{padding:20px 28px 26px;text-align:center;display:none}
+.draw-winner-badge{font-size:11px;font-weight:800;color:#00e5a0;letter-spacing:5px;text-transform:uppercase;opacity:0;transition:opacity .6s;margin-bottom:10px;display:block;text-shadow:0 0 14px rgba(0,229,160,.6)}
 .draw-winner-badge.show{opacity:1}
-.draw-winner-name{font-size:24px;font-weight:900;background:linear-gradient(135deg,#fff 0%,#c0b8ff 50%,#a89fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;min-height:32px;text-align:center}
-.draw-pool-info{font-size:12px;color:rgba(168,159,255,.35);margin-top:10px}
-.draw-modal-btns{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;justify-content:center}
+.draw-winner-name{font-size:26px;font-weight:900;background:linear-gradient(135deg,#fff 0%,#c0b8ff 50%,#a89fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;display:block}
+.draw-pool-info{font-size:12px;color:rgba(168,159,255,.35);margin-bottom:22px;display:block}
+.draw-modal-btns{display:flex;gap:10px;margin-top:0;flex-wrap:wrap;justify-content:center}
 
 /* ── ROULETTE ── */
 .roulette-wrap{margin-top:24px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px}
@@ -398,22 +372,25 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
   </div>
 </div>
 
-<!-- 추첨 모달 -->
+<!-- 추첨 레이어 -->
 <div id="draw-modal" onclick="if(event.target===this)closeDrawModal()">
   <div class="draw-card">
-    <div class="draw-card-title" id="draw-card-title">추첨 중</div>
-    <div id="slot-container" style="width:100%"></div>
-    <div class="rank-board" id="draw-rank-board">
-      <div class="rank-board-title">🏆 최종 순위</div>
-      <div class="rank-grid" id="draw-rank-grid"></div>
+    <div class="draw-card-title" id="draw-card-title">추첨</div>
+    <div class="draw-reel-window" id="draw-reel-window">
+      <div class="draw-reel-center"></div>
+      <div class="draw-reel-fade-l"></div>
+      <div class="draw-reel-fade-r"></div>
+      <div class="draw-reel-strip" id="draw-reel-strip"></div>
     </div>
-    <div class="draw-winner-badge" id="draw-winner-badge">🏆 우승!</div>
-    <div class="draw-winner-name" id="draw-winner-name"></div>
-    <div class="draw-pool-info" id="draw-pool-info"></div>
-    <div class="draw-modal-btns" id="draw-modal-btns" style="display:none">
-      <button class="btn" onclick="redraw()" style="padding:10px 22px;font-size:13px">↺ 다시 뽑기</button>
-      <button class="btn danger" onclick="excludeAndClose()" style="padding:10px 22px;font-size:13px">⊘ 뽑힌사람 제외</button>
-      <button class="btn" onclick="closeDrawModal()" style="padding:10px 22px;font-size:13px;background:var(--bg3)">닫기</button>
+    <div class="draw-slot-result" id="draw-slot-result">
+      <span class="draw-winner-badge" id="draw-winner-badge">🏆 당첨!</span>
+      <span class="draw-winner-name" id="draw-winner-name"></span>
+      <span class="draw-pool-info" id="draw-pool-info"></span>
+      <div class="draw-modal-btns" id="draw-modal-btns">
+        <button class="btn" onclick="redraw()" style="padding:10px 22px;font-size:13px">↺ 다시 뽑기</button>
+        <button class="btn danger" onclick="excludeAndClose()" style="padding:10px 22px;font-size:13px">⊘ 뽑힌사람 제외</button>
+        <button class="btn" onclick="closeDrawModal()" style="padding:10px 22px;font-size:13px;background:var(--bg3)">닫기</button>
+      </div>
     </div>
   </div>
 </div>
@@ -743,208 +720,86 @@ function buildDrawPool(voteIdx) {
   return pool.map(n => typeof n === 'object' ? n.name : n);
 }
 
-function openDrawModal(e, voteIdx) {
+const SLOT_ITEM_W=160,SLOT_WINNER_IDX=44,SLOT_START_IDX=3;
+
+function openDrawModal(e,voteIdx){
   e.stopPropagation();
-  const pool = buildDrawPool(voteIdx);
-  if (!pool.length) { toast('추첨 가능한 참가자가 없습니다'); return; }
-  currentDrawVoteIdx = voteIdx;
-  currentDrawPool = pool;
-  lastDrawWinner = null;
-  const it = state.vote.items[voteIdx];
-  document.getElementById('draw-modal').style.display = 'flex';
-  document.getElementById('draw-card-title').textContent = `🐌 ${it?.label || '!투표'+(voteIdx+1)} 달팽이 경주`;
-  document.getElementById('draw-winner-badge').className = 'draw-winner-badge';
-  document.getElementById('draw-winner-name').textContent = '';
-  document.getElementById('draw-modal-btns').style.display = 'none';
-  document.getElementById('draw-pool-info').textContent = '';
-  const _rb=document.getElementById('draw-rank-board');const _rg=document.getElementById('draw-rank-grid');
-  if(_rb)_rb.style.display='none';if(_rg)_rg.innerHTML='';
+  const pool=buildDrawPool(voteIdx);
+  if(!pool.length){toast('추첨 가능한 참가자가 없습니다');return;}
+  currentDrawVoteIdx=voteIdx;currentDrawPool=pool;lastDrawWinner=null;
+  const it=state.vote.items[voteIdx];
+  document.getElementById('draw-modal').style.display='flex';
+  document.getElementById('draw-card-title').textContent=`🎰 ${it?.label||'!투표'+(voteIdx+1)} 추첨`;
+  document.getElementById('draw-slot-result').style.display='none';
+  document.getElementById('draw-winner-badge').className='draw-winner-badge';
+  document.getElementById('draw-winner-name').textContent='';
+  document.getElementById('draw-pool-info').textContent='';
   startSlotAnim(pool);
 }
-
-const MAX_RACERS=8,TRACK_FINISH=83;
-const RACE_EVENTS=[
-  {id:'turbo',   label:'🚀 터보 장착!',   emoji:'🐌💨',mult:4.2,dur:700},
-  {id:'legs',    label:'🦵 두발 달리기!', emoji:'🏃💨',mult:3.0,dur:800},
-  {id:'alien',   label:'👽 외계인 납치!',  emoji:'🛸',  mult:0,  dur:700,warp:20},
-  {id:'lightning',label:'⚡ 번개 직격!',  emoji:'⚡🐌',mult:6.0,dur:280},
-  {id:'sleep',   label:'💤 갑자기 졸음...', emoji:'😴',  mult:0,  dur:700},
-  {id:'wind',    label:'🌪️ 돌풍 직격!',   emoji:'🌪️🐌',mult:3.5,dur:500},
-  {id:'mushroom',label:'🍄 버섯 파워!',   emoji:'🐌🍄',mult:3.8,dur:550},
-  {id:'rocket',  label:'🚀 로켓 발사!',   emoji:'🚀💨',mult:8.0,dur:300},
-  {id:'magnet',  label:'🧲 자석!',         emoji:'🧲🐌',mult:2.5,dur:600},
-  {id:'banana',  label:'🍌 바나나 밟음!',  emoji:'😵',  mult:0,  dur:500},
-];
-const MEDALS=['🥇','🥈','🥉'],STOP_IDS=['alien','sleep','banana'];
-const SNAIL_HTML=`<div class="snail3d"><div class="s-shell"><div class="s-shell-center"></div><div class="s-shine"></div></div><div class="s-body"></div><div class="s-head"></div><div class="s-stalkL"><div class="s-eye"></div></div><div class="s-stalkR"><div class="s-eye"></div></div></div>`;
 
 function startSlotAnim(pool){
   const myId=++drawAnimId;
   const winner=pool[Math.floor(Math.random()*pool.length)];
-  const others=pool.filter(n=>n!==winner).sort(()=>Math.random()-.5).slice(0,MAX_RACERS-1);
-  const racers=[winner,...others].sort(()=>Math.random()-.5);
-  const winnerTarget=3000+Math.random()*3000;
-  const state=racers.map(name=>{
-    const isWinner=name===winner;
-    const targetFinishTime=isWinner?winnerTarget:winnerTarget+1200+Math.random()*(12000-winnerTarget);
-    const baseSpd=TRACK_FINISH/(targetFinishTime/1000);
-    return{name,isWinner,pos:0,baseSpd,targetFinishTime,
-      eventAt:700+Math.random()*3000,
-      event:RACE_EVENTS[Math.floor(Math.random()*RACE_EVENTS.length)],
-      eventStarted:false,eventActive:false,eventEndAt:0,
-      finished:false,warpDone:false,rank:null};
-  });
-  const rankings=[];
-
-  // 순위표 초기화
-  const rankBoard=document.getElementById('draw-rank-board');
-  const rankGrid=document.getElementById('draw-rank-grid');
-  if(rankBoard)rankBoard.style.display='none';
-  if(rankGrid)rankGrid.innerHTML='';
-
-  const container=document.getElementById('slot-container');
-  const scene=document.createElement('div');scene.className='race-scene';
-  state.forEach((s,i)=>{
-    const lane=document.createElement('div');lane.className='race-lane';
-    lane.innerHTML=`
-      <div class="race-finish"></div>
-      <div class="racer" id="rc${i}">
-        <div class="racer-nametag">${esc(s.name.slice(0,10))}</div>
-        <div class="racer-snail" id="re${i}">${SNAIL_HTML}</div>
-        <div class="event-pop" id="ev${i}"></div>
-      </div>
-      <div class="rank-badge" id="rb${i}"></div>`;
-    scene.appendChild(lane);
-  });
-  container.innerHTML='';container.appendChild(scene);
-
-  function addRankEntry(rank,name){
-    if(!rankGrid||!rankBoard)return;
-    rankBoard.style.display='block';
-    const el=document.createElement('div');el.className='rank-entry';
-    el.innerHTML=`<span class="rank-medal">${MEDALS[rank-1]||rank+'위'}</span><span class="rank-name">🐌 ${name}</span>`;
-    rankGrid.appendChild(el);
+  const TOTAL=58;
+  const items=Array.from({length:TOTAL},(_,i)=>i===SLOT_WINNER_IDX?winner:pool[Math.floor(Math.random()*pool.length)]);
+  const winEl=document.getElementById('draw-reel-window');
+  const winW=winEl?winEl.offsetWidth:620;
+  const centerPos=winW/2-SLOT_ITEM_W/2;
+  const startX=centerPos-SLOT_START_IDX*SLOT_ITEM_W;
+  const targetX=centerPos-SLOT_WINNER_IDX*SLOT_ITEM_W;
+  const strip=document.getElementById('draw-reel-strip');
+  strip.style.transform=`translateX(${startX}px)`;
+  strip.innerHTML=items.map(n=>`<div class="draw-reel-item">${esc(n.slice(0,10))}</div>`).join('');
+  const TOTAL_MS=2500;let startT=null;
+  function ease(t){
+    if(t<0.22)return 0.10*(t/0.22)**2.5;
+    if(t<0.75)return 0.10+(t-0.22)/0.53*0.78;
+    const u=(t-0.75)/0.25;return 0.88+(1-(1-u)**3)*0.12;
   }
-
-  let raceEnded=false;
-  function endRace(){
-    if(raceEnded)return;raceEnded=true;
-    lastDrawWinner=winner;
-    setTimeout(()=>{
-      if(drawAnimId!==myId)return;
-      document.getElementById('draw-winner-badge').className='draw-winner-badge show';
-      document.getElementById('draw-winner-name').textContent=`🏆 1위: ${winner}`;
-      document.getElementById('draw-pool-info').textContent=`전체 ${pool.length}명 중 추첨`;
-      document.getElementById('draw-modal-btns').style.display='flex';
-    },700);
-  }
-
-  let startT=null,lastT=null;const MAX_RACE=15000;
   function frame(now){
     if(drawAnimId!==myId)return;
-    if(!startT){startT=now;lastT=now;}
-    const elapsed=now-startT,dt=Math.min((now-lastT)/1000,0.05);lastT=now;
-
-    state.forEach((s,i)=>{
-      if(s.finished)return;
-      const rcEl=document.getElementById(`rc${i}`);
-      const reEl=document.getElementById(`re${i}`);
-      const evEl=document.getElementById(`ev${i}`);
-      const rbEl=document.getElementById(`rb${i}`);
-      if(!rcEl)return;
-      if(!s.eventStarted&&elapsed>=s.eventAt){
-        s.eventStarted=true;s.eventActive=true;s.eventEndAt=elapsed+s.event.dur;
-        if(reEl)reEl.innerHTML=`<span style="font-size:22px;line-height:1">${s.event.emoji}</span>`;
-        if(evEl){evEl.textContent=s.event.label;evEl.style.display='block';}
-        rcEl.style.filter=STOP_IDS.includes(s.event.id)?'drop-shadow(0 0 8px rgba(255,60,60,.7))':'drop-shadow(0 0 10px rgba(0,229,160,.8))';
-        if(s.event.id==='alien'&&!s.warpDone){
-          s.warpDone=true;rcEl.style.transition='top 0.3s';rcEl.style.top='-30px';
-          setTimeout(()=>{
-            if(drawAnimId!==myId)return;
-            s.pos=Math.min(TRACK_FINISH-2,s.pos+(s.event.warp||15));
-            rcEl.style.top='50%';rcEl.style.transition='';
-          },s.event.dur*0.5);
-        }
-      }
-      if(s.eventActive&&elapsed>=s.eventEndAt){
-        s.eventActive=false;
-        if(reEl)reEl.innerHTML=SNAIL_HTML;
-        if(evEl)evEl.style.display='none';
-        rcEl.style.filter='drop-shadow(0 0 6px rgba(88,69,220,.55))';
-      }
-      const tl=Math.max(0.03,(s.targetFinishTime-elapsed)/1000);
-      const dl=TRACK_FINISH-s.pos;
-      let spd=dl>0?dl/tl:0;
-      if(s.eventActive){
-        if(STOP_IDS.includes(s.event.id))spd=0;
-        else spd=s.baseSpd*s.event.mult;
-      }
-      if(elapsed>MAX_RACE*0.8&&dl>0)spd=Math.max(spd,dl/Math.max(0.03,(MAX_RACE-elapsed)/1000)*1.5);
-      s.pos=Math.min(TRACK_FINISH,s.pos+spd*dt);
-      rcEl.style.left=s.pos+'%';
-      if(s.pos>=TRACK_FINISH&&!s.finished){
-        s.finished=true;s.rank=rankings.length+1;rankings.push(s.name);
-        if(reEl)reEl.innerHTML=s.isWinner?'<span style="font-size:22px">🎉</span>':SNAIL_HTML;
-        if(evEl)evEl.style.display='none';
-        const fc=['rgba(255,215,0,.9)','rgba(192,192,192,.8)','rgba(205,127,50,.8)'];
-        rcEl.style.filter=`drop-shadow(0 0 14px ${fc[s.rank-1]||'rgba(88,69,220,.5)'})`;
-        if(rbEl){const gc=['#ffd700','#c0c0c0','#cd7f32'];rbEl.style.textShadow=`0 0 12px ${gc[s.rank-1]||'#aaa'}`;}
-
-        const medal=MEDALS[s.rank-1]||(s.rank+'위');
-        if(rbEl){rbEl.textContent=medal;rbEl.style.display='block';rbEl.style.color=s.rank===1?'#ffd700':s.rank===2?'#c0c0c0':s.rank===3?'#cd7f32':'#aaa';}
-        addRankEntry(s.rank,s.name);
-        if(s.isWinner)endRace();
-      }
-    });
-
-    const allDone=state.every(s=>s.finished);
-    if(allDone||elapsed>=MAX_RACE){
-      state.filter(s=>!s.finished).forEach(s=>{
-        const i=state.indexOf(s);
-        s.finished=true;s.rank=rankings.length+1;rankings.push(s.name);
-        const rbEl=document.getElementById(`rb${i}`);
-        const medal=MEDALS[s.rank-1]||(s.rank+'위');
-        if(rbEl){rbEl.textContent=medal;rbEl.style.display='block';rbEl.style.color='#aaa';}
-        addRankEntry(s.rank,s.name);
-      });
-      endRace();
-    }else{requestAnimationFrame(frame);}
+    if(!startT)startT=now;
+    const t=Math.min((now-startT)/TOTAL_MS,1);
+    strip.style.transform=`translateX(${startX+(targetX-startX)*ease(t)}px)`;
+    if(t<1){requestAnimationFrame(frame);return;}
+    setTimeout(()=>{
+      if(drawAnimId!==myId)return;
+      lastDrawWinner=winner;
+      document.getElementById('draw-slot-result').style.display='block';
+      setTimeout(()=>{
+        document.getElementById('draw-winner-badge').className='draw-winner-badge show';
+        document.getElementById('draw-winner-name').textContent=winner;
+        document.getElementById('draw-pool-info').textContent=`전체 ${pool.length}명 중 추첨`;
+      },80);
+    },200);
   }
   requestAnimationFrame(frame);
 }
 
-function redraw() {
-  const pool = buildDrawPool(currentDrawVoteIdx);
-  if (!pool.length) { toast('추첨 가능한 참가자가 없습니다'); closeDrawModal(); return; }
-  currentDrawPool = pool;
-  lastDrawWinner = null;
-  document.getElementById('draw-winner-badge').className = 'draw-winner-badge';
-  document.getElementById('draw-winner-name').textContent = '';
-  document.getElementById('draw-modal-btns').style.display = 'none';
-  document.getElementById('draw-pool-info').textContent = '';
+function redraw(){
+  const pool=buildDrawPool(currentDrawVoteIdx);
+  if(!pool.length){toast('추첨 가능한 참가자가 없습니다');closeDrawModal();return;}
+  currentDrawPool=pool;lastDrawWinner=null;
+  document.getElementById('draw-slot-result').style.display='none';
+  document.getElementById('draw-winner-badge').className='draw-winner-badge';
   startSlotAnim(pool);
 }
 
-function excludeAndClose() {
-  if (lastDrawWinner && currentDrawVoteIdx !== null) {
-    if (!drawnPeople[currentDrawVoteIdx]) drawnPeople[currentDrawVoteIdx] = new Set();
+function excludeAndClose(){
+  if(lastDrawWinner&&currentDrawVoteIdx!==null){
+    if(!drawnPeople[currentDrawVoteIdx])drawnPeople[currentDrawVoteIdx]=new Set();
     drawnPeople[currentDrawVoteIdx].add(lastDrawWinner);
   }
-  closeDrawModal();
-  renderVote();
+  closeDrawModal();renderVote();
 }
 
-function closeDrawModal() {
-  drawAnimId++; // 진행 중 애니메이션 무효화
-  const modal = document.getElementById('draw-modal');
-  modal.style.display = 'none';
-  const label = document.getElementById('draw-modal-label');
-  if (label) { label.style.fontSize = ''; label.style.color = ''; label.style.fontWeight = ''; }
+function closeDrawModal(){
+  drawAnimId++;
+  document.getElementById('draw-modal').style.display='none';
 }
 
-function removeDrawnPerson(voteIdx, name) {
-  drawnPeople[voteIdx]?.delete(name);
-  renderVote();
+function removeDrawnPerson(voteIdx,name){
+  drawnPeople[voteIdx]?.delete(name);renderVote();
 }
 
 // ── 투표 액션 ──
