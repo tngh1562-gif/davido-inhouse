@@ -1203,9 +1203,9 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
         내전대기방에 모인 참가자를 현재 팀박스 기준으로 1팀/2팀 음성채널에 자동 이동시킵니다.
       </p>
       <div style="display:grid;gap:8px;margin-top:12px">
-        <input id="discordVoiceLobbyId" type="text" placeholder="내전대기방 음성채널 ID">
-        <input id="discordVoiceBlueId" type="text" placeholder="1팀 음성채널 ID">
-        <input id="discordVoiceRedId" type="text" placeholder="2팀 음성채널 ID">
+        <input id="discordVoiceLobbyId" type="text" placeholder="내전대기방 음성채널 ID" onblur="saveDiscordVoiceConfigSilent()">
+        <input id="discordVoiceBlueId" type="text" placeholder="1팀 음성채널 ID" onblur="saveDiscordVoiceConfigSilent()">
+        <input id="discordVoiceRedId" type="text" placeholder="2팀 음성채널 ID" onblur="saveDiscordVoiceConfigSilent()">
       </div>
       <div class="btn-row">
         <button class="btn btn-g" onclick="saveDiscordVoiceConfig()">음성방 설정 저장</button>
@@ -1915,13 +1915,21 @@ function discordIdForPlayer(p){
   const v=findViewerForPlayer(p);
   return String(v?.discordId||'').replace(/\D/g,'');
 }
-async function saveDiscordVoiceConfig(){
-  await saveDiscordConfig({
+function getVoiceChannelPayload(){
+  return {
     voiceLobbyChannelId:(document.getElementById('discordVoiceLobbyId')?.value||'').replace(/\D/g,''),
     voiceBlueChannelId:(document.getElementById('discordVoiceBlueId')?.value||'').replace(/\D/g,''),
     voiceRedChannelId:(document.getElementById('discordVoiceRedId')?.value||'').replace(/\D/g,''),
-  });
+  };
+}
+async function saveDiscordVoiceConfig(){
+  await saveDiscordConfig(getVoiceChannelPayload());
   toast('디스코드 음성방 설정 저장');
+}
+async function saveDiscordVoiceConfigSilent(){
+  const p=getVoiceChannelPayload();
+  if(!p.voiceLobbyChannelId&&!p.voiceBlueChannelId&&!p.voiceRedChannelId) return;
+  await saveDiscordConfig(p);
 }
 async function moveDiscordVoiceTeams(){
   if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정하세요');return}
