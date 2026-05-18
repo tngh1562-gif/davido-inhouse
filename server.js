@@ -57,6 +57,7 @@ const SEED_INHOUSE_DB_FILE = path.join(__dirname, 'data', 'inhouse-db.seed.json'
 const INHOUSE_BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const MANUAL_BACKUP_DIR = path.join(DATA_DIR, 'manual-backups');
 const MAX_MANUAL_BACKUPS = 5;
+const BOT_AUTH_FILE = path.join(DATA_DIR, 'bot-auth.json');
 const DISCORD_CONFIG_FILE = path.join(DATA_DIR, 'discord-config.json');
 // Optional: lets the inhouse site ask the separate Discord bot service to send button messages.
 function normalizeDiscordBotApiUrl(value) {
@@ -682,10 +683,29 @@ const CHZZK_CMD = {
   RECENT_CHAT: 15101,
   CHAT: 93101,
 };
-const chzzkAuth = {
-  nidAut: process.env.CHZZK_NID_AUT || '',
-  nidSes: process.env.CHZZK_NID_SES || '',
-};
+function loadBotAuth() {
+  try {
+    if (fs.existsSync(BOT_AUTH_FILE)) {
+      const saved = JSON.parse(fs.readFileSync(BOT_AUTH_FILE, 'utf8'));
+      return {
+        nidAut: saved.nidAut || process.env.CHZZK_NID_AUT || '',
+        nidSes: saved.nidSes || process.env.CHZZK_NID_SES || '',
+      };
+    }
+  } catch (e) {}
+  return { nidAut: process.env.CHZZK_NID_AUT || '', nidSes: process.env.CHZZK_NID_SES || '' };
+}
+
+function saveBotAuth(nidAut, nidSes) {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(BOT_AUTH_FILE, JSON.stringify({ nidAut, nidSes, savedAt: new Date().toISOString() }), 'utf8');
+  } catch (e) {
+    console.error('[BOT_AUTH] save failed:', e.message);
+  }
+}
+
+const chzzkAuth = loadBotAuth();
 
 function normalizeChzzkChannelId(value) {
   let raw = String(value || '').trim();
@@ -1365,6 +1385,7 @@ app.post('/api/action', async (req, res) => {
     case 'set_bot_auth':
       chzzkAuth.nidAut = String(body.nidAut || '').trim();
       chzzkAuth.nidSes = String(body.nidSes || '').trim();
+      saveBotAuth(chzzkAuth.nidAut, chzzkAuth.nidSes);
       state.bot.hasAuth = hasChzzkAuth();
       state.bot.lastSendError = hasChzzkAuth() ? null : 'NID_AUT/NID_SES가 모두 필요합니다.';
       if (state.channelId) connectChzzk(state.channelId).catch(err => {
@@ -1377,6 +1398,7 @@ app.post('/api/action', async (req, res) => {
     case 'clear_bot_auth':
       chzzkAuth.nidAut = '';
       chzzkAuth.nidSes = '';
+      saveBotAuth('', '');
       state.bot.hasAuth = false;
       state.bot.sendToChat = false;
       state.bot.lastSendError = null;
