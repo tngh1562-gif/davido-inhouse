@@ -669,6 +669,7 @@ let chzzkWs = null;
 let chzzkPing = null;
 let chzzkChatChannelId = null;
 let chzzkExtraToken = null;
+let chzzkSid = null;
 let chzzkTid = 10;
 let chzzkReconnectTimer = null;
 let chzzkReconnectDelay = 5000;
@@ -858,16 +859,18 @@ function sendChzzkChat(text) {
   try {
     const extras = JSON.stringify({
       chatType: 'STREAMING',
-      emojis: {},
       osType: 'PC',
+      extraToken: chzzkExtraToken || '',
       streamingChannelId: state.channelId || chzzkChatChannelId,
+      emojis: {},
     });
     const packet = {
       ver: '3',
       cmd: 3101,
       svcid: 'game',
       cid: chzzkChatChannelId,
-      bdy: { msg, msgTypeCode: 1, extras },
+      bdy: { msg, msgTypeCode: 1, extras, msgTime: Date.now() },
+      ...(chzzkSid ? { sid: chzzkSid } : {}),
       tid: ++chzzkTid,
     };
     console.log('[CHZZK] sending packet:', JSON.stringify(packet).slice(0, 300));
@@ -1222,6 +1225,7 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
         console.log('[CHZZK] auth response:', JSON.stringify(msg.bdy));
         clearTimeout(connectGuard);
         chzzkAuthed = true;
+        chzzkSid = msg.bdy?.sid || null;
         chzzkReconnectDelay = 5000;
         state.bot.status = chatAuthMode === 'SEND' ? 'connected-send' : 'connected-read';
         state.bot.lastSendError = null;
