@@ -1210,12 +1210,15 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
           state.bot.lastSendError = '봇 계정 인증이 없어 채팅 읽기만 연결됐습니다.';
         }
         console.log('[CHZZK] connected:', chatAuthMode, '| sid:', chzzkSid ? '획득' : 'null');
-        try {
-          ws.send(JSON.stringify({
-            ver: '3', cmd: CHZZK_CMD.REQUEST_RECENT_CHAT, svcid: 'game', cid: chatChannelId,
-            bdy: { recentMessageCount: 30, userCount: 0 }, tid: 2,
-          }));
-        } catch(e) {}
+        // READ 모드에서만 최근 채팅 요청 (SEND 모드에서는 오프라인 채널 시 연결 끊김 유발)
+        if (chatAuthMode === 'READ') {
+          try {
+            ws.send(JSON.stringify({
+              ver: '3', cmd: CHZZK_CMD.REQUEST_RECENT_CHAT, svcid: 'game', cid: chatChannelId,
+              bdy: { recentMessageCount: 30, userCount: 0 }, tid: 2,
+            }));
+          } catch(e) {}
+        }
         broadcastState();
         return;
       }
