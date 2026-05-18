@@ -553,6 +553,39 @@ app.get('/api/storage-status', (req, res) => {
   });
 });
 
+app.get('/api/export-backup', (req, res) => {
+  try {
+    const inhouseDb = readInhouseDB();
+    const discordConfig = readDiscordConfig();
+    backupInhouseDB(inhouseDb); // 서버에도 자동 백업
+    res.json({
+      exportedAt: new Date().toISOString(),
+      version: 1,
+      inhouseDb,
+      discordConfig,
+    });
+  } catch (err) {
+    console.error('[EXPORT_BACKUP] failed:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/import-backup', (req, res) => {
+  try {
+    const { inhouseDb, discordConfig, version } = req.body || {};
+    if (!inhouseDb || !Array.isArray(inhouseDb.viewers)) {
+      return res.status(400).json({ ok: false, error: '유효하지 않은 백업 파일입니다. (viewers 배열 없음)' });
+    }
+    writeInhouseDB(inhouseDb);
+    if (discordConfig && typeof discordConfig === 'object') writeDiscordConfig(discordConfig);
+    console.log(`[IMPORT_BACKUP] restored: viewers=${inhouseDb.viewers.length}, version=${version}`);
+    res.json({ ok: true, restored: { viewers: inhouseDb.viewers.length } });
+  } catch (err) {
+    console.error('[IMPORT_BACKUP] failed:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 app.post('/api/discord-config', (req, res) => {
   try {
     res.json({ ok: true, data: writeDiscordConfig(req.body || {}) });

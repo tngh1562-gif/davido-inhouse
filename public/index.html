@@ -29,6 +29,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tab-btn.active{color:var(--acc);border-bottom-color:var(--acc);font-weight:700}
 .tab-btn:hover:not(.active){color:var(--txt);border-bottom-color:var(--border2)}
 .conn-bar{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn-backup{padding:5px 11px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--txt2);font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-backup:hover{background:var(--bg3);border-color:#4fc3f7;color:#4fc3f7}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--txt2);flex-shrink:0;transition:all .3s}
 .dot.on{background:var(--acc2);box-shadow:0 0 6px var(--acc2);animation:blink 1.6s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
@@ -200,6 +202,9 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
       <button class="tab-btn" data-tab="music">🎵 음악 플레이어</button>
     </div>
     <div class="conn-bar" id="conn-bar">
+      <button class="btn-backup" onclick="downloadBackup()" title="현재 데이터 전체 백업 다운로드">💾 백업</button>
+      <button class="btn-backup" onclick="triggerRestore()" title="백업 파일로 데이터 복원">📂 복원</button>
+      <input type="file" id="restore-input" accept=".json" style="display:none" onchange="uploadBackup(this)">
       <div class="dot" id="conn-dot"></div>
       <span class="conn-id" id="conn-id-text">연결 안 됨</span>
       <input class="cid-input" id="cid-input" placeholder="채널 ID" />
@@ -457,6 +462,60 @@ function doDisconnect() {
   api('disconnect_chzzk').catch(err => alert(err.message || '연결 해제 실패'));
 }
 
+async function downloadBackup() {
+  try {
+    const res = await fetch('/api/export-backup');
+    if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+    const data = await res.json();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    a.download = `inhouse-backup-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('💾 백업 다운로드 완료!');
+  } catch (e) {
+    alert('백업 실패: ' + (e.message || e));
+  }
+}
+
+function triggerRestore() {
+  const el = document.getElementById('restore-input');
+  if (el) { el.value = ''; el.click(); }
+}
+
+async function uploadBackup(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+  if (!confirm(`"${file.name}" 백업 파일로 현재 데이터를 복원합니다.\n현재 데이터가 덮어씌워집니다. 계속하시겠습니까?`)) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data.inhouseDb || !Array.isArray(data.inhouseDb.viewers)) {
+      alert('유효하지 않은 백업 파일입니다.');
+      return;
+    }
+    const res = await fetch('/api/import-backup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (result.ok) {
+      toast(`✅ 복원 완료 (시청자 ${result.restored.viewers}명) — 새로고침합니다...`);
+      setTimeout(() => location.reload(), 1800);
+    } else {
+      alert('복원 실패: ' + result.error);
+    }
+  } catch (e) {
+    alert('복원 실패: ' + (e.message || e));
+  }
+}
+
 // ── 렌더 전체 ──
 function renderAll() {
   renderConnBar();
@@ -471,22 +530,24 @@ function renderConnBar() {
   const txt = document.getElementById('conn-id-text');
   const bar = document.getElementById('conn-bar');
   dot.className = 'dot' + (connected ? ' on' : '');
+  const backupBtns = `<button class="btn-backup" onclick="downloadBackup()" title="현재 데이터 전체 백업 다운로드">💾 백업</button><button class="btn-backup" onclick="triggerRestore()" title="백업 파일로 데이터 복원">📂 복원</button><input type="file" id="restore-input" accept=".json" style="display:none" onchange="uploadBackup(this)">`;
   if (connected) {
     txt.textContent = state.channelId?.slice(0, 20) + '...';
     txt.className = 'conn-id on';
     bar.innerHTML = `
+      ${backupBtns}
       <div class="dot on"></div>
       <span class="conn-id on">${(state.channelId||'').slice(0,20)}...</span>
       <button class="btn danger" onclick="doDisconnect()">해제</button>
     `;
   } else {
     bar.innerHTML = `
+      ${backupBtns}
       <div class="dot"></div>
       <span class="conn-id">연결 안 됨</span>
       <input class="cid-input" id="cid-input" placeholder="채널 ID" />
       <button class="btn primary" id="conn-btn" onclick="doConnect()">연결</button>
     `;
-    // Enter key
     document.getElementById('cid-input')?.addEventListener('keydown', e => { if(e.key==='Enter') doConnect(); });
   }
   // chat dot
