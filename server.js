@@ -1143,25 +1143,26 @@ async function connectChzzk(channelId) {
     }));
   } catch (e) { console.log('[CHZZK] token failed:', e.message); }
 
-  // uid가 없으면 여러 엔드포인트로 시도
+  // uid가 없으면 여러 방법으로 시도
   if (!botUid && hasChzzkAuth()) {
     const uidEndpoints = [
       'https://api.chzzk.naver.com/service/v2/user',
       'https://api.chzzk.naver.com/service/v1/user',
       'https://api.chzzk.naver.com/service/v2/channels/me',
       'https://comm-api.game.naver.com/nng_main/v1/user/getUserStatus',
+      'https://comm-api.game.naver.com/nng_main/v1/user',
     ];
     for (const ep of uidEndpoints) {
       try {
         const j = await fetchChzzkJson(ep, { headers: chzzkHeaders() });
+        console.log('[CHZZK] uid try', ep, ':', JSON.stringify(j?.content || j).slice(0, 200));
         const content = j?.content || j?.data || j;
-        botUid = content?.channelId || content?.userIdHash || content?.userId || content?.id || null;
-        if (botUid) { console.log('[CHZZK] uid from', ep, ':', botUid); break; }
-        else console.log('[CHZZK] uid not found in', ep, '- keys:', Object.keys(content || {}));
+        botUid = content?.channelId || content?.userIdHash || content?.userId || content?.id || content?.hashId || null;
+        if (botUid) { console.log('[CHZZK] uid found:', botUid); break; }
       } catch (e) { console.log('[CHZZK] uid endpoint failed:', ep, e.message); }
     }
   }
-  console.log('[CHZZK] final uid for SEND:', botUid || 'null (SEND mode may fail)');
+  console.log('[CHZZK] final uid:', botUid || 'null');
 
   connectChatWs(chatChannelId, channelId, accessToken, botUid);
 }
