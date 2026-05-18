@@ -1126,8 +1126,21 @@ async function connectChzzk(channelId) {
     );
     accessToken = json?.content?.accessToken || null;
     botUid = json?.content?.userIdHash || null;
-    console.log('[CHZZK] accessToken:', accessToken ? '획득' : '없음', '| uid:', botUid || 'null');
+    console.log('[CHZZK] token response keys:', Object.keys(json?.content || {}));
+    console.log('[CHZZK] accessToken:', accessToken ? '획득' : '없음', '| uid from token:', botUid || 'null');
   } catch (e) { console.log('[CHZZK] token failed:', e.message); }
+
+  // uid가 없으면 봇 계정 프로필 API로 별도 조회
+  if (!botUid && hasChzzkAuth()) {
+    try {
+      const profileJson = await fetchChzzkJson(
+        'https://api.chzzk.naver.com/service/v2/channels/me',
+        { headers: chzzkHeaders() }
+      );
+      botUid = profileJson?.content?.channelId || profileJson?.content?.userIdHash || null;
+      console.log('[CHZZK] uid from profile:', botUid || 'null');
+    } catch (e) { console.log('[CHZZK] profile uid failed:', e.message); }
+  }
 
   connectChatWs(chatChannelId, channelId, accessToken, botUid);
 }
