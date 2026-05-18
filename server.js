@@ -55,6 +55,8 @@ const DATA_DIR = resolveDataDir();
 const INHOUSE_DB_FILE = path.join(DATA_DIR, 'inhouse-db.json');
 const SEED_INHOUSE_DB_FILE = path.join(__dirname, 'data', 'inhouse-db.seed.json');
 const INHOUSE_BACKUP_DIR = path.join(DATA_DIR, 'backups');
+const MANUAL_BACKUP_DIR = path.join(DATA_DIR, 'manual-backups');
+const MAX_MANUAL_BACKUPS = 5;
 const DISCORD_CONFIG_FILE = path.join(DATA_DIR, 'discord-config.json');
 // Optional: lets the inhouse site ask the separate Discord bot service to send button messages.
 function normalizeDiscordBotApiUrl(value) {
@@ -553,23 +555,63 @@ app.get('/api/storage-status', (req, res) => {
   });
 });
 
-app.get('/api/export-backup', (req, res) => {
+// 수동 백업 저장 (최대 5개, 초과 시 오래된 것 삭제)
+app.post('/api/save-backup', (req, res) => {
   try {
     const inhouseDb = readInhouseDB();
     const discordConfig = readDiscordConfig();
-    backupInhouseDB(inhouseDb); // 서버에도 자동 백업
-    res.json({
-      exportedAt: new Date().toISOString(),
-      version: 1,
-      inhouseDb,
-      discordConfig,
-    });
+    if (!fs.existsSync(MANUAL_BACKUP_DIR)) fs.mkdirSync(MANUAL_BACKUP_DIR, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `backup-${stamp}.json`;
+    const data = { savedAt: new Date().toISOString(), version: 1, inhouseDb, discordConfig };
+    fs.writeFileSync(path.join(MANUAL_BACKUP_DIR, filename), JSON.stringify(data), 'utf8');
+    // 5개 초과 시 오래된 파일 삭제
+    const all = fs.readdirSync(MANUAL_BACKUP_DIR)
+      .filter(n => n.startsWith('backup-') && n.endsWith('.json')).sort();
+    all.slice(0, Math.max(0, all.length - MAX_MANUAL_BACKUPS))
+      .forEach(n => fs.unlinkSync(path.join(MANUAL_BACKUP_DIR, n)));
+    const remaining = Math.min(all.length, MAX_MANUAL_BACKUPS);
+    console.log(`[SAVE_BACKUP] saved: ${filename}, total: ${remaining}`);
+    res.json({ ok: true, filename, savedAt: data.savedAt, total: remaining });
   } catch (err) {
-    console.error('[EXPORT_BACKUP] failed:', err.message);
+    console.error('[SAVE_BACKUP] failed:', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
 
+// 백업 목록 조회
+app.get('/api/backups', (req, res) => {
+  try {
+    if (!fs.existsSync(MANUAL_BACKUP_DIR)) return res.json({ ok: true, backups: [] });
+    const backups = fs.readdirSync(MANUAL_BACKUP_DIR)
+      .filter(n => n.startsWith('backup-') && n.endsWith('.json'))
+      .sort().reverse()
+      .map(name => {
+        const stat = fs.statSync(path.join(MANUAL_BACKUP_DIR, name));
+        return { filename: name, size: stat.size, savedAt: stat.mtime };
+      });
+    res.json({ ok: true, backups });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// 백업 파일 다운로드
+app.get('/api/backups/:filename', (req, res) => {
+  try {
+    const { filename } = req.params;
+    if (!/^backup-[\w.-]+\.json$/.test(filename)) return res.status(400).json({ ok: false, error: '잘못된 파일명' });
+    const filepath = path.join(MANUAL_BACKUP_DIR, filename);
+    if (!fs.existsSync(filepath)) return res.status(404).json({ ok: false, error: '파일 없음' });
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/json');
+    res.sendFile(path.resolve(filepath));
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// 백업에서 복원
 app.post('/api/import-backup', (req, res) => {
   try {
     const { inhouseDb, discordConfig, version } = req.body || {};

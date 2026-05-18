@@ -202,7 +202,8 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
       <button class="tab-btn" data-tab="music">🎵 음악 플레이어</button>
     </div>
     <div class="conn-bar" id="conn-bar">
-      <button class="btn-backup" onclick="downloadBackup()" title="현재 데이터 전체 백업 다운로드">💾 백업</button>
+      <button class="btn-backup" onclick="saveBackup()" title="현재 데이터를 서버에 백업 저장">💾 백업</button>
+      <button class="btn-backup" onclick="openBackupList()" title="서버에 저장된 백업 목록 보기">📋 목록</button>
       <button class="btn-backup" onclick="triggerRestore()" title="백업 파일로 데이터 복원">📂 복원</button>
       <input type="file" id="restore-input" accept=".json" style="display:none" onchange="uploadBackup(this)">
       <div class="dot" id="conn-dot"></div>
@@ -363,6 +364,20 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
   </div>
 </div>
 
+<!-- 백업 목록 모달 -->
+<div id="backup-list-modal" onclick="if(event.target===this)this.style.display='none'"
+     style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9998;display:none;align-items:center;justify-content:center">
+  <div style="background:#1c1c1e;border:1px solid #2a2a2a;border-radius:20px;padding:32px 36px;width:560px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.6)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:15px;font-weight:800;color:#fff">💾 서버 백업 목록</div>
+      <div style="font-size:11px;color:#555">최대 5개 보관 · 오래된 파일 자동 삭제</div>
+    </div>
+    <div id="backup-list-body"></div>
+    <button onclick="document.getElementById('backup-list-modal').style.display='none'"
+      style="margin-top:20px;width:100%;background:#222;color:#888;border:1px solid #333;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;font-family:inherit">닫기</button>
+  </div>
+</div>
+
 <!-- 추첨 모달 -->
 <div id="draw-modal" onclick="if(event.target===this)closeDrawModal()">
   <div class="draw-card">
@@ -462,23 +477,72 @@ function doDisconnect() {
   api('disconnect_chzzk').catch(err => alert(err.message || '연결 해제 실패'));
 }
 
-async function downloadBackup() {
+async function saveBackup() {
   try {
-    const res = await fetch('/api/export-backup');
-    if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+    const res = await fetch('/api/save-backup', { method: 'POST' });
     const data = await res.json();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    a.download = `inhouse-backup-${stamp}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (!data.ok) throw new Error(data.error);
+    const t = new Date(data.savedAt).toLocaleString('ko-KR');
+    alert(`💾 백업 저장 완료!\n저장 시각: ${t}\n서버 저장 수: ${data.total}/${5}개`);
   } catch (e) {
     alert('백업 실패: ' + (e.message || e));
+  }
+}
+
+async function openBackupList() {
+  const modal = document.getElementById('backup-list-modal');
+  const body = document.getElementById('backup-list-body');
+  body.innerHTML = '<div style="color:#666;padding:20px 0;text-align:center">불러오는 중...</div>';
+  modal.style.display = 'flex';
+  try {
+    const res = await fetch('/api/backups');
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    if (!data.backups.length) {
+      body.innerHTML = '<div style="color:#666;padding:20px 0;text-align:center">저장된 백업이 없습니다</div>';
+      return;
+    }
+    body.innerHTML = data.backups.map((b, i) => {
+      const t = new Date(b.savedAt).toLocaleString('ko-KR');
+      const kb = (b.size / 1024).toFixed(1);
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #222">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#fff">${i === 0 ? '🔵 최신  ' : ''}${t}</div>
+          <div style="font-size:11px;color:#555;margin-top:2px">${b.filename} · ${kb}KB</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <a href="/api/backups/${b.filename}" download="${b.filename}"
+             style="background:#1a3a2a;color:#00e5a0;border:1px solid rgba(0,229,160,.3);border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer">⬇ 다운로드</a>
+          <button onclick="restoreFromServer('${b.filename}')"
+             style="background:rgba(255,80,80,.12);color:#ff8080;border:1px solid rgba(255,80,80,.3);border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">↩ 복원</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    body.innerHTML = `<div style="color:#f66;padding:20px 0;text-align:center">오류: ${e.message}</div>`;
+  }
+}
+
+async function restoreFromServer(filename) {
+  if (!confirm(`"${filename}"\n이 백업으로 현재 데이터를 복원합니다. 계속하시겠습니까?`)) return;
+  try {
+    const res = await fetch(`/api/backups/${filename}`);
+    const data = await res.json();
+    if (!data.inhouseDb) throw new Error('유효하지 않은 백업 파일');
+    const r = await fetch('/api/import-backup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const result = await r.json();
+    if (result.ok) {
+      alert(`✅ 복원 완료 (시청자 ${result.restored.viewers}명)\n페이지를 새로고침합니다.`);
+      location.reload();
+    } else {
+      alert('복원 실패: ' + result.error);
+    }
+  } catch (e) {
+    alert('복원 실패: ' + (e.message || e));
   }
 }
 
@@ -494,25 +558,14 @@ async function uploadBackup(input) {
   try {
     const text = await file.text();
     const data = JSON.parse(text);
-    if (!data.inhouseDb || !Array.isArray(data.inhouseDb.viewers)) {
-      alert('유효하지 않은 백업 파일입니다.');
-      return;
-    }
+    if (!data.inhouseDb || !Array.isArray(data.inhouseDb.viewers)) { alert('유효하지 않은 백업 파일입니다.'); return; }
     const res = await fetch('/api/import-backup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
     });
     const result = await res.json();
-    if (result.ok) {
-      alert(`✅ 복원 완료 (시청자 ${result.restored.viewers}명)\n페이지를 새로고침합니다.`);
-      location.reload();
-    } else {
-      alert('복원 실패: ' + result.error);
-    }
-  } catch (e) {
-    alert('복원 실패: ' + (e.message || e));
-  }
+    if (result.ok) { alert(`✅ 복원 완료 (시청자 ${result.restored.viewers}명)\n페이지를 새로고침합니다.`); location.reload(); }
+    else alert('복원 실패: ' + result.error);
+  } catch (e) { alert('복원 실패: ' + (e.message || e)); }
 }
 
 // ── 렌더 전체 ──
@@ -529,7 +582,7 @@ function renderConnBar() {
   const txt = document.getElementById('conn-id-text');
   const bar = document.getElementById('conn-bar');
   dot.className = 'dot' + (connected ? ' on' : '');
-  const backupBtns = `<button class="btn-backup" onclick="downloadBackup()" title="현재 데이터 전체 백업 다운로드">💾 백업</button><button class="btn-backup" onclick="triggerRestore()" title="백업 파일로 데이터 복원">📂 복원</button><input type="file" id="restore-input" accept=".json" style="display:none" onchange="uploadBackup(this)">`;
+  const backupBtns = `<button class="btn-backup" onclick="saveBackup()" title="현재 데이터를 서버에 백업 저장">💾 백업</button><button class="btn-backup" onclick="openBackupList()" title="저장된 백업 목록">📋 목록</button><button class="btn-backup" onclick="triggerRestore()" title="백업 파일로 복원">📂 복원</button><input type="file" id="restore-input" accept=".json" style="display:none" onchange="uploadBackup(this)">`;
   if (connected) {
     txt.textContent = state.channelId?.slice(0, 20) + '...';
     txt.className = 'conn-id on';
