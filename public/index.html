@@ -113,12 +113,17 @@ input.inp:focus,textarea.inp:focus{border-color:var(--acc)}
 
 /* draw modal - centered card */
 #draw-modal{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;display:none;align-items:center;justify-content:center}
-.draw-card{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:24px;padding:44px 52px;display:flex;flex-direction:column;align-items:center;min-width:460px;max-width:560px;box-shadow:0 32px 80px rgba(0,0,0,.6)}
+.draw-card{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:24px;padding:32px 36px;display:flex;flex-direction:column;align-items:center;width:660px;max-width:95vw;box-shadow:0 32px 80px rgba(0,0,0,.6)}
 .draw-card-title{font-size:11px;font-weight:700;color:#666;letter-spacing:3px;text-transform:uppercase;margin-bottom:28px}
-.slot-container{display:flex;gap:7px;justify-content:center;align-items:center;flex-wrap:wrap;max-width:520px;margin-bottom:16px;min-height:80px}
-.slot-cell{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:2px solid #2a2a2a;border-radius:10px;font-weight:900;color:#444;flex-shrink:0}
-.slot-cell.locked{color:#fff;border-color:rgba(0,229,160,.7);background:rgba(0,229,160,.08);animation:lockPop .18s ease}
-@keyframes lockPop{0%{transform:scale(1.25)}60%{transform:scale(.95)}100%{transform:scale(1)}}
+.slot-container{width:100%;margin-bottom:12px}
+.race-wrap{width:100%;background:#0c1a2e;border-radius:14px;padding:10px;border:1px solid #1a3356}
+.race-lane{position:relative;height:46px;background:linear-gradient(90deg,#091525,#0d1f38);border-radius:8px;border:1px solid #1a3356;margin-bottom:5px;overflow:visible}
+.race-lane:last-child{margin-bottom:0}
+.racer{position:absolute;left:2%;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;z-index:2;will-change:left}
+.racer-name{font-size:9px;font-weight:700;color:#bbb;background:rgba(0,0,0,.7);border-radius:3px;padding:1px 5px;white-space:nowrap;max-width:66px;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;line-height:1.3}
+.racer-emoji{font-size:22px;line-height:1}
+.racer-flag{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:16px;z-index:1}
+.race-event-label{display:none;position:absolute;top:-22px;left:0;font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,.8);padding:2px 7px;border-radius:5px;white-space:nowrap;z-index:4;pointer-events:none}
 .draw-winner-badge{font-size:12px;font-weight:700;color:var(--acc2);letter-spacing:4px;text-transform:uppercase;height:16px;opacity:0;transition:opacity .5s;margin-bottom:8px}
 .draw-winner-badge.show{opacity:1}
 .draw-winner-name{font-size:22px;font-weight:900;color:var(--txt);min-height:30px;text-align:center}
@@ -382,8 +387,8 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 <div id="draw-modal" onclick="if(event.target===this)closeDrawModal()">
   <div class="draw-card">
     <div class="draw-card-title" id="draw-card-title">추첨 중</div>
-    <div class="slot-container" id="slot-container"></div>
-    <div class="draw-winner-badge" id="draw-winner-badge">🎉 당첨!</div>
+    <div id="slot-container" style="width:100%"></div>
+    <div class="draw-winner-badge" id="draw-winner-badge">🏆 우승!</div>
     <div class="draw-winner-name" id="draw-winner-name"></div>
     <div class="draw-pool-info" id="draw-pool-info"></div>
     <div class="draw-modal-btns" id="draw-modal-btns" style="display:none">
@@ -715,7 +720,7 @@ function openDrawModal(e, voteIdx) {
   lastDrawWinner = null;
   const it = state.vote.items[voteIdx];
   document.getElementById('draw-modal').style.display = 'flex';
-  document.getElementById('draw-card-title').textContent = (it?.label || `!투표${voteIdx+1}`) + ' 추첨';
+  document.getElementById('draw-card-title').textContent = `🐌 ${it?.label || '!투표'+(voteIdx+1)} 달팽이 경주`;
   document.getElementById('draw-winner-badge').className = 'draw-winner-badge';
   document.getElementById('draw-winner-name').textContent = '';
   document.getElementById('draw-modal-btns').style.display = 'none';
@@ -723,49 +728,125 @@ function openDrawModal(e, voteIdx) {
   startSlotAnim(pool);
 }
 
-const REEL = '가나다라마바사아자차카타파하거너더러머버서어저처커터퍼허기니디리미비시이지치키티피히고노도로모보소오조초코토포호';
+const MAX_RACERS = 8;
+const TRACK_FINISH = 82;
+const RACE_EVENTS = [
+  { id:'turbo',    label:'🚀 터보 장착!',    emoji:'🐌💨', mult:4.2, dur:650  },
+  { id:'legs',     label:'🦵 두발 달리기!',  emoji:'🏃💨', mult:3.0, dur:750  },
+  { id:'alien',    label:'👽 외계인 납치!',   emoji:'🛸',   mult:0,   dur:650, warp:22 },
+  { id:'lightning',label:'⚡ 번개 직격!',    emoji:'⚡🐌', mult:5.5, dur:280  },
+  { id:'sleep',    label:'💤 갑자기 졸음...',  emoji:'😴',   mult:0,   dur:650  },
+  { id:'wind',     label:'🌪️ 돌풍 직격!',    emoji:'🌪️🐌', mult:3.5, dur:480  },
+  { id:'mushroom', label:'🍄 버섯 파워!',    emoji:'🐌🍄', mult:3.8, dur:520  },
+  { id:'rocket',   label:'🚀 로켓 발사!',    emoji:'🚀💨', mult:7.0, dur:320  },
+  { id:'magnet',   label:'🧲 자석!',          emoji:'🧲🐌', mult:2.5, dur:550  },
+  { id:'banana',   label:'🍌 바나나 밟음!',   emoji:'😵',   mult:0,   dur:450  },
+];
 
 function startSlotAnim(pool) {
   const myId = ++drawAnimId;
   const winner = pool[Math.floor(Math.random() * pool.length)];
-  const chars = [...winner];
-  const N = chars.length;
-  const TOTAL_MS = 2000;
-  const lockInterval = TOTAL_MS / N;
-  const sz = N <= 4 ? {w:68,h:84,fs:40} : N <= 7 ? {w:56,h:74,fs:34} : {w:44,h:62,fs:27};
+  const others = pool.filter(n=>n!==winner).sort(()=>Math.random()-.5).slice(0,MAX_RACERS-1);
+  const racers = [winner,...others].sort(()=>Math.random()-.5);
 
-  const container = document.getElementById('slot-container');
-  container.innerHTML = chars.map((_,i)=>
-    `<div class="slot-cell" id="sc-${i}" style="width:${sz.w}px;height:${sz.h}px;font-size:${sz.fs}px">${REEL[0]}</div>`
-  ).join('');
-
-  // 각 슬롯 개별 스핀
-  chars.forEach((finalChar, i) => {
-    const el = document.getElementById(`sc-${i}`);
-    const lockAt = Math.round((i + 1) * lockInterval);
-
-    function spin() {
-      if (drawAnimId !== myId) return;
-      el.textContent = REEL[Math.floor(Math.random() * REEL.length)];
-      setTimeout(spin, 40);
-    }
-    spin();
-
-    setTimeout(() => {
-      if (drawAnimId !== myId) return;
-      el.textContent = finalChar;
-      el.classList.add('locked');
-    }, lockAt);
+  const state = racers.map(name => {
+    const isWinner = name === winner;
+    const baseSpd = (TRACK_FINISH/(3000/1000)) * (isWinner ? 0.52 : 0.2+Math.random()*0.25);
+    return {
+      name, isWinner, pos:0, baseSpd,
+      eventAt: 500+Math.random()*1300,
+      event: RACE_EVENTS[Math.floor(Math.random()*RACE_EVENTS.length)],
+      eventStarted:false, eventActive:false, eventEndAt:0,
+      finished:false, warpDone:false,
+    };
   });
 
-  setTimeout(() => {
-    if (drawAnimId !== myId) return;
-    lastDrawWinner = winner;
-    document.getElementById('draw-winner-badge').className = 'draw-winner-badge show';
-    document.getElementById('draw-winner-name').textContent = winner;
-    document.getElementById('draw-pool-info').textContent = `전체 ${pool.length}명 중 추첨`;
-    document.getElementById('draw-modal-btns').style.display = 'flex';
-  }, TOTAL_MS + 300);
+  const container = document.getElementById('slot-container');
+  const wrap = document.createElement('div');
+  wrap.className = 'race-wrap';
+  state.forEach((s,i) => {
+    const lane = document.createElement('div');
+    lane.className = 'race-lane';
+    lane.innerHTML = `
+      <div class="racer-flag">🏁</div>
+      <div class="racer" id="rc${i}">
+        <div class="racer-name">${esc(s.name.slice(0,8))}</div>
+        <div class="racer-emoji" id="re${i}">🐌</div>
+      </div>
+      <div class="race-event-label" id="ev${i}"></div>`;
+    wrap.appendChild(lane);
+  });
+  container.innerHTML = '';
+  container.appendChild(wrap);
+
+  let startT=null, lastT=null;
+  function frame(now) {
+    if (drawAnimId!==myId) return;
+    if (!startT){startT=now;lastT=now;}
+    const elapsed=now-startT, dt=Math.min((now-lastT)/1000,0.05);
+    lastT=now;
+    let winnerDone=false;
+
+    state.forEach((s,i) => {
+      if (s.finished) return;
+      const rcEl=document.getElementById(`rc${i}`);
+      const reEl=document.getElementById(`re${i}`);
+      const evEl=document.getElementById(`ev${i}`);
+      if (!rcEl) return;
+
+      if (!s.eventStarted && elapsed>=s.eventAt) {
+        s.eventStarted=true; s.eventActive=true; s.eventEndAt=elapsed+s.event.dur;
+        if(reEl) reEl.textContent=s.event.emoji;
+        if(evEl){evEl.textContent=s.event.label;evEl.style.display='block';}
+        if(s.event.id==='alien'&&!s.warpDone){
+          s.warpDone=true;
+          rcEl.style.transition='top 0.3s'; rcEl.style.top='-32px';
+          setTimeout(()=>{
+            if(drawAnimId!==myId)return;
+            s.pos=Math.min(TRACK_FINISH-(s.isWinner?0:6),s.pos+(s.event.warp||20));
+            rcEl.style.top='50%'; rcEl.style.transition='';
+          },s.event.dur*0.55);
+        }
+      }
+      if(s.eventActive&&elapsed>=s.eventEndAt){
+        s.eventActive=false;
+        if(reEl)reEl.textContent='🐌';
+        if(evEl)evEl.style.display='none';
+      }
+
+      let spd=s.baseSpd;
+      const stopIds=['alien','sleep','banana'];
+      if(s.eventActive&&!stopIds.includes(s.event.id)) spd*=s.event.mult;
+      if(s.eventActive&&stopIds.includes(s.event.id)) spd=0;
+      if(s.isWinner&&elapsed>400){
+        const tl=Math.max(0.05,(3000-elapsed)/1000);
+        const dl=TRACK_FINISH-s.pos;
+        if(dl>0) spd=Math.max(spd,dl/tl*1.15);
+      }
+      if(!s.isWinner&&s.pos>TRACK_FINISH-8) spd*=0.04;
+
+      s.pos=Math.min(s.isWinner?TRACK_FINISH:TRACK_FINISH-3, s.pos+spd*dt);
+      rcEl.style.left=s.pos+'%';
+
+      if(s.isWinner&&s.pos>=TRACK_FINISH){
+        s.finished=true; winnerDone=true;
+        if(reEl)reEl.textContent='🎉';
+        if(evEl){evEl.textContent='🏆 우승!';evEl.style.display='block';evEl.style.color='#ffd700';}
+      }
+    });
+
+    if(winnerDone){
+      setTimeout(()=>{
+        if(drawAnimId!==myId)return;
+        lastDrawWinner=winner;
+        document.getElementById('draw-winner-badge').className='draw-winner-badge show';
+        document.getElementById('draw-winner-name').textContent=`🐌 ${winner}`;
+        document.getElementById('draw-pool-info').textContent=`전체 ${pool.length}명 중 추첨`;
+        document.getElementById('draw-modal-btns').style.display='flex';
+      },500);
+    } else { requestAnimationFrame(frame); }
+  }
+  requestAnimationFrame(frame);
 }
 
 function redraw() {
