@@ -57,7 +57,7 @@ iframe#inhouse-frame{width:100%;height:100%;border:none;display:block}
 /* ── VOTE PANEL ── */
 #panel-vote{gap:0}
 .vote-left{width:280px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.vote-right{flex:1;overflow:auto;padding:20px 24px}
+.vote-right{flex:1;overflow:auto;padding:28px 36px;display:flex;flex-direction:column}
 .section{padding:16px;border-bottom:1px solid var(--border)}
 .section-title{font-size:12px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
 label.lbl{font-size:12px;color:var(--txt2);display:block;margin-bottom:5px}
@@ -77,26 +77,29 @@ input.inp:focus,textarea.inp:focus{border-color:var(--acc)}
 .chat-txt.vote{color:var(--acc2);font-weight:600}
 
 /* vote results */
-.vote-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
-.vote-header h2{font-size:20px;font-weight:800;color:var(--txt)}
-.vote-badge{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700}
-.vote-badge.active{background:rgba(0,229,160,.15);color:var(--acc2);border:1px solid rgba(0,229,160,.3)}
-.vote-badge.inactive{background:rgba(255,255,255,.06);color:var(--txt2);border:1px solid var(--border2)}
-.timer{margin-left:auto;font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--gold);background:rgba(255,201,77,.08);border:1px solid rgba(255,201,77,.2);border-radius:8px;padding:4px 14px}
-.total-count{font-size:13px;color:var(--txt2);margin-bottom:16px}
-.total-count b{color:var(--gold);font-size:18px}
-.vote-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:border-color .2s}
-.vote-item:hover{border-color:var(--border2)}
-.vote-item-top{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
-.vote-cmd{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;flex-shrink:0}
-.vote-label{font-size:16px;font-weight:700;flex:1}
-.vote-pct{font-size:22px;font-weight:900;font-family:'Rajdhani',sans-serif;margin-left:auto}
-.vote-cnt{font-size:12px;color:var(--txt2);margin-left:4px}
-.vote-bar-bg{height:4px;background:rgba(255,255,255,.07);margin:0 16px 14px}
-.vote-bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
-.vote-voters{padding:8px 16px 12px;border-top:1px solid var(--border);display:none}
+.vote-top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.vote-total-large{font-size:30px;font-weight:900;color:var(--txt)}
+.timer{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;color:var(--txt)}
+.vote-notice-box{background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:10px;padding:16px 20px;margin-bottom:20px;font-size:13px;color:var(--txt3)}
+.vote-notice-title{font-weight:700;font-size:14px;color:var(--txt);margin-bottom:10px}
+.vote-notice-box ul{margin:0;padding-left:20px;line-height:2}
+.vote-notice-box ul ul{margin-top:0}
+.vote-notice-fold{display:flex;justify-content:flex-end;margin-top:8px}
+.vote-notice-fold button{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:12px;font-family:'Noto Sans KR',sans-serif}
+.vote-item{display:flex;align-items:center;gap:16px;margin-bottom:10px}
+.vote-item-left{width:110px;flex-shrink:0}
+.vote-cmd{font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:3px}
+.vote-label{font-size:22px;font-weight:800;color:var(--txt);word-break:break-all}
+.vote-item-bar-wrap{flex:1;position:relative;height:50px;background:var(--bg3);border-radius:8px;overflow:hidden;cursor:pointer;transition:opacity .2s}
+.vote-item-bar-wrap:hover{opacity:.85}
+.vote-bar-fill{position:absolute;left:0;top:0;height:100%;background:rgba(255,255,255,.1);transition:width .5s ease;border-radius:8px}
+.vote-bar-text{position:relative;z-index:1;padding:0 16px;font-size:14px;font-weight:600;color:var(--txt);display:flex;align-items:center;height:100%}
+.vote-voters{padding:8px 0 4px;display:none}
 .vote-voters.open{display:block}
-.voter-chip{display:inline-block;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--txt3);margin:2px}
+.voter-chip{display:inline-block;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--txt3);margin:2px;cursor:pointer}
+.vote-bottom-bar{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
+.vote-hide-label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--txt2);cursor:pointer;user-select:none}
+.vote-hide-label input[type=checkbox]{accent-color:var(--acc2);width:14px;height:14px;cursor:pointer}
 .empty-msg{text-align:center;padding:60px 20px;color:var(--txt2);font-size:14px}
 
 /* ── ROULETTE ── */
@@ -230,13 +233,28 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 
       <!-- 오른쪽 결과 -->
       <div class="vote-right">
-        <div class="vote-header">
-          <h2 id="vote-result-title">투표 결과</h2>
-          <span class="vote-badge inactive" id="vote-status-badge">대기 중</span>
-          <div class="timer" id="vote-timer" style="display:none">00:00</div>
+        <div class="vote-top-bar">
+          <div class="vote-total-large">총 <span id="vote-total">0</span>표</div>
+          <div class="timer" id="vote-timer">00:00:00</div>
         </div>
-        <div class="total-count">총 <b id="vote-total">0</b>표</div>
+        <div class="vote-notice-box" id="vote-notice-box" style="display:none">
+          <div class="vote-notice-title">채팅 투표가 진행중입니다</div>
+          <ul id="vote-notice-body">
+            <li>채팅 시 메시지 가장 앞에 <span style="color:#4fc3f7">'!투표1'</span> 혹은 <span style="color:#4fc3f7">'!투표 1'</span>과 같이 입력해주세요</li>
+            <li>투표 바를 클릭하면 상세 정보를 확인할 수 있습니다
+              <ul>
+                <li>투표자 리스트를 확인하고, 그 중에서 추첨을 진행할 수 있습니다</li>
+                <li>투표 진행 중에도 추첨이 가능합니다</li>
+              </ul>
+            </li>
+          </ul>
+          <div class="vote-notice-fold"><button onclick="toggleVoteNotice()" id="vote-notice-btn">안내사항 접기 ∧</button></div>
+        </div>
         <div id="vote-items-list"><div class="empty-msg">투표를 시작하면 결과가 표시됩니다</div></div>
+        <div class="vote-bottom-bar" id="vote-bottom-bar" style="display:none">
+          <label class="vote-hide-label"><input type="checkbox" id="hide-vote-content" onchange="toggleHideVoteContent()"> 투표 내용 가리기</label>
+          <button class="btn danger" onclick="endVote()">투표 종료</button>
+        </div>
 
         <!-- 룰렛 -->
         <div class="roulette-wrap" id="roulette-wrap" style="display:none">
@@ -434,29 +452,31 @@ function renderConnBar() {
 }
 
 // ── 투표 렌더 ──
-const COLORS = ['#4285f4','#ea4335','#34a853','#fbbc04','#9c27b0','#00bcd4','#ff5722','#e91e63'];
+let voteNoticeOpen = true;
 function renderVote() {
   const v = state.vote;
+  const hidden = document.getElementById('hide-vote-content')?.checked;
   const total = v.items.reduce((s, it) => s + it.votes.length, 0);
   document.getElementById('vote-total').textContent = total;
-  document.getElementById('vote-result-title').textContent = v.title || '투표 결과';
 
-  const badge = document.getElementById('vote-status-badge');
-  badge.textContent = v.active ? '진행 중' : '대기 중';
-  badge.className = 'vote-badge ' + (v.active ? 'active' : 'inactive');
+  const noticeBox = document.getElementById('vote-notice-box');
+  const bottomBar = document.getElementById('vote-bottom-bar');
+  if (noticeBox) noticeBox.style.display = v.active ? '' : 'none';
+  if (bottomBar) bottomBar.style.display = v.active ? '' : 'none';
 
   const timer = document.getElementById('vote-timer');
-  timer.style.display = v.active ? '' : 'none';
   if (v.active) {
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
       const sec = Math.floor((Date.now() - v.startedAt) / 1000);
-      const m = String(Math.floor(sec/60)).padStart(2,'0');
+      const h = String(Math.floor(sec/3600)).padStart(2,'0');
+      const m = String(Math.floor((sec%3600)/60)).padStart(2,'0');
       const s = String(sec%60).padStart(2,'0');
-      timer.textContent = `${m}:${s}`;
+      timer.textContent = `${h}:${m}:${s}`;
     }, 500);
   } else {
     clearInterval(timerInterval);
+    timer.textContent = '00:00:00';
   }
 
   const startBtn = document.getElementById('vote-start-btn');
@@ -469,26 +489,38 @@ function renderVote() {
 
   list.innerHTML = v.items.map((it, i) => {
     const pct = total > 0 ? Math.round(it.votes.length / total * 100) : 0;
-    const col = COLORS[i % COLORS.length];
     const isOpen = expandedVoteIdx === i;
+    const labelHtml = hidden ? '<span style="filter:blur(6px);user-select:none">●●●●</span>' : esc(it.label);
     return `
-    <div class="vote-item">
-      <div class="vote-item-top" onclick="toggleVoter(${i})">
-        <span class="vote-cmd" style="background:${col}22;color:${col};border:1px solid ${col}44">!투표${i+1}</span>
-        <span class="vote-label">${esc(it.label)}</span>
-        <span class="vote-pct" style="color:${col}">${pct}%</span>
-        <span class="vote-cnt">${it.votes.length}표</span>
-        <span style="color:var(--txt2);font-size:12px;margin-left:4px">${isOpen?'▾':'▸'}</span>
+    <div>
+      <div class="vote-item">
+        <div class="vote-item-left">
+          <div class="vote-cmd">!투표${i+1}</div>
+          <div class="vote-label">${labelHtml}</div>
+        </div>
+        <div class="vote-item-bar-wrap" onclick="toggleVoter(${i})">
+          <div class="vote-bar-fill" style="width:${pct}%"></div>
+          <span class="vote-bar-text">${it.votes.length}표&nbsp;&nbsp;${pct}%</span>
+        </div>
       </div>
-      <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:${pct}%;background:${col}"></div></div>
-      <div class="vote-voters ${isOpen?'open':''}">
-        ${it.votes.length ? it.votes.map(n=>`<span class="voter-chip" onclick="addToInhouse('${n.replace(/'/g,"\'")}',${i})" title="내전에 추가" style="cursor:pointer">${esc(n)} <span style="color:var(--acc2);font-size:10px">+</span></span>`).join('') : '<span style="font-size:12px;color(var(--txt2)">투표자 없음</span>'}
+      <div class="vote-voters ${isOpen?'open':''}" style="padding-left:126px">
+        ${it.votes.length ? it.votes.map(n=>`<span class="voter-chip" onclick="addToInhouse('${n.replace(/'/g,"\'")}',${i})" title="내전에 추가">${esc(n)} <span style="color:var(--acc2);font-size:10px">+</span></span>`).join('') : '<span style="font-size:12px;color:var(--txt2)">투표자 없음</span>'}
       </div>
     </div>`;
   }).join('');
 }
 
 function toggleVoter(i) { expandedVoteIdx = expandedVoteIdx === i ? null : i; renderVote(); }
+
+function toggleVoteNotice() {
+  voteNoticeOpen = !voteNoticeOpen;
+  const body = document.getElementById('vote-notice-body');
+  const btn = document.getElementById('vote-notice-btn');
+  if (body) body.style.display = voteNoticeOpen ? '' : 'none';
+  if (btn) btn.textContent = voteNoticeOpen ? '안내사항 접기 ∧' : '안내사항 펼치기 ∨';
+}
+
+function toggleHideVoteContent() { renderVote(); }
 
 // ── 투표 액션 ──
 function startVote() {
