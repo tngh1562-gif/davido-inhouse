@@ -113,8 +113,10 @@ input.inp:focus,textarea.inp:focus{border-color:var(--acc)}
 #draw-modal{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;display:none;align-items:center;justify-content:center}
 .draw-card{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:24px;padding:44px 52px;display:flex;flex-direction:column;align-items:center;min-width:460px;max-width:560px;box-shadow:0 32px 80px rgba(0,0,0,.6)}
 .draw-card-title{font-size:11px;font-weight:700;color:#666;letter-spacing:3px;text-transform:uppercase;margin-bottom:28px}
-.draw-name-box{width:100%;height:100px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:1px solid #2a2a2a;border-radius:14px;margin-bottom:16px;overflow:hidden}
-.draw-spinning{font-size:52px;font-weight:900;color:#fff;padding:0 20px;text-align:center}
+.slot-container{display:flex;gap:7px;justify-content:center;align-items:center;flex-wrap:wrap;max-width:520px;margin-bottom:16px;min-height:80px}
+.slot-cell{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:2px solid #2a2a2a;border-radius:10px;font-weight:900;color:#444;flex-shrink:0}
+.slot-cell.locked{color:#fff;border-color:rgba(0,229,160,.7);background:rgba(0,229,160,.08);animation:lockPop .18s ease}
+@keyframes lockPop{0%{transform:scale(1.25)}60%{transform:scale(.95)}100%{transform:scale(1)}}
 .draw-winner-badge{font-size:12px;font-weight:700;color:var(--acc2);letter-spacing:4px;text-transform:uppercase;height:16px;opacity:0;transition:opacity .5s;margin-bottom:8px}
 .draw-winner-badge.show{opacity:1}
 .draw-winner-name{font-size:22px;font-weight:900;color:var(--txt);min-height:30px;text-align:center}
@@ -360,9 +362,7 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 <div id="draw-modal" onclick="if(event.target===this)closeDrawModal()">
   <div class="draw-card">
     <div class="draw-card-title" id="draw-card-title">추첨 중</div>
-    <div class="draw-name-box">
-      <div class="draw-spinning" id="draw-spinning">-</div>
-    </div>
+    <div class="slot-container" id="slot-container"></div>
     <div class="draw-winner-badge" id="draw-winner-badge">🎉 당첨!</div>
     <div class="draw-winner-name" id="draw-winner-name"></div>
     <div class="draw-pool-info" id="draw-pool-info"></div>
@@ -387,7 +387,7 @@ const drawnPeople = {}; // voteIdx -> Set<nickname>
 let currentDrawVoteIdx = null;
 let currentDrawPool = [];
 let lastDrawWinner = null;
-let drawAnimTimer = null;
+let drawAnimId = 0;
 
 async function initInhouseFrame() {
   const iframe = document.getElementById('inhouse-frame');
@@ -607,40 +607,52 @@ function openDrawModal(e, voteIdx) {
   document.getElementById('draw-winner-name').textContent = '';
   document.getElementById('draw-modal-btns').style.display = 'none';
   document.getElementById('draw-pool-info').textContent = '';
-  startDrawAnim(pool);
+  startSlotAnim(pool);
 }
 
-function startDrawAnim(pool) {
-  if (drawAnimTimer) clearTimeout(drawAnimTimer);
-  const display = document.getElementById('draw-spinning');
+const REEL = '가나다라마바사아자차카타파하거너더러머버서어저처커터퍼허기니디리미비시이지치키티피히고노도로모보소오조초코토포호';
+
+function startSlotAnim(pool) {
+  const myId = ++drawAnimId;
   const winner = pool[Math.floor(Math.random() * pool.length)];
-  const TOTAL = 55;
-  let frame = 0;
+  const chars = [...winner];
+  const N = chars.length;
+  const TOTAL_MS = 2000;
+  const lockInterval = TOTAL_MS / N;
+  const sz = N <= 4 ? {w:68,h:84,fs:40} : N <= 7 ? {w:56,h:74,fs:34} : {w:44,h:62,fs:27};
 
-  function delay(f) {
-    const t = f / TOTAL;
-    if (t < 0.25) return Math.round(180 - t * 4 * 150);
-    if (t < 0.65) return 30;
-    return Math.round(30 + ((t - 0.65) / 0.35) * 370);
-  }
+  const container = document.getElementById('slot-container');
+  container.innerHTML = chars.map((_,i)=>
+    `<div class="slot-cell" id="sc-${i}" style="width:${sz.w}px;height:${sz.h}px;font-size:${sz.fs}px">${REEL[0]}</div>`
+  ).join('');
 
-  function step() {
-    if (frame < TOTAL) {
-      display.textContent = pool[Math.floor(Math.random() * pool.length)];
-      frame++;
-      drawAnimTimer = setTimeout(step, delay(frame));
-    } else {
-      display.textContent = winner;
-      lastDrawWinner = winner;
-      setTimeout(() => {
-        document.getElementById('draw-winner-badge').className = 'draw-winner-badge show';
-        document.getElementById('draw-winner-name').textContent = winner;
-        document.getElementById('draw-pool-info').textContent = `전체 ${pool.length}명 중 추첨`;
-        document.getElementById('draw-modal-btns').style.display = 'flex';
-      }, 300);
+  // 각 슬롯 개별 스핀
+  chars.forEach((finalChar, i) => {
+    const el = document.getElementById(`sc-${i}`);
+    const lockAt = Math.round((i + 1) * lockInterval);
+
+    function spin() {
+      if (drawAnimId !== myId) return;
+      el.textContent = REEL[Math.floor(Math.random() * REEL.length)];
+      setTimeout(spin, 40);
     }
-  }
-  step();
+    spin();
+
+    setTimeout(() => {
+      if (drawAnimId !== myId) return;
+      el.textContent = finalChar;
+      el.classList.add('locked');
+    }, lockAt);
+  });
+
+  setTimeout(() => {
+    if (drawAnimId !== myId) return;
+    lastDrawWinner = winner;
+    document.getElementById('draw-winner-badge').className = 'draw-winner-badge show';
+    document.getElementById('draw-winner-name').textContent = winner;
+    document.getElementById('draw-pool-info').textContent = `전체 ${pool.length}명 중 추첨`;
+    document.getElementById('draw-modal-btns').style.display = 'flex';
+  }, TOTAL_MS + 300);
 }
 
 function redraw() {
@@ -652,7 +664,7 @@ function redraw() {
   document.getElementById('draw-winner-name').textContent = '';
   document.getElementById('draw-modal-btns').style.display = 'none';
   document.getElementById('draw-pool-info').textContent = '';
-  startDrawAnim(pool);
+  startSlotAnim(pool);
 }
 
 function excludeAndClose() {
@@ -665,7 +677,7 @@ function excludeAndClose() {
 }
 
 function closeDrawModal() {
-  if (drawAnimTimer) { clearTimeout(drawAnimTimer); drawAnimTimer = null; }
+  drawAnimId++; // 진행 중 애니메이션 무효화
   const modal = document.getElementById('draw-modal');
   modal.style.display = 'none';
   const label = document.getElementById('draw-modal-label');
