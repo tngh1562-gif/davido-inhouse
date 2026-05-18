@@ -1131,10 +1131,16 @@ async function connectChzzk(channelId) {
       `https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
       { headers: chzzkHeaders() }
     );
-    accessToken = json?.content?.accessToken || null;
-    botUid = json?.content?.userIdHash || null;
-    console.log('[CHZZK] token response keys:', Object.keys(json?.content || {}));
-    console.log('[CHZZK] accessToken:', accessToken ? '획득' : '없음', '| uid from token:', botUid || 'null');
+    const content = json?.content || {};
+    accessToken = content.accessToken || null;
+    botUid = content.userIdHash || null;
+    console.log('[CHZZK] token response:', JSON.stringify({
+      hasToken: !!accessToken,
+      temporaryRestrict: content.temporaryRestrict,
+      realNameAuth: content.realNameAuth,
+      chatTime: content.chatTime,
+      uid: botUid || 'null',
+    }));
   } catch (e) { console.log('[CHZZK] token failed:', e.message); }
 
   // uid가 없으면 여러 엔드포인트로 시도
