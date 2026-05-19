@@ -332,15 +332,15 @@ select.console-opt-inp{cursor:pointer}
     </div>
 
     <!-- 관리자 탭 -->
-    <div class="panel" id="panel-admin" style="flex-direction:column;overflow:auto">
-      <div style="display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0">
-        <button class="admin-sub-btn active" onclick="setAdminTab('inhouse')">내전관리</button>
-        <button class="admin-sub-btn" onclick="setAdminTab('storage')">보관함</button>
-        <button class="admin-sub-btn" onclick="setAdminTab('discord')">디스코드</button>
-      </div>
-      <div id="admin-panel-inhouse" class="admin-sub-panel" style="flex:1;padding:20px;display:grid;grid-template-columns:1fr 360px;gap:20px;min-height:0;overflow:auto">
-        <!-- 왼쪽: 컨트롤 -->
-        <div>
+    <div class="panel" id="panel-admin" style="flex-direction:row;overflow:hidden">
+      <!-- 왼쪽: 서브탭 + 콘텐츠 -->
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0">
+        <div style="display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0">
+          <button class="admin-sub-btn active" onclick="setAdminTab('inhouse')">내전관리</button>
+          <button class="admin-sub-btn" onclick="setAdminTab('storage')">보관함</button>
+          <button class="admin-sub-btn" onclick="setAdminTab('discord')">디스코드</button>
+        </div>
+        <div id="admin-panel-inhouse" class="admin-sub-panel" style="flex:1;padding:24px;overflow-y:auto">
           <div style="display:inline-flex;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:16px 22px">
             <span style="font-size:14px;font-weight:700;color:var(--txt)">버튼 OFF/ON</span>
             <button id="register-toggle-btn" onclick="toggleRegisterButton()" style="width:52px;height:28px;border:none;border-radius:999px;background:#444;padding:3px;cursor:pointer;transition:background .2s;flex-shrink:0">
@@ -350,8 +350,13 @@ select.console-opt-inp{cursor:pointer}
           </div>
           <p style="margin-top:10px;font-size:12px;color:var(--txt2)">OFF 시 디스코드에서 내전 참가 등록이 비활성화됩니다.</p>
         </div>
-        <!-- 오른쪽: 봇 명령어 콘솔 -->
-        <div class="bot-console">
+        <div id="admin-panel-storage" class="admin-sub-panel" style="flex:1;padding:24px;overflow-y:auto;display:none"></div>
+        <div id="admin-panel-discord" class="admin-sub-panel" style="flex:1;padding:24px;overflow-y:auto;display:none"></div>
+      </div>
+      <!-- 오른쪽: 봇 명령어 콘솔 (항상 고정) -->
+      <div style="width:340px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--txt2);letter-spacing:1px;text-transform:uppercase;flex-shrink:0">봇 명령어 콘솔</div>
+        <div class="bot-console" style="flex:1;border-radius:0;border:none;min-height:0">
           <div class="console-messages" id="console-messages">
             <div style="text-align:center;padding:20px 0;color:#72767d;font-size:12px">/ 를 입력해 명령어를 사용하세요</div>
           </div>
@@ -366,8 +371,6 @@ select.console-opt-inp{cursor:pointer}
           </div>
         </div>
       </div>
-      <div id="admin-panel-storage" class="admin-sub-panel" style="flex:1;padding:24px;display:none"></div>
-      <div id="admin-panel-discord" class="admin-sub-panel" style="flex:1;padding:24px;display:none"></div>
     </div>
   </div>
 </div>
