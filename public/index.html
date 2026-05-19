@@ -186,14 +186,13 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 .console-cmd-desc{color:#72767d;font-size:11px;flex:1;text-align:right}
 .console-options-area{display:none}
 .console-input-box{display:flex;gap:6px;background:#40444b;border-radius:8px;padding:8px 12px;align-items:flex-end}
-.console-inline-wrap{display:flex;flex:1;align-items:flex-end;gap:6px;min-width:0;overflow-x:auto}
+.console-inline-wrap{display:flex;flex:1;align-items:center;gap:5px;min-width:0;overflow-x:auto}
 .console-inline-wrap::-webkit-scrollbar{height:3px}
 .console-inline-wrap::-webkit-scrollbar-thumb{background:#555;border-radius:2px}
 .console-cmd-chip{background:#5865f2;color:#fff;border-radius:4px;padding:5px 10px;font-size:13px;font-weight:800;white-space:nowrap;flex-shrink:0;cursor:pointer;user-select:none;line-height:1.5}
 .console-cmd-chip:hover{background:#4752c4}
-.console-inline-param{display:flex;flex-direction:column;gap:2px;flex:1;min-width:70px}
-.console-inline-lbl{font-size:10px;font-weight:700;color:#8e9297;padding:0 2px;white-space:nowrap}
-.console-inline-inp{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:4px;color:#dcddde;font-size:13px;padding:5px 8px;outline:none;font-family:inherit;width:100%;box-sizing:border-box}
+.console-inline-inp{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:#dcddde;font-size:12px;padding:5px 8px;outline:none;font-family:inherit;flex:1;min-width:60px;box-sizing:border-box}
+.console-inline-inp.req{border-color:rgba(240,71,71,.5)}
 .console-inline-inp:focus{border-color:#5865f2}
 select.console-inline-inp{cursor:pointer}
 .console-main-input{flex:1;background:none;border:none;color:#dcddde;font-size:14px;outline:none;font-family:inherit}
@@ -908,7 +907,7 @@ function consoleOnKeydown(e) {
     if (e.key==='ArrowUp') { e.preventDefault(); _consoleAcIdx=Math.max(_consoleAcIdx-1,0); items.forEach((el,i)=>el.classList.toggle('sel',i===_consoleAcIdx)); return; }
     if (e.key==='Tab'||e.key==='Enter') { e.preventDefault(); const sel=items[_consoleAcIdx]; if(sel) { const name=sel.querySelector('.console-cmd-name').textContent; consoleSelectCmd(name); } return; }
   }
-  if (e.key==='Enter' && _consoleSelCmd) { e.preventDefault(); consoleSubmit(); }
+  if (e.key==='Enter') { e.preventDefault(); consoleSubmit(); }
 }
 
 function consoleSelectCmd(name) {
@@ -935,21 +934,16 @@ function consoleSelectCmd(name) {
   wrap.appendChild(chip);
 
   cmd.options.forEach(o => {
-    const pd = document.createElement('div');
-    pd.className = 'console-inline-param';
-    const lbl = document.createElement('div');
-    lbl.className = 'console-inline-lbl';
-    lbl.innerHTML = o.name + (o.required ? ' <span style="color:#f04747">*</span>' : '');
     let inp;
     if (o.type === 'select') {
       inp = document.createElement('select');
-      inp.innerHTML = `<option value="">선택...</option>` + o.choices.map(ch=>`<option value="${ch.value}">${ch.label}</option>`).join('');
+      inp.innerHTML = `<option value="">${o.name}</option>` + o.choices.map(ch=>`<option value="${ch.value}">${ch.label}</option>`).join('');
     } else {
       inp = document.createElement('input');
       inp.type = o.type === 'number' ? 'number' : 'text';
-      inp.placeholder = o.desc;
+      inp.placeholder = o.name;
     }
-    inp.className = 'console-inline-inp';
+    inp.className = 'console-inline-inp' + (o.required ? ' req' : '');
     inp.id = 'copt-' + o.name;
     inp.addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); consoleSubmit(); }
@@ -960,9 +954,7 @@ function consoleSelectCmd(name) {
         if (next) next.focus();
       }
     });
-    pd.appendChild(lbl);
-    pd.appendChild(inp);
-    wrap.appendChild(pd);
+    wrap.appendChild(inp);
   });
 
   box.insertBefore(wrap, box.querySelector('.console-send-btn'));
