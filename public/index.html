@@ -1342,7 +1342,91 @@ function startVote() {
   if (!items.length) return alert('항목을 입력하세요');
   api('start_vote', { title, items });
 }
-function endVote() { api('end_vote'); }
+async function endVote() {
+  await api('end_vote');
+  // 투표 종료 후 보상 자동 차감 체크
+  setTimeout(() => autoDeductVoteRewards(), 800);
+}
+
+async function autoDeductVoteRewards() {
+  const v = state.vote;
+  if (!v || !v.items || !v.items.length) return;
+
+  // bot config에서 보상 목록 가져오기
+  let botUsers = [], botRewards = [], botSponsor = [];
+  try {
+    const r = await fetch('/api/bot-config');
+    const d = await r.json();
+    if (d.ok) {
+      botUsers = d.config.users || [];
+      botRewards = d.config.rewards || [];
+      botSponsor = d.config.sponsor_rewards || [];
+    }
+  } catch(e) { return; }
+
+  const allBotRewards = [...new Set([...botRewards, ...botSponsor])];
+
+  // 인하우스 DB (치지직 닉 → LoL닉 매핑)
+  let inhouseViewers = [];
+  try {
+    const r = await fetch('/api/inhouse-db');
+    const d = await r.json();
+    inhouseViewers = d.viewers || [];
+  } catch(e) {}
+
+  // 보상 이름과 일치하는 투표 항목 찾기
+  const targets = v.items.filter(it => allBotRewards.includes(it.label) && it.votes.length > 0);
+  if (!targets.length) return;
+
+  const results = [];
+  for (const item of targets) {
+    for (const voterNick of item.votes) {
+      // 치지직닉 → 인하우스뷰어 → LoL닉
+      const viewer = inhouseViewers.find(vw =>
+        (vw.chzzk||'').toLowerCase() === voterNick.toLowerCase() ||
+        (vw.name||'').toLowerCase() === voterNick.toLowerCase()
+      );
+      const botName = viewer?.name || voterNick;
+
+      // 봇 유저 찾기
+      const botUser = botUsers.find(u =>
+        u.name === botName ||
+        u.name === viewer?.chzzk ||
+        u.name.toLowerCase() === voterNick.toLowerCase()
+      );
+
+      if (!botUser) {
+        results.push({ reward: item.label, nick: voterNick, ok: false, msg: '봇 config에서 유저를 찾지 못함' });
+        continue;
+      }
+      if (!botUser.counts || !botUser.counts[item.label] || botUser.counts[item.label] <= 0) {
+        results.push({ reward: item.label, nick: voterNick, ok: false, msg: `${botUser.name} ${item.label} 보유 없음` });
+        continue;
+      }
+
+      try {
+        const r = await fetch('/api/proxy-bot-command', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ command:'차감', options:{ 닉네임: botUser.name, 보상이름: item.label, 개수: 1 }}),
+        });
+        const d = await r.json();
+        results.push({ reward: item.label, nick: voterNick, ok: d.ok, msg: d.ok ? `${botUser.name} ${item.label} -1` : d.error });
+      } catch(e) {
+        results.push({ reward: item.label, nick: voterNick, ok: false, msg: e.message });
+      }
+    }
+  }
+
+  if (!results.length) return;
+
+  // 결과 표시
+  const success = results.filter(r=>r.ok);
+  const fail = results.filter(r=>!r.ok);
+  let msg = `🎫 보상 자동 차감 결과\n`;
+  if (success.length) msg += `\n✅ 성공 (${success.length}건)\n` + success.map(r=>`• ${r.nick} → ${r.reward} -1`).join('\n');
+  if (fail.length) msg += `\n❌ 실패 (${fail.length}건)\n` + fail.map(r=>`• ${r.nick}: ${r.msg}`).join('\n');
+  alert(msg);
+}
 function resetVote() { if(confirm('초기화할까요?')) api('reset_vote'); }
 function voteToRoulette() { api('vote_to_roulette'); }
 
