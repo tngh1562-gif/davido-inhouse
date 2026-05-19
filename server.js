@@ -580,6 +580,23 @@ app.post('/api/save-backup', (req, res) => {
   }
 });
 
+// 봇 config 조회 프록시
+app.get('/api/bot-config', async (req, res) => {
+  if (!DISCORD_BOT_API_URL) return res.json({ ok: false, error: 'BOT API URL 없음' });
+  try {
+    const data = await new Promise((resolve, reject) => {
+      const target = new URL(`${DISCORD_BOT_API_URL}/api/config`);
+      const lib = target.protocol === 'https:' ? require('https') : require('http');
+      lib.get(target, r => {
+        let buf = '';
+        r.on('data', c => buf += c);
+        r.on('end', () => { try { resolve(JSON.parse(buf)); } catch(e) { reject(e); } });
+      }).on('error', reject);
+    });
+    res.json(data);
+  } catch(e) { res.json({ ok: false, error: e.message }); }
+});
+
 // 채널 메시지 전송 프록시
 app.post('/api/send-channel-message', async (req, res) => {
   const { channelId, content, includeRegisterButton } = req.body || {};
