@@ -963,15 +963,21 @@ function consoleSelectCmd(name) {
 }
 
 function consoleClearCmd() {
+  resetConsole();
+  const mainInp = document.getElementById('console-main-input');
+  if (mainInp) { mainInp.value = '/'; mainInp.focus(); consoleOnInput('/'); }
+}
+
+function resetConsole() {
   _consoleSelCmd = null;
   const box = document.getElementById('console-input-box');
-  const wrap = box.querySelector('.console-inline-wrap');
-  if (wrap) wrap.remove();
+  if (box) { const wrap = box.querySelector('.console-inline-wrap'); if (wrap) wrap.remove(); }
   const mainInp = document.getElementById('console-main-input');
-  mainInp.style.display = '';
-  mainInp.value = '/';
-  mainInp.focus();
-  consoleOnInput('/');
+  if (mainInp) { mainInp.style.display = ''; mainInp.value = ''; }
+  const ac = document.getElementById('console-autocomplete');
+  if (ac) ac.style.display = 'none';
+  const oa = document.getElementById('console-options-area');
+  if (oa) oa.style.display = 'none';
 }
 
 function consolePrintMsg(text, type='user') {
@@ -996,11 +1002,7 @@ async function consoleSubmit() {
   const wrap = box.querySelector('.console-inline-wrap');
 
   // 상태 꼬임 방지: 커맨드가 선택됐지만 인라인 UI가 없으면 초기화
-  if (_consoleSelCmd && !wrap) {
-    _consoleSelCmd = null;
-    inp.style.display = '';
-    return;
-  }
+  if (_consoleSelCmd && !wrap) { resetConsole(); return; }
 
   const val = inp.value.trim();
   if (!_consoleSelCmd && !val.startsWith('/')) return;
@@ -1702,7 +1704,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`panel-${tab}`).classList.add('active');
-    if (tab === 'admin') { loadRegisterBtnState(); loadAdminVoiceIds(); }
+    if (tab === 'admin') { loadRegisterBtnState(); loadAdminVoiceIds(); resetConsole(); }
   });
 });
 
