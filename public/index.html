@@ -340,15 +340,71 @@ select.console-opt-inp{cursor:pointer}
           <button class="admin-sub-btn" onclick="setAdminTab('storage')">보관함</button>
           <button class="admin-sub-btn" onclick="setAdminTab('discord')">디스코드</button>
         </div>
-        <div id="admin-panel-inhouse" class="admin-sub-panel" style="flex:1;padding:24px;overflow-y:auto">
-          <div style="display:inline-flex;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:16px 22px">
-            <span style="font-size:14px;font-weight:700;color:var(--txt)">버튼 OFF/ON</span>
-            <button id="register-toggle-btn" onclick="toggleRegisterButton()" style="width:52px;height:28px;border:none;border-radius:999px;background:#444;padding:3px;cursor:pointer;transition:background .2s;flex-shrink:0">
-              <span id="register-toggle-knob" style="display:block;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4);transition:transform .2s"></span>
-            </button>
-            <span id="register-toggle-label" style="font-size:12px;font-weight:700;color:#ff6060">OFF</span>
+        <div id="admin-panel-inhouse" class="admin-sub-panel" style="flex:1;display:grid;grid-template-columns:180px 1fr;overflow:hidden;min-height:0">
+          <!-- 왼쪽: 컨트롤 -->
+          <div style="border-right:1px solid var(--border);padding:16px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:16px">
+            <!-- 버튼 ON/OFF -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:8px;letter-spacing:.5px">내전참가등록 버튼</div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <button id="register-toggle-btn" onclick="toggleRegisterButton()" style="width:44px;height:24px;border:none;border-radius:999px;background:#444;padding:2px;cursor:pointer;transition:background .2s;flex-shrink:0">
+                  <span id="register-toggle-knob" style="display:block;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4);transition:transform .2s"></span>
+                </button>
+                <span id="register-toggle-label" style="font-size:12px;font-weight:700;color:#ff6060">OFF</span>
+              </div>
+            </div>
+            <!-- 내전규칙 채널 ID -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px;letter-spacing:.5px">내전규칙 채널 ID</div>
+              <input id="admin-rules-channel-id" class="inp" placeholder="채널 ID" style="font-size:12px;padding:6px 10px">
+            </div>
+            <!-- 디코 음성방 ID -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px;letter-spacing:.5px">디코 음성방 ID</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <input id="admin-lobby-id" class="inp" placeholder="내전대기방 ID" style="font-size:12px;padding:6px 10px" onblur="saveAdminVoiceIds()">
+                <input id="admin-blue-id" class="inp" placeholder="1팀 음성채널 ID" style="font-size:12px;padding:6px 10px" onblur="saveAdminVoiceIds()">
+                <input id="admin-red-id" class="inp" placeholder="2팀 음성채널 ID" style="font-size:12px;padding:6px 10px" onblur="saveAdminVoiceIds()">
+              </div>
+            </div>
+            <!-- 버튼들 -->
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:auto">
+              <button class="btn" onclick="adminSendMessage()" style="font-size:12px;padding:7px;background:rgba(88,69,220,.2);color:#a89fff;border-color:rgba(88,69,220,.4)">메시지 보내기</button>
+              <button class="btn" onclick="adminMoveVoiceTeams()" style="font-size:12px;padding:7px">음성방 이동</button>
+            </div>
           </div>
-          <p style="margin-top:10px;font-size:12px;color:var(--txt2)">OFF 시 디스코드에서 내전 참가 등록이 비활성화됩니다.</p>
+          <!-- 오른쪽: 편집기 + 미리보기 -->
+          <div style="display:grid;grid-template-rows:1fr 1fr;gap:0;overflow:hidden">
+            <!-- 상단: 내전규칙 수정 -->
+            <div style="display:flex;flex-direction:column;border-bottom:1px solid var(--border);padding:12px;overflow:hidden">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0">
+                <span style="font-size:12px;font-weight:700;color:var(--txt2)">내전규칙 수정</span>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer">
+                    <input type="checkbox" id="admin-include-btn" onchange="updateRulesPreview()" style="accent-color:var(--acc2)"> 참가등록 버튼 포함
+                  </label>
+                  <button class="btn" onclick="updateRulesPreview()" style="font-size:11px;padding:3px 10px">미리보기 갱신</button>
+                </div>
+              </div>
+              <textarea id="admin-rules-content" class="inp" style="flex:1;resize:none;font-size:13px;line-height:1.6;font-family:monospace"
+                placeholder="마크다운 형식으로 내전규칙을 입력하세요.
+예시)
+**📋 내전 참가 방법**
+1. 참가 등록 버튼 클릭
+2. 정보 입력 후 제출
+
+**⚠️ 주의사항**
+- 게임 시작 후 이탈 금지"
+                oninput="updateRulesPreview()"></textarea>
+            </div>
+            <!-- 하단: 미리보기 -->
+            <div style="display:flex;flex-direction:column;padding:12px;overflow:hidden">
+              <span style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:8px;flex-shrink:0">메시지 미리보기</span>
+              <div id="admin-rules-preview" style="flex:1;background:#36393f;border-radius:8px;padding:14px;overflow-y:auto;color:#dcddde;font-size:14px;line-height:1.6">
+                <div style="color:#555;font-size:12px">위에 내용을 입력하면 여기에 Discord 미리보기가 표시됩니다.</div>
+              </div>
+            </div>
+          </div>
         </div>
         <div id="admin-panel-storage" class="admin-sub-panel" style="flex:1;padding:24px;overflow-y:auto;display:none"></div>
         <div id="admin-panel-discord" class="admin-sub-panel" style="flex:1;padding:24px;overflow-y:auto;display:none"></div>
@@ -891,6 +947,102 @@ async function consoleSubmit() {
   }
 }
 
+// ── 관리자 내전관리 ──
+function discordMarkdown(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/__(.+?)__/g,'<u>$1</u>')
+    .replace(/~~(.+?)~~/g,'<del>$1</del>')
+    .replace(/`(.+?)`/g,'<code style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px">$1</code>')
+    .replace(/^### (.+)$/gm,'<h3 style="font-size:15px;font-weight:700;margin:8px 0 4px;color:#fff">$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2 style="font-size:17px;font-weight:700;margin:10px 0 4px;color:#fff">$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1 style="font-size:20px;font-weight:700;margin:12px 0 4px;color:#fff">$1</h1>')
+    .replace(/\n/g,'<br>');
+}
+
+function updateRulesPreview() {
+  const content = document.getElementById('admin-rules-content')?.value || '';
+  const includeBtn = document.getElementById('admin-include-btn')?.checked;
+  const preview = document.getElementById('admin-rules-preview');
+  if (!preview) return;
+  if (!content.trim()) {
+    preview.innerHTML = '<div style="color:#555;font-size:12px">위에 내용을 입력하면 여기에 Discord 미리보기가 표시됩니다.</div>';
+    return;
+  }
+  preview.innerHTML = `
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <div style="width:40px;height:40px;border-radius:50%;background:#5865f2;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px">🤖</div>
+      <div style="flex:1;min-width:0">
+        <div style="margin-bottom:4px">
+          <span style="font-weight:700;color:#fff;font-size:15px">다비도 봇</span>
+          <span style="background:#5865f2;color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;font-weight:700;margin-left:6px">BOT</span>
+        </div>
+        <div>${discordMarkdown(content)}</div>
+        ${includeBtn ? `<div style="margin-top:10px"><button style="background:#5865f2;color:#fff;border:none;border-radius:4px;padding:8px 18px;font-size:14px;font-weight:600;cursor:default">내전 참가 등록</button></div>` : ''}
+      </div>
+    </div>`;
+}
+
+async function adminSendMessage() {
+  const channelId = document.getElementById('admin-rules-channel-id')?.value.trim();
+  const content = document.getElementById('admin-rules-content')?.value.trim();
+  const includeBtn = document.getElementById('admin-include-btn')?.checked;
+  if (!channelId) { alert('채널 ID를 입력하세요.'); return; }
+  if (!content) { alert('내용을 입력하세요.'); return; }
+  if (!confirm('Discord 채널에 메시지를 전송하시겠습니까?')) return;
+  try {
+    const res = await fetch('/api/send-channel-message', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channelId, content, includeRegisterButton: !!includeBtn }),
+    });
+    const data = await res.json();
+    alert(data.ok ? '✅ ' + data.message : '❌ ' + data.error);
+  } catch(e) { alert('전송 실패: ' + e.message); }
+}
+
+async function saveAdminVoiceIds() {
+  const lobby = document.getElementById('admin-lobby-id')?.value.replace(/\D/g,'');
+  const blue = document.getElementById('admin-blue-id')?.value.replace(/\D/g,'');
+  const red = document.getElementById('admin-red-id')?.value.replace(/\D/g,'');
+  if (!lobby && !blue && !red) return;
+  try {
+    await fetch('/api/discord-config', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ voiceLobbyChannelId: lobby, voiceBlueChannelId: blue, voiceRedChannelId: red }),
+    });
+  } catch(e) {}
+}
+
+async function adminMoveVoiceTeams() {
+  const lobby = document.getElementById('admin-lobby-id')?.value.replace(/\D/g,'');
+  const blue = document.getElementById('admin-blue-id')?.value.replace(/\D/g,'');
+  const red = document.getElementById('admin-red-id')?.value.replace(/\D/g,'');
+  if (!lobby||!blue||!red) { alert('음성방 ID를 모두 입력하세요.'); return; }
+  // inhouse iframe의 moveDiscordVoiceTeams 호출
+  const iframe = document.getElementById('inhouse-frame');
+  if (iframe) {
+    iframe.contentWindow.postMessage({ type: 'move_voice_teams_from_admin',
+      lobbyChannelId: lobby, blueChannelId: blue, redChannelId: red }, '*');
+    alert('팀 음성방 이동을 요청했습니다.');
+  } else { alert('내전 진행 탭이 로드된 후 사용 가능합니다.'); }
+}
+
+async function loadAdminVoiceIds() {
+  try {
+    const res = await fetch('/api/discord-config');
+    const cfg = await res.json();
+    const lobby = document.getElementById('admin-lobby-id');
+    const blue = document.getElementById('admin-blue-id');
+    const red = document.getElementById('admin-red-id');
+    if (lobby) lobby.value = cfg.voiceLobbyChannelId || '';
+    if (blue) blue.value = cfg.voiceBlueChannelId || '';
+    if (red) red.value = cfg.voiceRedChannelId || '';
+  } catch(e) {}
+}
+
 let _registerBtnEnabled = false;
 
 async function loadRegisterBtnState() {
@@ -1234,7 +1386,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`panel-${tab}`).classList.add('active');
-    if (tab === 'admin') loadRegisterBtnState();
+    if (tab === 'admin') { loadRegisterBtnState(); loadAdminVoiceIds(); }
   });
 });
 

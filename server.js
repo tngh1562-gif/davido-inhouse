@@ -580,6 +580,20 @@ app.post('/api/save-backup', (req, res) => {
   }
 });
 
+// 채널 메시지 전송 프록시
+app.post('/api/send-channel-message', async (req, res) => {
+  const { channelId, content, includeRegisterButton } = req.body || {};
+  if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET) {
+    return res.json({ ok: false, error: 'BOT API 환경변수가 필요합니다.' });
+  }
+  try {
+    const result = await postJson(`${DISCORD_BOT_API_URL}/api/send-channel-message`, {
+      secret: DISCORD_BOT_API_SECRET, channelId, content, includeRegisterButton: !!includeRegisterButton,
+    });
+    res.json(result);
+  } catch (err) { res.json({ ok: false, error: err.message || '봇 연결 실패' }); }
+});
+
 // 봇 명령어 프록시 (인하우스 사이트 → 보관함봇)
 app.post('/api/proxy-bot-command', async (req, res) => {
   const { command, options } = req.body || {};
