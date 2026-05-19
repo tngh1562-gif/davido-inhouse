@@ -1032,8 +1032,6 @@ async function consoleSubmit() {
   }
 
   consolePrintMsg(`/${cmd.name} ${Object.entries(opts).map(([k,v])=>`${k}:${v}`).join(' ')}`);
-  const box = document.getElementById('console-input-box');
-  const wrap = box.querySelector('.console-inline-wrap');
   if (wrap) wrap.remove();
   inp.style.display = '';
   inp.value = '';
