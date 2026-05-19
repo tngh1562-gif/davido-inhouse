@@ -4,17 +4,17 @@
 ══════════════════════════════════════════ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* light theme */
-  --ink:    #e8ecf0;
-  --s1:     #e2e5ea;
-  --s2:     #d8dce3;
-  --s3:     #cdd2da;
-  --s4:     #c2c9d4;
-  --line:   #a8b4c4;
-  --line2:  #8a9ab0;
-  --txt:    #1a2433;
-  --txt2:   #5a7a9a;
-  --txt3:   #3a5a7a;
+  /* dark theme */
+  --ink:    #0d1117;
+  --s1:     #161b27;
+  --s2:     #1a2030;
+  --s3:     #1e2535;
+  --s4:     #232d40;
+  --line:   #2d3748;
+  --line2:  #3d4f63;
+  --txt:    #c9d1d9;
+  --txt2:   #7898b8;
+  --txt3:   #a0b8d0;
 
   /* accent */
   --a:      #d4900a;
@@ -40,13 +40,13 @@
   --c-ir:  #506070;
 
   --radius:6px;
-  --shadow:0 4px 16px rgba(0,0,0,.1);
+  --shadow:0 4px 16px rgba(0,0,0,.5);
 }
 
 
 html{scroll-behavior:smooth}
 body{
-  background:#d4d8df;
+  background:#0d1117;
   color:var(--txt);
   font-family:'Noto Sans KR',sans-serif;
   min-height:100vh;
@@ -444,7 +444,7 @@ input::placeholder{color:var(--txt2)}
 /* ── 스크린샷 디자인 오버라이드 ── */
 /* 헤더/타이틀 제거 후 여백 최소화 */
 header { display: none !important; }
-body { background: #f0f4f8; }
+body { background: #0d1117; }
 
 /* nav pill 스타일 */
 .nav {
@@ -559,70 +559,69 @@ body { background: #f0f4f8; }
    기존 기능/정보는 유지하고 시각 스타일만 덮어쓴다.
 ══════════════════════════════════════════ */
 :root{
-  --ink:#cdd2da;
-  --s1:#d0d4db;
-  --s2:#c4c9d2;
-  --s3:#b8bec8;
-  --s4:#acb4be;
-  --line:#8a96a6;
-  --line2:#6e7d90;
-  --txt:#171a20;
-  --txt2:#59616d;
-  --txt3:#343b46;
-  --a:#b8842d;
-  --a2:#d2a14a;
-  --ad:#efe4cf;
-  --bl:#2f6dbd;
-  --bl2:#245a9d;
-  --rl:#bd4a4a;
-  --rl2:#9f3838;
+  --ink:#0d1117;
+  --s1:#161b27;
+  --s2:#1a2030;
+  --s3:#1e2535;
+  --s4:#232d40;
+  --line:#2d3748;
+  --line2:#3d4f63;
+  --txt:#c9d1d9;
+  --txt2:#7898b8;
+  --txt3:#a0b8d0;
+  --a:#d4900a;
+  --a2:#f0b030;
+  --ad:#7a4d08;
+  --bl:#1a6ef0;
+  --bl2:#5aa5f5;
+  --rl:#e03020;
+  --rl2:#f06060;
   --radius:10px;
-  --shadow:0 12px 30px rgba(35,55,85,.10);
+  --shadow:0 12px 30px rgba(0,0,0,.5);
 }
 body{
-  background:
-    linear-gradient(180deg,#dfe3e8 0%,#d4d9df 45%,#cbd1d8 100%);
+  background:#0d1117;
   color:var(--txt);
 }
 .page,.wrap{max-width:1480px !important;padding:14px 18px 70px !important}
 .nav{
   position:sticky;top:0;z-index:300;
   gap:8px;margin:0 0 14px !important;padding:10px;
-  background:rgba(238,240,243,.88);
-  border:1px solid rgba(160,168,178,.7);
+  background:rgba(18,22,34,.90);
+  border:1px solid rgba(45,55,72,.7);
   border-radius:14px;
-  box-shadow:0 10px 28px rgba(36,54,82,.10);
+  box-shadow:0 10px 28px rgba(0,0,0,.4);
   backdrop-filter:blur(14px);
 }
 .nav-btn{
   position:relative;border:0 !important;border-radius:10px !important;
   padding:9px 15px !important;background:transparent !important;
-  color:#5b6d83 !important;font-size:.82rem !important;font-weight:800 !important;
+  color:#7898b8 !important;font-size:.82rem !important;font-weight:800 !important;
 }
-.nav-btn:hover{background:#e1e5ea !important;color:#171a20 !important}
+.nav-btn:hover{background:#252d40 !important;color:#c9d1d9 !important}
 .nav-btn.on{
-  color:#111827 !important;background:#f8f9fb !important;
-  box-shadow:inset 0 0 0 1px rgba(30,75,130,.12),0 6px 18px rgba(31,61,95,.10);
+  color:#c9d1d9 !important;background:#232d40 !important;
+  box-shadow:inset 0 0 0 1px rgba(90,165,245,.15),0 6px 18px rgba(0,0,0,.25);
 }
 .nav-btn.on::before{
   content:"";position:absolute;left:10px;right:10px;bottom:5px;height:2px;
   border-radius:99px;background:linear-gradient(90deg,var(--bl),var(--a));
 }
 .card{
-  border:1px solid rgba(120,140,165,.8) !important;
-  border-radius:12px !important;background:rgba(200,205,212,.96) !important;
+  border:1px solid rgba(45,55,72,.72) !important;
+  border-radius:12px !important;background:rgba(22,27,39,.97) !important;
   box-shadow:var(--shadow) !important;
 }
 .card-title{
-  color:#142033 !important;font-weight:900 !important;font-size:.9rem !important;
+  color:#c9d1d9 !important;font-weight:900 !important;font-size:.9rem !important;
   letter-spacing:0 !important;
 }
 input[type=text],input[type=number],select,textarea,#quickSearch{
-  border-radius:8px !important;border-color:#d4dfeb !important;
-  background:#c0c5ce !important;color:#111827 !important;
+  border-radius:8px !important;border-color:#2d3748 !important;
+  background:#1a2030 !important;color:#c9d1d9 !important;
 }
 input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#quickSearch:focus{
-  border-color:#8b96a3 !important;box-shadow:0 0 0 3px rgba(100,116,139,.16) !important;
+  border-color:#d4900a !important;box-shadow:0 0 0 3px rgba(212,144,10,.15) !important;
 }
 .btn{
   border-radius:9px !important;font-weight:900 !important;
@@ -630,49 +629,49 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 }
 .btn-g{
   background:linear-gradient(135deg,#d58a10,#f0bd45) !important;
-  color:#172033 !important;border:1px solid rgba(184,122,20,.25) !important;
+  color:#fff !important;border:1px solid rgba(184,122,20,.25) !important;
 }
 .btn-o{
-  background:#f4f5f7 !important;color:#333b46 !important;border:1px solid #c8ced6 !important;
+  background:#1e2535 !important;color:#7898b8 !important;border:1px solid #2d3748 !important;
 }
-.btn-o:hover{background:#e7ebef !important;border-color:#aeb6c0 !important}
-.btn-bl{background:#e2e8f0 !important;color:var(--bl2) !important;border:1px solid #aebbd0 !important}
-.btn-rl{background:#ece1e1 !important;color:var(--rl2) !important;border:1px solid #d0b0b0 !important}
+.btn-o:hover{background:#252d40 !important;border-color:#3d4f63 !important}
+.btn-bl{background:rgba(41,121,255,.15) !important;color:var(--bl2) !important;border:1px solid rgba(41,121,255,.3) !important}
+.btn-rl{background:rgba(224,48,32,.15) !important;color:var(--rl2) !important;border:1px solid rgba(224,48,32,.3) !important}
 .team-box{
-  border-radius:14px !important;overflow:hidden;background:#e2e5ea !important;
-  box-shadow:0 12px 28px rgba(40,58,84,.10) !important;
+  border-radius:14px !important;overflow:hidden;background:#161b27 !important;
+  box-shadow:0 12px 28px rgba(0,0,0,.4) !important;
 }
-.bl-box{border:2px solid rgba(34,104,232,.5) !important}
-.rl-box{border:2px solid rgba(225,63,67,.45) !important}
+.bl-box{border:1px solid rgba(26,110,240,.3) !important}
+.rl-box{border:1px solid rgba(224,48,32,.3) !important}
 .team-hdr{
-  background:linear-gradient(180deg,#c4c9d2,#b8bec8) !important;
-  border-bottom:1px solid #8a96a6 !important;
+  background:linear-gradient(180deg,#1e2535,#161b27) !important;
+  border-bottom:1px solid #2d3748 !important;
 }
 .team-name-lbl{font-weight:950 !important;letter-spacing:.2px}
 .t-player,.p-row,.hist-item,.vdb-table td,.drop-z,.wait-pool > *{
   border-color:#dce5ef !important;
 }
 .p-row{
-  background:#bcc2cc !important;border-radius:9px !important;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);
+  background:#1e2535 !important;border-radius:9px !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
 }
-.p-row:hover,.vdb-table tr:hover td{background:#b0b8c4 !important}
-.bal-track{height:6px !important;background:#cfd5dc !important}
+.p-row:hover,.vdb-table tr:hover td{background:#252d40 !important}
+.bal-track{height:6px !important;background:#2d3748 !important}
 .bal-fill{background:linear-gradient(90deg,var(--bl),#765fc8,var(--rl)) !important}
 #toast{
   border-radius:12px !important;background:#101828 !important;color:#fff !important;
   box-shadow:0 18px 44px rgba(16,24,40,.22) !important;
 }
 .overlay-dashboard{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:14px}
-.overlay-setting{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid #c8ced6;border-radius:12px;background:#c0c5ce;margin-bottom:10px}
-.overlay-setting b{display:block;font-size:.9rem;color:#142033}
+.overlay-setting{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid #2d3748;border-radius:12px;background:#1a2030;margin-bottom:10px}
+.overlay-setting b{display:block;font-size:.9rem;color:#c9d1d9}
 .overlay-setting span{display:block;margin-top:4px;font-size:.75rem;color:var(--txt2);line-height:1.45}
-.overlay-switch{width:54px;height:30px;border:0;border-radius:999px;background:#cbd5e1;padding:4px;cursor:pointer}
-.overlay-switch i{display:block;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:.18s}
+.overlay-switch{width:54px;height:30px;border:0;border-radius:999px;background:#3d4f63;padding:4px;cursor:pointer}
+.overlay-switch i{display:block;width:22px;height:22px;border-radius:50%;background:#c9d1d9;box-shadow:0 2px 6px rgba(0,0,0,.4);transition:.18s}
 .overlay-switch.on{background:#22c55e}
 .overlay-switch.on i{transform:translateX(24px)}
 .overlay-url{display:flex;gap:8px}.overlay-url input{flex:1}
-.overlay-preview{min-height:430px;border:1px dashed #9aa3af;border-radius:14px;background:linear-gradient(135deg,#d8dde3,#ece3d1);display:grid;place-items:center;padding:22px}
+.overlay-preview{min-height:430px;border:1px dashed #3d4f63;border-radius:14px;background:linear-gradient(135deg,#1a2030,#1e1c14);display:grid;place-items:center;padding:22px}
 .overlay-frame{width:100%;max-width:760px;height:360px;border:0;border-radius:12px;background:#101828;box-shadow:0 18px 50px rgba(16,24,40,.28)}
 .overlay-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
 .overlay-mini .card{margin:0 !important;padding:12px !important;box-shadow:none !important}
@@ -680,19 +679,19 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 .shop-search{position:relative}
 .shop-result{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:var(--s2);max-height:440px;overflow:auto}
 .shop-user{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer;transition:.12s}
-.shop-user:hover,.shop-user.on{background:#e1e6eb}
+.shop-user:hover,.shop-user.on{background:#252d40}
 .shop-user b{font-size:.86rem;color:var(--txt)}
 .shop-user span{font-size:.72rem;color:var(--txt2)}
 .shop-points{font-size:1.9rem;font-weight:950;color:var(--a);line-height:1}
 .shop-products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.shop-product{border:1px solid #c8ced6;border-radius:14px;background:#c0c5ce;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:190px}
-.shop-product h3{margin:0;font-size:1rem;color:#121826}
+.shop-product{border:1px solid #2d3748;border-radius:14px;background:#1a2030;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:190px}
+.shop-product h3{margin:0;font-size:1rem;color:#c9d1d9}
 .shop-product p{margin:0;color:var(--txt2);font-size:.76rem;line-height:1.5;flex:1}
 .shop-price{font-size:1.35rem;font-weight:950;color:var(--a)}
 .shop-buy{width:100%;justify-content:center}
 .shop-buy:disabled{opacity:.45;cursor:not-allowed}
 .shop-log{display:flex;flex-direction:column;gap:7px;max-height:260px;overflow:auto}
-.shop-log-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#bcc2cc;font-size:.78rem}
+.shop-log-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#1a2030;font-size:.78rem}
 @media(max-width:980px){.shop-layout{grid-template-columns:1fr}.shop-products{grid-template-columns:1fr 1fr}}
 @media(max-width:980px){.overlay-dashboard{grid-template-columns:1fr}.nav{position:relative}.page,.wrap{padding:10px !important}}
 </style>
@@ -1174,7 +1173,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
     <div class="card">
       <div class="card-title">버튼 메시지 미리보기</div>
       <textarea id="discordMessageContent" rows="8" placeholder="# 내전 규칙&#10;원하는 글을 디스코드 마크다운 그대로 입력하세요." style="width:100%;resize:vertical"></textarea>
-      <div style="margin-top:12px;border:1px solid var(--line);border-radius:12px;background:#c0c5ce;padding:14px">
+      <div style="margin-top:12px;border:1px solid var(--line);border-radius:12px;background:#1a2030;padding:14px">
         <div id="discordPreviewDesc" style="white-space:pre-line;color:var(--txt2);font-size:.82rem;line-height:1.55;margin-bottom:12px"></div>
         <button id="discordPreviewButton" class="btn btn-bl" style="pointer-events:none">내전 참가 등록</button>
         <button class="btn btn-g" style="pointer-events:none;margin-left:6px">디코 연동</button>
@@ -1865,7 +1864,7 @@ async function renderDiscordTab(){
           <button class="btn btn-o" style="padding:6px 10px;font-size:.72rem;color:var(--rl2)" onclick="removeDiscordChannelOverride('${esc(id)}')">삭제</button>
         </div>
       </div>
-    `).join(''):'<div style="font-size:.78rem;color:var(--txt2);padding:10px;border:1px solid var(--line);border-radius:10px;background:#c0c5ce">채널별 설정 없음 · 전체 ON/OFF 설정을 따릅니다.</div>';
+    `).join(''):'<div style="font-size:.78rem;color:var(--txt2);padding:10px;border:1px solid var(--line);border-radius:10px;background:#1a2030">채널별 설정 없음 · 전체 ON/OFF 설정을 따릅니다.</div>';
   }
   [label,style,desc].forEach(el=>{ if(el && !el.dataset.discordBound){ el.dataset.discordBound='1'; el.addEventListener('input',syncDiscordPreview); el.addEventListener('change',syncDiscordPreview); }});
   const state=document.getElementById('discordConfigState');
@@ -3359,11 +3358,11 @@ function memberHTML(p, pos, side){
       ondragover="swapDragOver(event)"
       ondragleave="swapDragLeave(event)"
       ondrop="swapDrop(event)"
-      style="cursor:grab;padding:10px 12px;border-bottom:1px solid #e8edf4;display:flex;align-items:center;gap:10px;background:#fff;transition:background .12s"
-      onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background='#fff'">
+      style="cursor:grab;padding:10px 12px;border-bottom:1px solid #2d3748;display:flex;align-items:center;gap:10px;background:#1a2030;transition:background .12s"
+      onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#1a2030'">
       <div style="flex-shrink:0">${pip(pos)}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:.88rem;font-weight:700;color:#1a2433;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name||'?')}</div>
+        <div style="font-size:.88rem;font-weight:700;color:#c9d1d9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name||'?')}</div>
         ${chzzk?`<div style="font-size:.68rem;color:#22c55e;margin-top:1px">▶ ${esc(chzzk)}</div>`:''}
         ${filled.length?`<div style="font-size:.65rem;color:#8aa8c4;margin-top:1px">${filled.join(' · ')}</div>`:''}
       </div>
@@ -3396,9 +3395,9 @@ function teamBox(team,cls,label,pts,avg){
   return `<div class="team-box ${cls}" style="min-height:220px;border-radius:12px;overflow:hidden;border:1px solid ${isBlue?'rgba(26,110,240,.2)':'rgba(224,48,32,.2)'}">
     <div style="padding:12px 16px;background:${teamBg};border-bottom:1px solid ${isBlue?'rgba(26,110,240,.1)':'rgba(224,48,32,.1)'};display:flex;align-items:center;justify-content:space-between">
       <div style="font-weight:700;font-size:.95rem;color:${teamColor}">${label}</div>
-      <div style="font-size:.72rem;color:#8aa8c4">유효 <b style="color:#3a5a7a">${pts}</b>pts · 평균 <b style="color:#3a5a7a">${avgLabel(avg)}</b></div>
+      <div style="font-size:.72rem;color:#7898b8">유효 <b style="color:#a0b8d0">${pts}</b>pts · 평균 <b style="color:#a0b8d0">${avgLabel(avg)}</b></div>
     </div>
-    <div style="background:#fff">${rows}</div></div>`;
+    <div style="background:#161b27">${rows}</div></div>`;
 }
 
 function renderRecords(){
@@ -3977,7 +3976,7 @@ function makeRosterRow(p, i){
       oninput="updP(${p.id},'name',this.value)"
       onfocus="if(!this.value.trim()){this.blur();quickPickFromDB(${p.id})}"
       style="min-width:0;width:90px;font-size:.8rem;cursor:${isEmpty?'pointer':'text'}">
-    <select style="flex-shrink:0;width:100px;background:#ffffff;border:1px solid #dde3ec;color:#1a2433;border-radius:6px;padding:4px 6px;font-size:.7rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;outline:none"
+    <select style="flex-shrink:0;width:100px;background:#1a2030;border:1px solid #2d3748;color:#c9d1d9;border-radius:6px;padding:4px 6px;font-size:.7rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;outline:none"
       onchange="updP(${p.id},'tier',this.value)">${buildTierOptions(p.tier)}</select>
     <div style="display:flex;gap:2px;flex-shrink:0">${posHTML}</div>
     <button style="flex-shrink:0;background:none;border:none;color:var(--txt2);cursor:pointer;font-size:.85rem;padding:2px 5px;border-radius:2px;transition:color .15s;margin-left:auto"

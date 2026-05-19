@@ -142,9 +142,9 @@ export default function Home() {
     const items = activeRouletteItems
     if (!items.length) {
       ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2)
-      ctx.fillStyle='#f0f4f8'; ctx.fill()
-      ctx.strokeStyle='#dde3ec'; ctx.lineWidth=2; ctx.stroke()
-      ctx.fillStyle='#8aa8c4'; ctx.font='14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'
+      ctx.fillStyle='#1a1f2c'; ctx.fill()
+      ctx.strokeStyle='#2d3748'; ctx.lineWidth=2; ctx.stroke()
+      ctx.fillStyle='#6b8aaa'; ctx.font='14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'
       ctx.fillText('항목을 추가하세요', cx, cy); return
     }
     const total = items.reduce((s,i)=>s+(i.weight||1),0)
@@ -243,17 +243,17 @@ export default function Home() {
   }
   function removeExcluded(label:string) { setExcludedWinners(p=>p.filter(w=>w!==label)) }
 
-  // ── 라이트 테마 스타일 ──
-  const bg   = '#f5f7fa'
-  const card = '#ffffff'
-  const bdr  = '#e2e8f0'
-  const txt  = '#1a2433'
+  // ── 다크 테마 스타일 ──
+  const bg   = '#0d1117'
+  const card = '#161b27'
+  const bdr  = '#21283a'
+  const txt  = '#c9d1d9'
   const txt2 = '#6b8aaa'
   const acc  = '#d4900a'
 
   const S = {
     inp: (w='100%', extra:React.CSSProperties={}): React.CSSProperties => ({
-      background:'#fff', border:`1px solid ${bdr}`, color:txt,
+      background:card, border:`1px solid ${bdr}`, color:txt,
       borderRadius:'7px', padding:'8px 12px', fontSize:'13px',
       fontFamily:'inherit', outline:'none', width:w,
       boxSizing:'border-box' as const, transition:'border-color .15s', ...extra,
@@ -266,7 +266,7 @@ export default function Home() {
     btn: (bg2=acc, fg='#fff', ghost=false): React.CSSProperties => ({
       padding:'8px 18px', borderRadius:'7px',
       border: ghost ? `1px solid ${bdr}` : 'none',
-      background: ghost ? '#fff' : bg2,
+      background: ghost ? card : bg2,
       color: ghost ? txt2 : fg,
       cursor:'pointer', fontSize:'13px', fontWeight:600,
       fontFamily:'inherit', whiteSpace:'nowrap' as const, transition:'opacity .15s',
@@ -362,7 +362,7 @@ export default function Home() {
           </>}
           <div style={{marginLeft:'auto',display:'flex',gap:'4px',alignItems:'center'}}>
             {['1','2','3','4','5'].map(n=>(
-              <code key={n} style={{background:'#f0f4f8',padding:'2px 8px',borderRadius:'5px',color:acc,fontSize:'11px',border:`1px solid ${bdr}`,fontWeight:700}}>!투표{n}</code>
+              <code key={n} style={{background:'#1e2533',padding:'2px 8px',borderRadius:'5px',color:acc,fontSize:'11px',border:`1px solid ${bdr}`,fontWeight:700}}>!투표{n}</code>
             ))}
           </div>
         </div>
@@ -467,7 +467,7 @@ export default function Home() {
                         ■ 투표 종료
                       </button>
                   }
-                  <button style={S.btn('#fff','#e03020',true)} onClick={()=>api('reset_vote')}>초기화</button>
+                  <button style={S.btn(card,'#e03020',true)} onClick={()=>api('reset_vote')}>초기화</button>
                 </div>
                 {!vote.active&&vote.items.length>0&&(
                   <button style={{...S.btn('#7b2fbe'),marginTop:'10px',width:'100%',padding:'8px 0'}}
@@ -551,7 +551,7 @@ export default function Home() {
                 return (
                   <div key={i} style={{
                     marginBottom:'12px',
-                    background: isExpanded ? `${item.color}08` : '#f8fafc',
+                    background: isExpanded ? `${item.color}10` : card,
                     border:`2px solid ${isExpanded?item.color+'66':bdr}`,
                     borderRadius:'14px',overflow:'hidden',transition:'all .2s',
                   }}>
@@ -586,7 +586,7 @@ export default function Home() {
                       </div>
 
                       {/* 진행 바 */}
-                      <div style={{height:'14px',background:'#e2e8f0',borderRadius:'7px',overflow:'hidden'}}>
+                      <div style={{height:'14px',background:bdr,borderRadius:'7px',overflow:'hidden'}}>
                         <div style={{
                           height:'100%',width:`${pct}%`,
                           background:`linear-gradient(90deg, ${item.color}cc, ${item.color})`,
@@ -646,7 +646,7 @@ export default function Home() {
               display:'flex',alignItems:'center',justifyContent:'center',
             }} onClick={()=>{if(!drawingIdx)setDrawWinner(null)}}>
               <div style={{
-                background:'#fff',borderRadius:'20px',padding:'40px 52px',
+                background:card,borderRadius:'20px',padding:'40px 52px',
                 textAlign:'center',minWidth:'380px',
                 boxShadow:'0 24px 80px rgba(0,0,0,.25)',
                 border:`2px solid ${drawWinner?vote.items[drawWinner.idx]?.color||acc:acc}`,
@@ -660,7 +660,7 @@ export default function Home() {
 
                 {/* 슬롯 디스플레이 */}
                 <div style={{
-                  background:'#f5f7fa',border:`2px solid ${bdr}`,
+                  background:'#1a1f2c',border:`2px solid ${bdr}`,
                   borderRadius:'14px',padding:'28px 20px',
                   margin:'16px 0 24px',minHeight:'100px',
                   display:'flex',alignItems:'center',justifyContent:'center',
@@ -668,9 +668,9 @@ export default function Home() {
                 }}>
                   {/* 상하 그라데이션 마스크 */}
                   <div style={{position:'absolute',top:0,left:0,right:0,height:'30px',
-                    background:'linear-gradient(to bottom,#f5f7fa,transparent)',zIndex:1,pointerEvents:'none'}}/>
+                    background:'linear-gradient(to bottom,#1a1f2c,transparent)',zIndex:1,pointerEvents:'none'}}/>
                   <div style={{position:'absolute',bottom:0,left:0,right:0,height:'30px',
-                    background:'linear-gradient(to top,#f5f7fa,transparent)',zIndex:1,pointerEvents:'none'}}/>
+                    background:'linear-gradient(to top,#1a1f2c,transparent)',zIndex:1,pointerEvents:'none'}}/>
 
                   {drawingIdx!==null ? (
                     // 슬롯 돌아가는 중
@@ -744,7 +744,7 @@ export default function Home() {
                   </label>
                 </div>
                 {excludedWinners.length>0&&(
-                  <div style={{marginTop:'12px',padding:'10px 14px',background:'#f8fafc',borderRadius:'8px',border:`1px solid ${bdr}`,textAlign:'left'}}>
+                  <div style={{marginTop:'12px',padding:'10px 14px',background:card,borderRadius:'8px',border:`1px solid ${bdr}`,textAlign:'left'}}>
                     <div style={{fontSize:'10px',color:txt2,marginBottom:'7px',letterSpacing:'.6px',textTransform:'uppercase'}}>제외됨 ({excludedWinners.length}명)</div>
                     <div style={{display:'flex',flexWrap:'wrap',gap:'5px'}}>
                       {excludedWinners.map((w,i)=>(
@@ -760,7 +760,7 @@ export default function Home() {
                       ))}
                     </div>
                     <button onClick={()=>setExcludedWinners([])}
-                      style={{...S.btn('#fff',txt2,true),marginTop:'10px',width:'100%',padding:'6px 0',fontSize:'12px'}}>
+                      style={{...S.btn(card,txt2,true),marginTop:'10px',width:'100%',padding:'6px 0',fontSize:'12px'}}>
                       전체 해제
                     </button>
                   </div>
@@ -794,7 +794,7 @@ export default function Home() {
                           <div key={i} style={{
                             display:'flex',alignItems:'center',gap:'8px',
                             padding:'9px 10px',borderRadius:'7px',marginBottom:'4px',
-                            background:excluded?'rgba(224,48,32,.04)':'#f8fafc',
+                            background:excluded?'rgba(224,48,32,.10)':card,
                             border:`1px solid ${excluded?'rgba(224,48,32,.15)':bdr}`,
                             opacity:excluded?0.6:1,transition:'all .15s',
                           }}>
@@ -815,8 +815,8 @@ export default function Home() {
                     const data=await r.json()
                     if(data.roulette?.items) setRouletteItems(data.roulette.items)
                   }}>← 투표 결과 갱신</button>
-                  <button style={S.btn('#fff',txt2,true)} onClick={()=>{setRouletteItems([]);api('set_roulette',{items:[]})}}>전체 삭제</button>
-                  <button style={{...S.btn('#fff',txt2,true),marginLeft:'auto'}} onClick={()=>setShowRoulette(false)}>닫기</button>
+                  <button style={S.btn(card,txt2,true)} onClick={()=>{setRouletteItems([]);api('set_roulette',{items:[]})}}>전체 삭제</button>
+                  <button style={{...S.btn(card,txt2,true),marginLeft:'auto'}} onClick={()=>setShowRoulette(false)}>닫기</button>
                 </div>
               </div>
             </div>
@@ -893,7 +893,7 @@ export default function Home() {
                     <div style={{textAlign:'center',padding:'60px',color:'#b0c0d0'}}>
                       <div style={{fontSize:'48px',marginBottom:'12px',opacity:.3}}>🎵</div>
                       <div style={{fontSize:'15px',marginBottom:'6px'}}>노래를 검색하거나</div>
-                      <div style={{fontSize:'13px',opacity:.7}}>채팅에서 <code style={{background:'#f0f4f8',padding:'2px 8px',borderRadius:'5px',color:acc,fontWeight:700}}>!신청곡 노래제목</code> 으로 추가하세요</div>
+                      <div style={{fontSize:'13px',opacity:.7}}>채팅에서 <code style={{background:'#1e2533',padding:'2px 8px',borderRadius:'5px',color:acc,fontWeight:700}}>!신청곡 노래제목</code> 으로 추가하세요</div>
                     </div>
                   )}
                   {!searching&&searchResults.length>0&&(
@@ -947,7 +947,7 @@ export default function Home() {
                                 style={{
                                   padding:'7px 16px',borderRadius:'8px',
                                   border: inQueue?`1px solid ${bdr}`:`1px solid ${acc}`,
-                                  background: inQueue?'#f8fafc':`${acc}15`,
+                                  background: inQueue?card:`${acc}15`,
                                   color: inQueue?txt2:acc,
                                   fontSize:'12px',fontWeight:700,cursor:inQueue?'default':'pointer',
                                   fontFamily:'inherit',whiteSpace:'nowrap' as const,
@@ -971,7 +971,7 @@ export default function Home() {
                       신청곡 대기열 <span style={{fontSize:'13px',fontWeight:400,color:txt2}}>({music.queue.length}곡)</span>
                     </div>
                     {music.queue.length>0&&(
-                      <button style={{...S.btn('#fff','#e03020',true),padding:'7px 14px',fontSize:'12px'}}
+                      <button style={{...S.btn(card,'#e03020',true),padding:'7px 14px',fontSize:'12px'}}
                         onClick={()=>{if(confirm('전체 삭제할까요?'))api('music_clear')}}>전체 삭제</button>
                     )}
                   </div>
@@ -1047,8 +1047,8 @@ export default function Home() {
         body, button, input, textarea, select { font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #dde3ec; border-radius: 2px; }
-        input:focus, textarea:focus { border-color: #a0b8d0 !important; box-shadow: 0 0 0 3px rgba(212,144,10,.1); }
+        ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 2px; }
+        input:focus, textarea:focus { border-color: #d4900a !important; box-shadow: 0 0 0 3px rgba(212,144,10,.15); }
         @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
       `}</style>
