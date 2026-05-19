@@ -580,6 +580,24 @@ app.post('/api/save-backup', (req, res) => {
   }
 });
 
+// 봇 명령어 프록시 (인하우스 사이트 → 보관함봇)
+app.post('/api/proxy-bot-command', async (req, res) => {
+  const { command, options } = req.body || {};
+  if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET) {
+    return res.json({ ok: false, error: 'DISCORD_BOT_API_URL / DISCORD_BOT_API_SECRET 환경변수가 필요합니다.' });
+  }
+  try {
+    const result = await postJson(`${DISCORD_BOT_API_URL}/api/bot-command`, {
+      secret: DISCORD_BOT_API_SECRET,
+      command: command || '',
+      options: options || {},
+    });
+    res.json(result);
+  } catch (err) {
+    res.json({ ok: false, error: err.message || '봇 연결 실패' });
+  }
+});
+
 // 백업 목록 조회
 app.get('/api/backups', (req, res) => {
   try {
