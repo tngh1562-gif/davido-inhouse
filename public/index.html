@@ -294,50 +294,6 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 
     <!-- 관리자 탭 -->
     <div class="panel" id="panel-admin">
-      <!-- 플레이어 바 -->
-      <div class="music-player" id="music-player-bar">
-        <img class="music-thumb" id="music-thumb" src="" alt="" style="display:none">
-        <div class="music-info" id="music-info-area">
-          <div style="color:var(--txt2);font-size:13px">재생 중인 곡이 없습니다</div>
-        </div>
-        <div class="music-controls">
-          <button class="music-ctrl-btn" onclick="api('music_prev')">⏮</button>
-          <button class="music-ctrl-btn" onclick="api('music_next')">⏭</button>
-        </div>
-      </div>
-      <div class="music-body">
-        <!-- 유튜브 플레이어 -->
-        <div class="music-left">
-          <div class="music-ytb" id="music-ytb-wrap">
-            <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--txt2);font-size:14px">신청곡을 추가하면 여기서 재생됩니다</div>
-          </div>
-        </div>
-        <!-- 사이드 -->
-        <div class="music-right">
-          <div class="music-subtabs">
-            <button class="music-subtab active" data-subtab="search" onclick="setMusicSubtab('search')">🔍 검색</button>
-            <button class="music-subtab" data-subtab="queue" onclick="setMusicSubtab('queue')">📋 대기열</button>
-          </div>
-          <!-- 검색 -->
-          <div id="music-search-panel">
-            <div class="music-search-wrap">
-              <input class="music-search-input" id="music-search-input" placeholder="곡 제목 검색..." onkeydown="if(event.key==='Enter')searchMusic()">
-              <button class="btn" onclick="searchMusic()">검색</button>
-            </div>
-            <div class="music-results" id="music-search-results">
-              <div class="music-empty">검색어를 입력하세요<br><small style="color:var(--txt2);font-size:11px">채팅에서 !신청곡 제목 으로도 추가 가능</small></div>
-            </div>
-          </div>
-          <!-- 대기열 -->
-          <div id="music-queue-panel" style="display:none;flex:1;overflow:hidden;display:none;flex-direction:column">
-            <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-              <span style="font-size:12px;color:var(--txt2)">대기열 <span id="queue-count">0</span>곡</span>
-              <button class="btn danger" onclick="api('music_clear')" style="font-size:11px;padding:4px 10px">전체삭제</button>
-            </div>
-            <div class="music-results" id="music-queue-list"></div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
