@@ -986,6 +986,7 @@ async function consoleSubmit() {
 // ── 관리자 보관함 ──
 let _storageUsers = [];
 let _storageSelectedUser = null;
+let _storageOriginalCounts = {}; // 선택 시점의 원본 값
 
 async function loadStorageData() {
   try {
@@ -1021,6 +1022,8 @@ function filterStorageList(q) {
 function selectStorageUser(name) {
   _storageSelectedUser = _storageUsers.find(u=>u.name===name);
   if (!_storageSelectedUser) return;
+  // 원본 counts 저장 (깊은 복사)
+  _storageOriginalCounts = JSON.parse(JSON.stringify(_storageSelectedUser.counts || {}));
   renderStorageList(_storageUsers.filter(u => {
     const q = document.getElementById('storage-search')?.value || '';
     return !q || u.name.toLowerCase().includes(q.toLowerCase());
@@ -1051,32 +1054,56 @@ function renderStorageContent() {
     </div>`;
 }
 
-async function storageAdjust(nickname, rewardName, delta) {
-  const cmd = delta > 0 ? '추가' : '차감';
-  try {
-    const res = await fetch('/api/proxy-bot-command', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ command: cmd, options: { 닉네임: nickname, 보상이름: rewardName, 개수: Math.abs(delta) }}),
-    });
-    const data = await res.json();
-    if (data.ok) {
-      const u = _storageUsers.find(u=>u.name===nickname);
-      if (u) { if (!u.counts) u.counts={}; u.counts[rewardName] = (u.counts[rewardName]||0) + delta; if(u.counts[rewardName]<0)u.counts[rewardName]=0; }
-      renderStorageContent();
-    } else { alert('❌ ' + data.error); }
-  } catch(e) { alert('오류: ' + e.message); }
+function storageAdjust(nickname, rewardName, delta) {
+  // 로컬에서만 수정 (API 호출 없음)
+  const u = _storageUsers.find(u => u.name === nickname);
+  if (!u) return;
+  if (!u.counts) u.counts = {};
+  u.counts[rewardName] = Math.max(0, (u.counts[rewardName] || 0) + delta);
+  renderStorageContent();
 }
 
 async function storageUpdate() {
   if (!_storageSelectedUser) { alert('시청자를 선택하세요.'); return; }
-  try {
-    const res = await fetch('/api/proxy-bot-command', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ command: '전체업데이트', options: {} }),
-    });
-    const data = await res.json();
-    alert(data.ok ? '✅ 업데이트 완료' : '❌ ' + data.error);
-  } catch(e) { alert('오류: ' + e.message); }
+  const u = _storageSelectedUser;
+  const cur = u.counts || {};
+  const orig = _storageOriginalCounts;
+
+  // 변경된 항목만 추출
+  const changes = [];
+  const allKeys = new Set([...Object.keys(cur), ...Object.keys(orig)]);
+  for (const key of allKeys) {
+    const delta = (cur[key] || 0) - (orig[key] || 0);
+    if (delta !== 0) changes.push({ reward: key, delta });
+  }
+
+  if (!changes.length) { alert('변경된 내용이 없습니다.'); return; }
+
+  let hasError = false;
+  for (const { reward, delta } of changes) {
+    const cmd = delta > 0 ? '추가' : '차감';
+    const 개수 = Math.abs(delta);
+    try {
+      const res = await fetch('/api/proxy-bot-command', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd, options: { 닉네임: u.name, 보상이름: reward, 개수 } }),
+      });
+      const data = await res.json();
+      if (!data.ok) { alert('❌ ' + reward + ': ' + data.error); hasError = true; }
+    } catch(e) { alert('오류: ' + e.message); hasError = true; }
+  }
+
+  if (!hasError) {
+    // 성공 시 원본 갱신 + Discord 임베드 업데이트
+    _storageOriginalCounts = JSON.parse(JSON.stringify(cur));
+    try {
+      await fetch('/api/proxy-bot-command', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: '전체업데이트', options: {} }),
+      });
+    } catch(e) {}
+    alert('✅ 업데이트 완료');
+  }
 }
 
 // ── 관리자 내전관리 ──
