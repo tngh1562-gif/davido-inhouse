@@ -450,10 +450,16 @@ select.console-inline-inp{cursor:pointer}
           </div>
           <div class="console-input-area">
             <div class="console-autocomplete" id="console-autocomplete"></div>
-            <div class="console-options-area" id="console-options-area"></div>
-            <div class="console-input-box">
+            <!-- 일반 모드 -->
+            <div id="console-input-normal" class="console-input-box">
               <input class="console-main-input" id="console-main-input" placeholder="/ 명령어 입력..." autocomplete="off"
                 oninput="consoleOnInput(this.value)" onkeydown="consoleOnKeydown(event)">
+              <button class="console-send-btn" onclick="consoleSubmit()">전송</button>
+            </div>
+            <!-- 커맨드 모드 (명령어 선택 시) -->
+            <div id="console-input-cmd" class="console-input-box" style="display:none">
+              <span id="console-cmd-chip-el" class="console-cmd-chip" onclick="consoleClearCmd()" title="클릭해서 취소"></span>
+              <div id="console-cmd-params" style="display:flex;flex:1;gap:5px;min-width:0;overflow-x:auto;align-items:center"></div>
               <button class="console-send-btn" onclick="consoleSubmit()">전송</button>
             </div>
           </div>
@@ -915,23 +921,13 @@ function consoleSelectCmd(name) {
   if (!cmd) return;
   _consoleSelCmd = cmd;
 
-  const mainInp = document.getElementById('console-main-input');
-  const box = document.getElementById('console-input-box');
   document.getElementById('console-autocomplete').style.display = 'none';
-  mainInp.style.display = 'none';
+  document.getElementById('console-input-normal').style.display = 'none';
+  document.getElementById('console-input-cmd').style.display = 'flex';
+  document.getElementById('console-cmd-chip-el').textContent = '/' + cmd.name;
 
-  const existing = box.querySelector('.console-inline-wrap');
-  if (existing) existing.remove();
-
-  const wrap = document.createElement('div');
-  wrap.className = 'console-inline-wrap';
-
-  const chip = document.createElement('span');
-  chip.className = 'console-cmd-chip';
-  chip.title = '클릭해서 취소';
-  chip.textContent = '/' + cmd.name;
-  chip.onclick = consoleClearCmd;
-  wrap.appendChild(chip);
+  const params = document.getElementById('console-cmd-params');
+  params.innerHTML = '';
 
   cmd.options.forEach(o => {
     let inp;
@@ -949,16 +945,15 @@ function consoleSelectCmd(name) {
       if (e.key === 'Enter') { e.preventDefault(); consoleSubmit(); }
       if (e.key === 'Tab') {
         e.preventDefault();
-        const inputs = Array.from(wrap.querySelectorAll('.console-inline-inp'));
+        const inputs = Array.from(params.querySelectorAll('.console-inline-inp'));
         const next = inputs[inputs.indexOf(e.target) + 1];
         if (next) next.focus();
       }
     });
-    wrap.appendChild(inp);
+    params.appendChild(inp);
   });
 
-  box.insertBefore(wrap, box.querySelector('.console-send-btn'));
-  const first = wrap.querySelector('.console-inline-inp');
+  const first = params.querySelector('.console-inline-inp');
   if (first) first.focus();
 }
 
@@ -970,14 +965,16 @@ function consoleClearCmd() {
 
 function resetConsole() {
   _consoleSelCmd = null;
-  const box = document.getElementById('console-input-box');
-  if (box) { const wrap = box.querySelector('.console-inline-wrap'); if (wrap) wrap.remove(); }
+  const normal = document.getElementById('console-input-normal');
+  const cmd = document.getElementById('console-input-cmd');
+  const params = document.getElementById('console-cmd-params');
   const mainInp = document.getElementById('console-main-input');
-  if (mainInp) { mainInp.style.display = ''; mainInp.value = ''; }
   const ac = document.getElementById('console-autocomplete');
+  if (normal) normal.style.display = 'flex';
+  if (cmd) cmd.style.display = 'none';
+  if (params) params.innerHTML = '';
+  if (mainInp) mainInp.value = '';
   if (ac) ac.style.display = 'none';
-  const oa = document.getElementById('console-options-area');
-  if (oa) oa.style.display = 'none';
 }
 
 function consolePrintMsg(text, type='user') {
@@ -997,31 +994,23 @@ function consolePrintMsg(text, type='user') {
 }
 
 async function consoleSubmit() {
-  const inp = document.getElementById('console-main-input');
-  const box = document.getElementById('console-input-box');
-  const wrap = box.querySelector('.console-inline-wrap');
-
-  // 상태 꼬임 방지: 커맨드가 선택됐지만 인라인 UI가 없으면 초기화
-  if (_consoleSelCmd && !wrap) { resetConsole(); return; }
-
-  const val = inp.value.trim();
-  if (!_consoleSelCmd && !val.startsWith('/')) return;
-
-  let cmd = _consoleSelCmd;
-  if (!cmd && val.startsWith('/')) {
+  if (!_consoleSelCmd) {
+    const inp = document.getElementById('console-main-input');
+    const val = inp ? inp.value.trim() : '';
+    if (!val.startsWith('/')) return;
     const name = val.slice(1).trim();
-    cmd = BOT_COMMANDS.find(c=>c.name===name);
-    if (!cmd) { consolePrintMsg(`알 수 없는 명령어: ${val}`, 'error'); return; }
-    consoleSelectCmd(cmd.name);
+    const found = BOT_COMMANDS.find(c=>c.name===name);
+    if (!found) { consolePrintMsg(`알 수 없는 명령어: ${val}`, 'error'); return; }
+    consoleSelectCmd(found.name);
     return;
   }
 
+  const cmd = _consoleSelCmd;
   const opts = {};
   for (const o of cmd.options) {
     const el = document.getElementById(`copt-${o.name}`);
     const v = el ? el.value.trim() : '';
     if (o.required && !v) {
-      // 채팅창 에러 대신 해당 필드를 빨갛게 강조 후 포커스
       if (el) {
         el.style.borderColor = '#f04747';
         el.style.boxShadow = '0 0 0 2px rgba(240,71,71,.3)';
@@ -1034,10 +1023,7 @@ async function consoleSubmit() {
   }
 
   consolePrintMsg(`/${cmd.name} ${Object.entries(opts).map(([k,v])=>`${k}:${v}`).join(' ')}`);
-  if (wrap) wrap.remove();
-  inp.style.display = '';
-  inp.value = '';
-  _consoleSelCmd = null;
+  resetConsole();
 
   try {
     const res = await fetch('/api/proxy-bot-command', {
