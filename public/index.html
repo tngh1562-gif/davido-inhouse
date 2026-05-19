@@ -302,7 +302,17 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
         <button class="admin-sub-btn" onclick="setAdminTab('storage')">보관함</button>
         <button class="admin-sub-btn" onclick="setAdminTab('discord')">디스코드</button>
       </div>
-      <div id="admin-panel-inhouse" class="admin-sub-panel" style="flex:1;padding:24px"></div>
+      <div id="admin-panel-inhouse" class="admin-sub-panel" style="flex:1;padding:24px">
+        <!-- 디코 내전참가등록 버튼 ON/OFF -->
+        <div style="display:inline-flex;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:16px 22px">
+          <span style="font-size:14px;font-weight:700;color:var(--txt)">버튼 OFF/ON</span>
+          <button id="register-toggle-btn" onclick="toggleRegisterButton()" style="width:52px;height:28px;border:none;border-radius:999px;background:#444;padding:3px;cursor:pointer;transition:background .2s;flex-shrink:0">
+            <span id="register-toggle-knob" style="display:block;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4);transition:transform .2s"></span>
+          </button>
+          <span id="register-toggle-label" style="font-size:12px;font-weight:700;color:#ff6060">OFF</span>
+        </div>
+        <p style="margin-top:10px;font-size:12px;color:var(--txt2)">OFF 시 디스코드에서 내전 참가 등록이 비활성화됩니다.</p>
+      </div>
       <div id="admin-panel-storage" class="admin-sub-panel" style="flex:1;padding:24px;display:none"></div>
       <div id="admin-panel-discord" class="admin-sub-panel" style="flex:1;padding:24px;display:none"></div>
     </div>
@@ -668,6 +678,44 @@ function setAdminTab(tab) {
   });
 }
 
+let _registerBtnEnabled = false;
+
+async function loadRegisterBtnState() {
+  try {
+    const res = await fetch('/api/discord-config');
+    const data = await res.json();
+    _registerBtnEnabled = data.registerButtonEnabled !== false;
+    applyRegisterToggleUI(_registerBtnEnabled);
+  } catch(e) {}
+}
+
+function applyRegisterToggleUI(enabled) {
+  const btn = document.getElementById('register-toggle-btn');
+  const knob = document.getElementById('register-toggle-knob');
+  const label = document.getElementById('register-toggle-label');
+  if (!btn) return;
+  btn.style.background = enabled ? '#00e5a0' : '#444';
+  knob.style.transform = enabled ? 'translateX(24px)' : 'translateX(0)';
+  label.textContent = enabled ? 'ON' : 'OFF';
+  label.style.color = enabled ? '#00e5a0' : '#ff6060';
+}
+
+async function toggleRegisterButton() {
+  _registerBtnEnabled = !_registerBtnEnabled;
+  applyRegisterToggleUI(_registerBtnEnabled);
+  try {
+    await fetch('/api/discord-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ registerButtonEnabled: _registerBtnEnabled }),
+    });
+  } catch(e) {
+    alert('저장 실패: ' + e.message);
+    _registerBtnEnabled = !_registerBtnEnabled;
+    applyRegisterToggleUI(_registerBtnEnabled);
+  }
+}
+
 function toggleVoteLeft() {
   const el = document.getElementById('vote-left');
   const btn = document.getElementById('vote-left-toggle');
@@ -973,6 +1021,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`panel-${tab}`).classList.add('active');
+    if (tab === 'admin') loadRegisterBtnState();
   });
 });
 
