@@ -815,7 +815,7 @@ function setAdminTab(tab) {
   ['inhouse','storage','discord'].forEach(t => {
     const el = document.getElementById('admin-panel-'+t);
     if (t === tab) {
-      el.style.display = t === 'storage' ? 'grid' : '';
+      el.style.display = t === 'discord' ? 'block' : 'grid';
     } else {
       el.style.display = 'none';
     }
