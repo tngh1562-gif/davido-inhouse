@@ -144,8 +144,8 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 .roulette-chip{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:12px}
 .roulette-chip .color-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 
-/* ── MUSIC PANEL ── */
-#panel-music{flex-direction:column;overflow:hidden}
+/* ── ADMIN PANEL ── */
+#panel-admin{flex-direction:column;overflow:auto;padding:28px 32px}
 .music-player{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0}
 .music-thumb{width:56px;height:42px;border-radius:6px;object-fit:cover;background:var(--bg3);flex-shrink:0}
 .music-info{flex:1;min-width:0}
@@ -203,7 +203,7 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
     <div class="tabs">
       <button class="tab-btn active" data-tab="inhouse">⚔ 내전 진행</button>
       <button class="tab-btn" data-tab="vote">📊 채팅 투표</button>
-      <button class="tab-btn" data-tab="music">🎵 음악 플레이어</button>
+      <button class="tab-btn" data-tab="admin">⚙ 관리자</button>
     </div>
     <div class="conn-bar" id="conn-bar">
       <button class="btn-backup" onclick="saveBackup()" title="현재 데이터를 서버에 백업 저장">💾 백업</button>
@@ -292,8 +292,8 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
       </div>
     </div>
 
-    <!-- 음악 탭 -->
-    <div class="panel" id="panel-music">
+    <!-- 관리자 탭 -->
+    <div class="panel" id="panel-admin">
       <!-- 플레이어 바 -->
       <div class="music-player" id="music-player-bar">
         <img class="music-thumb" id="music-thumb" src="" alt="" style="display:none">
