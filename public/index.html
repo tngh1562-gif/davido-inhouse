@@ -1001,6 +1001,7 @@ async function consoleSubmit() {
     cmd = BOT_COMMANDS.find(c=>c.name===name);
     if (!cmd) { consolePrintMsg(`알 수 없는 명령어: ${val}`, 'error'); return; }
     consoleSelectCmd(cmd.name);
+    return; // 파라미터 입력 단계로 넘어가고, 즉시 제출하지 않음
   }
 
   const opts = {};
