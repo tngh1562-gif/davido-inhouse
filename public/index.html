@@ -1097,22 +1097,38 @@ function renderStorageContent() {
   const u = _storageSelectedUser;
   const el = document.getElementById('storage-content');
   if (!el || !u) return;
-  const counts = u.counts || {};
+  const saved = _storageOriginalCounts;
+  const edit = u.counts || {};
   const uRewards = u.rewards || _storageRewards;
   const uSponsor = u.sponsor_rewards || _storageSponsor;
   const allRewards = [...new Set([...uRewards, ...uSponsor])];
-  el.innerHTML = `
-    <div style="text-align:center;font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px">${esc(u.name)}님의 보관함</div>
-    <div class="storage-card">
-      ${allRewards.length ? allRewards.map(r=>`
+
+  const rewardRows = (countsObj, editable) => allRewards.length
+    ? allRewards.map(r => `
         <div class="storage-reward-row">
           <span class="storage-reward-name">${esc(r)}</span>
-          <div class="storage-count-ctrl">
-            <button class="storage-count-btn" onclick="storageAdjust('${esc(u.name)}','${esc(r)}',-1)">−</button>
-            <span class="storage-count-num" id="sc-${btoa(encodeURIComponent(r)).slice(0,8)}">${counts[r]||0}</span>
-            <button class="storage-count-btn" onclick="storageAdjust('${esc(u.name)}','${esc(r)}',1)">+</button>
-          </div>
-        </div>`).join('') : '<div style="color:#555;font-size:13px">보상 항목 없음</div>'}
+          ${editable
+            ? `<div class="storage-count-ctrl">
+                <button class="storage-count-btn" onclick="storageAdjust('${esc(u.name)}','${esc(r)}',-1)">−</button>
+                <span class="storage-count-num">${countsObj[r]||0}</span>
+                <button class="storage-count-btn" onclick="storageAdjust('${esc(u.name)}','${esc(r)}',1)">+</button>
+               </div>`
+            : `<span style="font-size:15px;font-weight:800;color:#fff;min-width:28px;text-align:right">${countsObj[r]||0}</span>`
+          }
+        </div>`).join('')
+    : '<div style="color:#555;font-size:13px">보상 항목 없음</div>';
+
+  el.innerHTML = `
+    <div style="text-align:center;font-size:16px;font-weight:800;color:var(--txt);margin-bottom:16px">${esc(u.name)}님의 보관함</div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--txt2);letter-spacing:.5px;margin-bottom:6px">최근 업데이트</div>
+    <div class="storage-card" style="margin-bottom:20px;opacity:.85">
+      ${rewardRows(saved, false)}
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--txt2);letter-spacing:.5px;margin-bottom:6px">수정</div>
+    <div class="storage-card">
+      ${rewardRows(edit, true)}
     </div>`;
 }
 
@@ -1156,14 +1172,20 @@ async function storageUpdate() {
   }
 
   if (!hasError) {
-    // 성공 시 원본 갱신 + Discord 임베드 업데이트
-    _storageOriginalCounts = JSON.parse(JSON.stringify(cur));
     try {
       await fetch('/api/proxy-bot-command', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command: '전체업데이트', options: {} }),
       });
     } catch(e) {}
+    // 서버에서 최신 데이터 다시 로드 → 상단 박스 실시간 갱신
+    await loadStorageData();
+    const reloaded = _storageUsers.find(u2 => u2.name === u.name);
+    if (reloaded) {
+      _storageSelectedUser = reloaded;
+      _storageOriginalCounts = JSON.parse(JSON.stringify(reloaded.counts || {}));
+    }
+    renderStorageContent();
     alert('✅ 업데이트 완료');
   }
 }
