@@ -992,6 +992,16 @@ function consolePrintMsg(text, type='user') {
 
 async function consoleSubmit() {
   const inp = document.getElementById('console-main-input');
+  const box = document.getElementById('console-input-box');
+  const wrap = box.querySelector('.console-inline-wrap');
+
+  // 상태 꼬임 방지: 커맨드가 선택됐지만 인라인 UI가 없으면 초기화
+  if (_consoleSelCmd && !wrap) {
+    _consoleSelCmd = null;
+    inp.style.display = '';
+    return;
+  }
+
   const val = inp.value.trim();
   if (!_consoleSelCmd && !val.startsWith('/')) return;
 
@@ -1001,14 +1011,23 @@ async function consoleSubmit() {
     cmd = BOT_COMMANDS.find(c=>c.name===name);
     if (!cmd) { consolePrintMsg(`알 수 없는 명령어: ${val}`, 'error'); return; }
     consoleSelectCmd(cmd.name);
-    return; // 파라미터 입력 단계로 넘어가고, 즉시 제출하지 않음
+    return;
   }
 
   const opts = {};
   for (const o of cmd.options) {
     const el = document.getElementById(`copt-${o.name}`);
     const v = el ? el.value.trim() : '';
-    if (o.required && !v) { consolePrintMsg(`필수 옵션 [${o.name}]을 입력해주세요.`, 'error'); return; }
+    if (o.required && !v) {
+      // 채팅창 에러 대신 해당 필드를 빨갛게 강조 후 포커스
+      if (el) {
+        el.style.borderColor = '#f04747';
+        el.style.boxShadow = '0 0 0 2px rgba(240,71,71,.3)';
+        el.focus();
+        setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1500);
+      }
+      return;
+    }
     if (v) opts[o.name] = o.type==='number' ? Number(v) : v;
   }
 
