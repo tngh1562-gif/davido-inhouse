@@ -978,6 +978,13 @@ async function consoleSubmit() {
     });
     const data = await res.json();
     consolePrintMsg(data.message || data.error || '응답 없음', data.ok ? 'bot' : 'error');
+    // 보관함 탭이 열려있고 유저가 선택된 경우 → 데이터 갱신 후 재렌더
+    if (data.ok && _storageSelectedUser) {
+      const reloadedName = _storageSelectedUser.name;
+      await loadStorageData();
+      const updated = _storageUsers.find(u => u.name === reloadedName);
+      if (updated) { _storageSelectedUser = updated; _storageOriginalCounts = JSON.parse(JSON.stringify(updated.counts || {})); renderStorageContent(); }
+    }
   } catch(e) {
     consolePrintMsg('연결 실패: ' + e.message, 'error');
   }
