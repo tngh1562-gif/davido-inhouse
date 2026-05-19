@@ -944,6 +944,28 @@ function handlePointCommand(nickname) {
   return true;
 }
 
+function handleWinrateCommand(nickname) {
+  const viewer = findViewerByChzzkNickname(nickname);
+  if (!viewer) {
+    sendBotNotice(nickname, `${nickname}님은 아직 시청자 DB에 등록되어 있지 않습니다.`);
+    return true;
+  }
+  const st = viewer.stats || { w: 0, l: 0, d: 0 };
+  const w = Math.max(0, Number(st.w) || 0);
+  const l = Math.max(0, Number(st.l) || 0);
+  const d = Math.max(0, Number(st.d) || 0);
+  const total = w + l + d;
+  const name = displayViewerName(viewer, nickname);
+  if (total === 0) {
+    sendBotNotice(nickname, `${name}님의 내전 기록이 없습니다.`);
+    return true;
+  }
+  const wr = Math.round((w / total) * 100);
+  const drawPart = d > 0 ? ` 무${d}` : '';
+  sendBotNotice(nickname, `${name}님의 내전 승률: ${w}승 ${l}패${drawPart} (${wr}%) — 총 ${total}게임`);
+  return true;
+}
+
 // ── WebSocket 클라이언트 ──
 wss.on('connection', (ws) => {
   console.log('[WS] 브라우저 연결');
@@ -1362,6 +1384,11 @@ function handleChat(msg) {
     if (/^!포인트(?:\s|$)/.test(text)) {
       state.bot.lastCommand = { nickname, text, command: '!포인트', ts: Date.now() };
       handlePointCommand(nickname);
+    }
+
+    if (/^!승률(?:\s|$)/.test(text)) {
+      state.bot.lastCommand = { nickname, text, command: '!승률', ts: Date.now() };
+      handleWinrateCommand(nickname);
     }
 
     if (/^!참가(?:\s|$)/.test(text)) {
