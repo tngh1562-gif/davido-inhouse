@@ -184,15 +184,18 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 .console-cmd-slash{color:#5865f2;font-weight:800;font-size:13px;flex-shrink:0}
 .console-cmd-name{color:#fff;font-weight:700;font-size:13px}
 .console-cmd-desc{color:#72767d;font-size:11px;flex:1;text-align:right}
-.console-options-area{background:#36393f;border:1px solid #202225;border-radius:8px;padding:10px 12px;margin-bottom:8px;display:none;flex-direction:column;gap:8px}
-.console-opt-selected{font-size:12px;font-weight:800;color:#b9bbbe;letter-spacing:.5px;margin-bottom:4px}
-.console-opt-row{display:flex;flex-direction:column;gap:3px}
-.console-opt-lbl{font-size:11px;font-weight:700;color:#72767d;display:flex;gap:6px;align-items:center}
-.console-opt-req{color:#f04747;font-size:10px}
-.console-opt-inp{background:#40444b;border:1px solid #202225;border-radius:4px;color:#dcddde;font-size:13px;padding:6px 10px;outline:none;font-family:inherit;width:100%}
-.console-opt-inp:focus{border-color:#5865f2}
-select.console-opt-inp{cursor:pointer}
-.console-input-box{display:flex;gap:8px;background:#40444b;border-radius:8px;padding:8px 12px;align-items:center}
+.console-options-area{display:none}
+.console-input-box{display:flex;gap:6px;background:#40444b;border-radius:8px;padding:8px 12px;align-items:flex-end}
+.console-inline-wrap{display:flex;flex:1;align-items:flex-end;gap:6px;min-width:0;overflow-x:auto}
+.console-inline-wrap::-webkit-scrollbar{height:3px}
+.console-inline-wrap::-webkit-scrollbar-thumb{background:#555;border-radius:2px}
+.console-cmd-chip{background:#5865f2;color:#fff;border-radius:4px;padding:5px 10px;font-size:13px;font-weight:800;white-space:nowrap;flex-shrink:0;cursor:pointer;user-select:none;line-height:1.5}
+.console-cmd-chip:hover{background:#4752c4}
+.console-inline-param{display:flex;flex-direction:column;gap:2px;flex:1;min-width:70px}
+.console-inline-lbl{font-size:10px;font-weight:700;color:#8e9297;padding:0 2px;white-space:nowrap}
+.console-inline-inp{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:4px;color:#dcddde;font-size:13px;padding:5px 8px;outline:none;font-family:inherit;width:100%;box-sizing:border-box}
+.console-inline-inp:focus{border-color:#5865f2}
+select.console-inline-inp{cursor:pointer}
 .console-main-input{flex:1;background:none;border:none;color:#dcddde;font-size:14px;outline:none;font-family:inherit}
 .console-main-input::placeholder{color:#72767d}
 .console-send-btn{background:#5865f2;color:#fff;border:none;border-radius:4px;padding:5px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;flex-shrink:0}
@@ -912,21 +915,71 @@ function consoleSelectCmd(name) {
   const cmd = BOT_COMMANDS.find(c=>c.name===name);
   if (!cmd) return;
   _consoleSelCmd = cmd;
-  document.getElementById('console-main-input').value = '';
-  document.getElementById('console-autocomplete').style.display='none';
-  const oa = document.getElementById('console-options-area');
-  if (!cmd.options.length) { oa.style.display='none'; }
-  else {
-    oa.style.display='flex';
-    oa.innerHTML = `<div class="console-opt-selected">/${cmd.name}</div>` +
-      cmd.options.map(o => {
-        const req = o.required ? '<span class="console-opt-req">필수</span>' : '';
-        const inp = o.type==='select'
-          ? `<select class="console-opt-inp" id="copt-${o.name}"><option value="">-- 선택 (선택사항) --</option>${o.choices.map(ch=>`<option value="${ch.value}">${ch.label}</option>`).join('')}</select>`
-          : `<input class="console-opt-inp" id="copt-${o.name}" type="${o.type==='number'?'number':'text'}" placeholder="${o.desc}">`;
-        return `<div class="console-opt-row"><div class="console-opt-lbl">${o.name} ${req}</div>${inp}</div>`;
-      }).join('');
-  }
+
+  const mainInp = document.getElementById('console-main-input');
+  const box = document.getElementById('console-input-box');
+  document.getElementById('console-autocomplete').style.display = 'none';
+  mainInp.style.display = 'none';
+
+  const existing = box.querySelector('.console-inline-wrap');
+  if (existing) existing.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'console-inline-wrap';
+
+  const chip = document.createElement('span');
+  chip.className = 'console-cmd-chip';
+  chip.title = '클릭해서 취소';
+  chip.textContent = '/' + cmd.name;
+  chip.onclick = consoleClearCmd;
+  wrap.appendChild(chip);
+
+  cmd.options.forEach(o => {
+    const pd = document.createElement('div');
+    pd.className = 'console-inline-param';
+    const lbl = document.createElement('div');
+    lbl.className = 'console-inline-lbl';
+    lbl.innerHTML = o.name + (o.required ? ' <span style="color:#f04747">*</span>' : '');
+    let inp;
+    if (o.type === 'select') {
+      inp = document.createElement('select');
+      inp.innerHTML = `<option value="">선택...</option>` + o.choices.map(ch=>`<option value="${ch.value}">${ch.label}</option>`).join('');
+    } else {
+      inp = document.createElement('input');
+      inp.type = o.type === 'number' ? 'number' : 'text';
+      inp.placeholder = o.desc;
+    }
+    inp.className = 'console-inline-inp';
+    inp.id = 'copt-' + o.name;
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); consoleSubmit(); }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const inputs = Array.from(wrap.querySelectorAll('.console-inline-inp'));
+        const next = inputs[inputs.indexOf(e.target) + 1];
+        if (next) next.focus();
+      }
+    });
+    pd.appendChild(lbl);
+    pd.appendChild(inp);
+    wrap.appendChild(pd);
+  });
+
+  box.insertBefore(wrap, box.querySelector('.console-send-btn'));
+  const first = wrap.querySelector('.console-inline-inp');
+  if (first) first.focus();
+}
+
+function consoleClearCmd() {
+  _consoleSelCmd = null;
+  const box = document.getElementById('console-input-box');
+  const wrap = box.querySelector('.console-inline-wrap');
+  if (wrap) wrap.remove();
+  const mainInp = document.getElementById('console-main-input');
+  mainInp.style.display = '';
+  mainInp.value = '/';
+  mainInp.focus();
+  consoleOnInput('/');
 }
 
 function consolePrintMsg(text, type='user') {
@@ -967,9 +1020,12 @@ async function consoleSubmit() {
   }
 
   consolePrintMsg(`/${cmd.name} ${Object.entries(opts).map(([k,v])=>`${k}:${v}`).join(' ')}`);
-  inp.value='';
-  document.getElementById('console-options-area').style.display='none';
-  _consoleSelCmd=null;
+  const box = document.getElementById('console-input-box');
+  const wrap = box.querySelector('.console-inline-wrap');
+  if (wrap) wrap.remove();
+  inp.style.display = '';
+  inp.value = '';
+  _consoleSelCmd = null;
 
   try {
     const res = await fetch('/api/proxy-bot-command', {
