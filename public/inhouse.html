@@ -691,7 +691,6 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
     <button class="inhouse-nav-btn"     onclick="goTab('records',this)"><span class="nav-icon">📊</span>Records</button>
     <button class="inhouse-nav-btn"     onclick="goTab('viewers',this)"><span class="nav-icon">👥</span>시청자 DB</button>
     <button class="inhouse-nav-btn"     onclick="goTab('overlay',this)"><span class="nav-icon">🖥</span>오버레이</button>
-    <button class="inhouse-nav-btn"     onclick="goTab('discord',this)"><span class="nav-icon">💬</span>디스코드 관리</button>
     <button class="inhouse-nav-btn"     onclick="goTab('bot',this)"><span class="nav-icon">🤖</span>치지직 봇</button>
   </nav>
 </div>
@@ -709,7 +708,6 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
   <button class="nav-btn"     onclick="goTab('records',this)">Records</button>
   <button class="nav-btn"     onclick="goTab('viewers',this)">시청자 DB</button>
   <button class="nav-btn"     onclick="goTab('overlay',this)">오버레이</button>
-  <button class="nav-btn"     onclick="goTab('discord',this)">디스코드 관리</button>
   <button class="nav-btn"     onclick="goTab('bot',this)">치지직 봇</button>
 </nav>
 
@@ -1115,109 +1113,6 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
   </div>
 </div>
 
-<!-- ══════ TAB: DISCORD MANAGER ══════ -->
-<div id="tab-discord" class="tab">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    <div class="card">
-      <div class="card-title">디스코드 등록 버튼</div>
-      <div class="overlay-setting">
-        <div>
-          <b>내전 참가 등록 버튼</b>
-          <span>보관함봇이 만든 버튼을 누르면 모달팝업으로 시청자 DB 등록을 진행합니다.</span>
-        </div>
-        <button class="overlay-switch on" id="discordRegisterSwitch" onclick="toggleDiscordRegister()"><i></i></button>
-      </div>
-      <div class="overlay-setting">
-        <div>
-          <b>최근 메시지 아래 버튼 생성</b>
-          <span>ON일 때 보관함봇의 버튼 생성 명령으로 채널 최신 위치에 버튼 메시지를 만들 수 있습니다.</span>
-        </div>
-        <button class="overlay-switch on" id="discordRecentSwitch" onclick="toggleDiscordRecent()"><i></i></button>
-      </div>
-      <div class="overlay-setting">
-        <div>
-          <b>버튼만 생성</b>
-          <span>ON이면 안내문 없이 버튼만 있는 메시지를 만들어 위에 직접 작성한 글과 자연스럽게 붙여 씁니다.</span>
-        </div>
-        <button class="overlay-switch" id="discordButtonOnlySwitch" onclick="toggleDiscordButtonOnly()"><i></i></button>
-      </div>
-      <div class="overlay-setting">
-        <div>
-          <b>일반 글 + 버튼</b>
-          <span>ON이면 프로봇처럼 일반 메시지 본문 아래에 버튼을 같이 붙여 보냅니다.</span>
-        </div>
-        <button class="overlay-switch" id="discordPlainSwitch" onclick="toggleDiscordPlainMessage()"><i></i></button>
-      </div>
-      <div style="display:grid;gap:8px;margin-top:12px">
-        <input id="discordButtonLabel" type="text" placeholder="버튼 이름">
-        <select id="discordButtonStyle">
-          <option value="primary">파란색</option>
-          <option value="success">초록색</option>
-          <option value="danger">빨간색</option>
-          <option value="secondary">회색</option>
-        </select>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-g" onclick="saveDiscordConfigFromForm()">설정 저장</button>
-        <button class="btn btn-o" onclick="copyDiscordButtonCommand()">명령어 복사</button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:12px">
-        <input id="discordSendChannelId" type="text" placeholder="보낼 디스코드 채널 ID">
-        <button class="btn btn-g" onclick="sendDiscordButtonFromSite()">디코로 보내기</button>
-      </div>
-      <p style="font-size:.74rem;color:var(--txt2);line-height:1.55;margin-top:10px">
-        디스코드 등록 채널에서 관리자만 <b>/내전등록버튼</b>을 한 번 실행하면 버튼 메시지가 생성됩니다.
-        채팅 권한이 없는 시청자도 버튼 클릭과 팝업 입력은 가능합니다.
-      </p>
-    </div>
-
-    <div class="card">
-      <div class="card-title">버튼 메시지 미리보기</div>
-      <textarea id="discordMessageContent" rows="8" placeholder="# 내전 규칙&#10;원하는 글을 디스코드 마크다운 그대로 입력하세요." style="width:100%;resize:vertical"></textarea>
-      <div style="margin-top:12px;border:1px solid var(--line);border-radius:12px;background:#1a2030;padding:14px">
-        <div id="discordPreviewDesc" style="white-space:pre-line;color:var(--txt2);font-size:.82rem;line-height:1.55;margin-bottom:12px"></div>
-        <button id="discordPreviewButton" class="btn btn-bl" style="pointer-events:none">내전 참가 등록</button>
-        <button class="btn btn-g" style="pointer-events:none;margin-left:6px">디코 연동</button>
-      </div>
-      <div id="discordConfigState" style="font-size:.75rem;color:var(--txt2);margin-top:10px">설정 불러오는 중</div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">채널별 최근 메시지 버튼</div>
-      <p style="font-size:.74rem;color:var(--txt2);line-height:1.55;margin-top:0">
-        특정 채널 ID를 등록하면 전체 설정 대신 채널별 ON/OFF를 우선 적용합니다.
-      </p>
-      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:10px">
-        <input id="discordChannelIdInput" type="text" placeholder="디스코드 채널 ID">
-        <select id="discordChannelEnabled">
-          <option value="true">ON</option>
-          <option value="false">OFF</option>
-        </select>
-        <button class="btn btn-g" onclick="saveDiscordChannelOverride()">채널 저장</button>
-      </div>
-      <div id="discordChannelList" style="display:flex;flex-direction:column;gap:7px"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">디스코드 팀 음성방 이동</div>
-      <p style="font-size:.74rem;color:var(--txt2);line-height:1.55;margin-top:0">
-        내전대기방에 모인 참가자를 현재 팀박스 기준으로 1팀/2팀 음성채널에 자동 이동시킵니다.
-      </p>
-      <div style="display:grid;gap:8px;margin-top:12px">
-        <input id="discordVoiceLobbyId" type="text" placeholder="내전대기방 음성채널 ID" onblur="saveDiscordVoiceConfigSilent()">
-        <input id="discordVoiceBlueId" type="text" placeholder="1팀 음성채널 ID" onblur="saveDiscordVoiceConfigSilent()">
-        <input id="discordVoiceRedId" type="text" placeholder="2팀 음성채널 ID" onblur="saveDiscordVoiceConfigSilent()">
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-g" onclick="saveDiscordVoiceConfig()">음성방 설정 저장</button>
-        <button class="btn btn-o" onclick="moveDiscordVoiceTeams()">팀 음성방 이동</button>
-      </div>
-      <p style="font-size:.74rem;color:var(--txt2);line-height:1.55;margin-top:10px">
-        보관함봇 역할에 음성채널의 <b>멤버 이동</b> 권한이 있어야 합니다.
-      </p>
-    </div>
-  </div>
-</div>
 
 <!-- ══════ TAB: CHZZK BOT ══════ -->
 <div id="tab-bot" class="tab">
