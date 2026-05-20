@@ -611,23 +611,6 @@ app.post('/api/send-channel-message', async (req, res) => {
   } catch (err) { res.json({ ok: false, error: err.message || '봇 연결 실패' }); }
 });
 
-// 레벨 데이터 프록시
-app.get('/api/proxy-levels', async (req, res) => {
-  if (!DISCORD_BOT_API_URL) return res.json({ ok: false, error: 'BOT API URL 없음' });
-  try {
-    const data = await new Promise((resolve, reject) => {
-      const target = new URL(`${DISCORD_BOT_API_URL}/api/levels`);
-      const mod = target.protocol === 'https:' ? require('https') : require('http');
-      mod.get(target.toString(), r => {
-        let body = '';
-        r.on('data', c => body += c);
-        r.on('end', () => { try { resolve(JSON.parse(body)); } catch(e) { reject(e); } });
-      }).on('error', reject);
-    });
-    res.json(data);
-  } catch (err) { res.json({ ok: false, error: err.message || '봇 연결 실패' }); }
-});
-
 // 봇 명령어 프록시 (인하우스 사이트 → 보관함봇)
 app.post('/api/proxy-bot-command', async (req, res) => {
   const { command, options } = req.body || {};

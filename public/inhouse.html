@@ -756,14 +756,6 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
     </div>
   </div>
 
-  <!-- 레벨 표시 토글 -->
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.75rem;color:var(--txt2);user-select:none">
-      <input type="checkbox" id="showLevelToggle" onchange="toggleShowLevel(this.checked)" style="accent-color:#a89fff;width:14px;height:14px">
-      디스코드 레벨 표시
-    </label>
-  </div>
-
   <!-- 팀 카드 2열 -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px" id="mainTeamsGrid">
     <div class="team-box bl-box" style="min-height:240px">
@@ -3346,8 +3338,6 @@ function memberHTML(p, pos, side){
   const baseScore=SCORE_MAP[p.tier]||0;
   const effScore=effectiveScore(p);
   const chzzk=p.chzzk||(viewers.find(v=>v.name.toLowerCase()===(p.name||'').toLowerCase())||{}).chzzk||'';
-  const lv=getPlayerLevel(p);
-  const lvBadge=lv!=null?`<span style="font-size:.6rem;padding:1px 5px;border-radius:3px;background:rgba(88,69,220,.25);color:#b4a6ff;border:1px solid rgba(88,69,220,.4);font-weight:800;flex-shrink:0">Lv.${lv}</span>`:'';
   const ps=Array.isArray(p.positions)?p.positions:normPositions(p);
   const filled=ps.filter(x=>x&&x!=='무관');
 
@@ -3372,7 +3362,7 @@ function memberHTML(p, pos, side){
       onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#1a2030'">
       <div style="flex-shrink:0">${pip(pos)}</div>
       <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:4px;min-width:0">${lvBadge}<span style="font-size:.88rem;font-weight:700;color:#c9d1d9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name||'?')}</span></div>
+        <div style="font-size:.88rem;font-weight:700;color:#c9d1d9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name||'?')}</div>
         ${chzzk?`<div style="font-size:.68rem;color:#22c55e;margin-top:1px">▶ ${esc(chzzk)}</div>`:''}
         ${filled.length?`<div style="font-size:.65rem;color:#8aa8c4;margin-top:1px">${filled.join(' · ')}</div>`:''}
       </div>
@@ -4125,32 +4115,6 @@ function mainImportFromDB(){ importFromDB(); setTimeout(()=>renderMainRoster(),3
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-// ── 디스코드 레벨 ──
-let _levelData = {};
-let _showLevels = localStorage.getItem('showLevels') !== 'false';
-
-async function fetchLevels() {
-  try {
-    const res = await fetch('/api/proxy-levels');
-    const data = await res.json();
-    if (data.ok) _levelData = data.levels || {};
-  } catch(e) {}
-}
-
-function toggleShowLevel(on) {
-  _showLevels = on;
-  localStorage.setItem('showLevels', on ? 'true' : 'false');
-  if(curBlue.length && curRed.length) renderMainTeams();
-}
-
-function getPlayerLevel(p) {
-  if (!_showLevels) return null;
-  const v = viewers.find(v => v.id == p.viewerId);
-  const did = v?.discordId;
-  if (!did || !_levelData[did]) return null;
-  return _levelData[did].level;
-}
-
 async function initApp(){
   await load();
   initViewerSelects();
@@ -4160,10 +4124,6 @@ async function initApp(){
   setTimeout(()=>renderMainAll(), 50);
   connectInhouseChatCommands();
   refreshBotState();
-  // 레벨 토글 초기값
-  const tog = document.getElementById('showLevelToggle');
-  if (tog) tog.checked = _showLevels;
-  fetchLevels();
 }
 initApp();
 
