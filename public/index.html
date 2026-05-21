@@ -1519,6 +1519,42 @@ async function autoDeductVoteRewards() {
   const v = state.vote;
   if (!v || !v.items || !v.items.length) return;
 
+  try {
+    const r = await fetch('/api/vote-reward-deduct', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ vote: v }),
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || '보상 자동 차감 실패');
+    const results = Array.isArray(data.results) ? data.results : [];
+    if (!results.length) return;
+
+    const success = results.filter(r=>r.ok);
+    const fail = results.filter(r=>!r.ok);
+    if (success.length) {
+      try {
+        const selectedName = _storageSelectedUser?.name || null;
+        await loadStorageData();
+        if (selectedName) {
+          const updated = _storageUsers.find(u => u.name === selectedName);
+          if (updated) {
+            _storageSelectedUser = updated;
+            _storageOriginalCounts = JSON.parse(JSON.stringify(updated.counts || {}));
+            renderStorageContent();
+          }
+        }
+      } catch(e) {}
+    }
+    let msg = `🎫 보상 자동 차감 결과\n`;
+    if (success.length) msg += `\n✅ 성공 (${success.length}건)\n` + success.map(r=>`• ${r.nick} → ${r.reward} -1`).join('\n');
+    if (fail.length) msg += `\n❌ 실패 (${fail.length}건)\n` + fail.map(r=>`• ${r.nick}: ${r.msg}`).join('\n');
+    alert(msg);
+  } catch(e) {
+    alert('🎫 보상 자동 차감 실패\n' + (e.message || e));
+  }
+  return;
+
   // bot config에서 보상 목록 가져오기
   let botUsers = [], botRewards = [], botSponsor = [];
   try {

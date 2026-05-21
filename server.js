@@ -585,15 +585,7 @@ app.post('/api/save-backup', (req, res) => {
 app.get('/api/bot-config', async (req, res) => {
   if (!DISCORD_BOT_API_URL) return res.json({ ok: false, error: 'BOT API URL 없음' });
   try {
-    const data = await new Promise((resolve, reject) => {
-      const target = new URL(`${DISCORD_BOT_API_URL}/api/config`);
-      const lib = target.protocol === 'https:' ? require('https') : require('http');
-      lib.get(target, r => {
-        let buf = '';
-        r.on('data', c => buf += c);
-        r.on('end', () => { try { resolve(JSON.parse(buf)); } catch(e) { reject(e); } });
-      }).on('error', reject);
-    });
+    const data = await getJson(`${DISCORD_BOT_API_URL}/api/config`);
     res.json(data);
   } catch(e) { res.json({ ok: false, error: e.message }); }
 });
@@ -631,6 +623,65 @@ app.post('/api/proxy-bot-command', async (req, res) => {
 });
 
 // 백업 목록 조회
+app.post('/api/vote-reward-deduct', async (req, res) => {
+  const vote = req.body?.vote || {};
+  if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET) {
+    return res.json({ ok: false, error: 'DISCORD_BOT_API_URL / DISCORD_BOT_API_SECRET 환경변수가 필요합니다.' });
+  }
+  try {
+    const botConfigResult = await getJson(`${DISCORD_BOT_API_URL}/api/config`);
+    if (!botConfigResult?.ok) {
+      return res.json({ ok: false, error: botConfigResult?.error || '보관함봇 config 조회 실패' });
+    }
+
+    const config = botConfigResult.config || {};
+    const botUsers = Array.isArray(config.users) ? config.users : [];
+    const rewards = Array.isArray(config.rewards) ? config.rewards : [];
+    const sponsorRewards = Array.isArray(config.sponsor_rewards) ? config.sponsor_rewards : [];
+    const allRewards = [...new Set([...rewards, ...sponsorRewards])];
+    const viewers = readInhouseDB().viewers || [];
+    const items = Array.isArray(vote.items) ? vote.items : [];
+    const targets = items.filter(item => allRewards.includes(item?.label) && Array.isArray(item.votes) && item.votes.length > 0);
+    const results = [];
+
+    for (const item of targets) {
+      for (const voterNick of item.votes) {
+        const viewer = findRewardViewer(viewers, voterNick);
+        const botUser = findRewardBotUser(botUsers, voterNick, viewer);
+        if (!botUser) {
+          results.push({ reward: item.label, nick: voterNick, ok: false, msg: '봇 config에서 유저를 찾지 못함' });
+          continue;
+        }
+
+        const counts = botUser.counts || {};
+        if (!counts[item.label] || counts[item.label] <= 0) {
+          results.push({ reward: item.label, nick: voterNick, ok: false, msg: `${botUser.name} ${item.label} 보유 없음` });
+          continue;
+        }
+
+        const result = await postJson(`${DISCORD_BOT_API_URL}/api/bot-command`, {
+          secret: DISCORD_BOT_API_SECRET,
+          command: '차감',
+          options: { 닉네임: botUser.name, 보상이름: item.label, 개수: 1 },
+        });
+        results.push({
+          reward: item.label,
+          nick: voterNick,
+          ok: result.ok === true,
+          msg: result.ok ? `${botUser.name} ${item.label} -1` : (result.error || result.message || '차감 실패'),
+          botName: botUser.name,
+          viewerName: viewer?.name || '',
+          chzzk: viewer?.chzzk || '',
+        });
+      }
+    }
+
+    res.json({ ok: true, results });
+  } catch (err) {
+    res.json({ ok: false, error: err.message || '보상 자동 차감 실패' });
+  }
+});
+
 app.get('/api/backups', (req, res) => {
   try {
     if (!fs.existsSync(MANUAL_BACKUP_DIR)) return res.json({ ok: true, backups: [] });
@@ -877,6 +928,85 @@ function postJson(url, payload) {
 }
 
 // ── 브로드캐스트 ──
+function getJson(url) {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const lib = target.protocol === 'https:' ? https : http;
+    const req = lib.get(target, { timeout: 10000 }, res => {
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => {
+        const text = Buffer.concat(chunks).toString('utf8');
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+        if (res.statusCode >= 400) {
+          const err = new Error(data.error || `HTTP ${res.statusCode}`);
+          err.data = data;
+          reject(err);
+          return;
+        }
+        resolve(data);
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => req.destroy(new Error('request_timeout')));
+  });
+}
+
+function normalizeRewardNick(value, leet = false) {
+  const key = String(value || '')
+    .normalize('NFKC')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[#＃].*$/g, '')
+    .replace(/[^\p{L}\p{N}가-힣]/gu, '');
+  return leet ? key.replace(/2/g, 'e') : key;
+}
+
+function rewardNickKeys(value) {
+  const raw = String(value || '').trim();
+  const taglessRaw = raw.split(/[#＃]/)[0];
+  return [...new Set([
+    normalizeRewardNick(raw),
+    normalizeRewardNick(taglessRaw),
+    normalizeRewardNick(raw, true),
+    normalizeRewardNick(taglessRaw, true),
+  ].filter(Boolean))];
+}
+
+function rewardEntityKeys(entity) {
+  if (!entity) return [];
+  return [...new Set([
+    ...rewardNickKeys(entity.name),
+    ...rewardNickKeys(entity.chzzk),
+  ])];
+}
+
+function rewardKeysMatch(leftKeys, rightKeys) {
+  for (const left of leftKeys) {
+    for (const right of rightKeys) {
+      if (!left || !right) continue;
+      if (left === right) return true;
+      if (left.length >= 2 && right.length >= 2 && (left.includes(right) || right.includes(left))) return true;
+    }
+  }
+  return false;
+}
+
+function findRewardViewer(viewers, voterNick) {
+  const voterKeys = rewardNickKeys(voterNick);
+  return viewers.find(viewer => rewardKeysMatch(rewardEntityKeys(viewer), voterKeys)) || null;
+}
+
+function findRewardBotUser(botUsers, voterNick, viewer) {
+  const searchKeys = [...new Set([
+    ...rewardNickKeys(voterNick),
+    ...rewardEntityKeys(viewer),
+  ])];
+  return botUsers.find(user => rewardKeysMatch(rewardEntityKeys(user), searchKeys)) || null;
+}
+
 function broadcast(data) {
   const msg = JSON.stringify(data);
   wss.clients.forEach(c => { if (c.readyState === 1) c.send(msg); });
