@@ -1234,6 +1234,7 @@ ALL_TIERS.forEach(t=>SCORE_MAP[t.key]=t.score);
 
 const POSITIONS = ['탑','정글','미드','원딜','서포터','무관'];
 const POS_ICON  = {탑:'⚔',정글:'🌲',미드:'✨',원딜:'🏹',서포터:'🛡',무관:'✦'};
+const LINE_POSITIONS = ['탑','정글','미드','원딜','서포터'];
 
 function tierObj(key){ return ALL_TIERS.find(t=>t.key===key) || ALL_TIERS[0]; }
 function tierBadge(key){
@@ -1279,13 +1280,55 @@ function ensureViewerMmr(v){
   if(!v) return tierBaseMmr('GO4');
   const mmr=viewerMmr(v);
   v.mmr=mmr;
+  ensureViewerLineMmrs(v);
   return mmr;
+}
+function ensureViewerLineMmrs(v){
+  if(!v) return null;
+  const base=viewerMmr(v);
+  const prev=(v.lineMmr&&typeof v.lineMmr==='object')?v.lineMmr:{};
+  const legacy=(v.posMmr&&typeof v.posMmr==='object')?v.posMmr:{};
+  v.lineMmr={};
+  LINE_POSITIONS.forEach(pos=>{
+    v.lineMmr[pos]=clampMmr(prev[pos] || legacy[pos] || base);
+  });
+  return v.lineMmr;
+}
+function refreshViewerOverallMmr(v){
+  const lm=ensureViewerLineMmrs(v);
+  v.mmr=clampMmr(LINE_POSITIONS.reduce((s,pos)=>s+(Number(lm[pos])||0),0)/LINE_POSITIONS.length);
+  return v.mmr;
+}
+function playerLinePos(p){
+  return LINE_POSITIONS.includes(p?.assignedPos) ? p.assignedPos : null;
+}
+function viewerLineMmr(v,pos){
+  if(!v) return tierBaseMmr('GO4');
+  if(!LINE_POSITIONS.includes(pos)) return viewerMmr(v);
+  const lm=ensureViewerLineMmrs(v);
+  return clampMmr(lm[pos]);
+}
+function setViewerLineMmr(v,pos,next){
+  if(!v || !LINE_POSITIONS.includes(pos)) return;
+  const lm=ensureViewerLineMmrs(v);
+  lm[pos]=clampMmr(next);
+  refreshViewerOverallMmr(v);
 }
 function playerBaseMmr(p){
   const v=findViewerForPlayer(p);
+  const pos=playerLinePos(p);
+  if(v && pos) return viewerLineMmr(v,pos);
   return v ? viewerMmr(v) : tierBaseMmr(p?.tier);
 }
 function mmrLabel(n){ return Math.round(Number(n)||0)+' MMR'; }
+function lineMmrSummary(v){
+  const lm=ensureViewerLineMmrs(v);
+  return LINE_POSITIONS.map(pos=>`${pos} ${lm[pos]}`).join(' · ');
+}
+function initialLineMmr(tier){
+  const base=tierBaseMmr(tier);
+  return Object.fromEntries(LINE_POSITIONS.map(pos=>[pos,base]));
+}
 
 // 구버전 키 → 신버전 키 호환 (마스터 단일 'MS' → 'MS0')
 function compatTierKey(key){
@@ -2346,10 +2389,9 @@ function assignPositions(team){
 // 포지션 배정 결과를 반영한 유효 점수
 function effectiveScore(p){
   const v=findViewerForPlayer(p);
+  const linePos=playerLinePos(p);
+  if(v && linePos) return viewerLineMmr(v,linePos);
   const base = v ? viewerMmr(v) : tierBaseMmr(p.tier);
-  if(v && v.posMmr && p.assignedPos && Number(v.posMmr[p.assignedPos])>0){
-    return clampMmr(v.posMmr[p.assignedPos]);
-  }
   if(p.posSlot===0 && p.posTiers && p.posTiers[0]){
     return tierBaseMmr(p.posTiers[0]);
   }
@@ -2765,7 +2807,7 @@ function addViewerPaste(){
     const positions=[parsePosText(pos0raw),parsePosText(pos1raw),parsePosText(pos2raw)];
     const posTiers=(pt0||pt1||pt2)?[pt0||null,pt1||null,pt2||null]:null;
     if(viewers.find(v=>v.name.toLowerCase()===name.toLowerCase())){skipped++;return}
-    viewers.push({id:++vid,name,chzzk,tier,positions,posTiers,memo,mmr:tierBaseMmr(tier),added:Date.now()});
+    viewers.push({id:++vid,name,chzzk,tier,positions,posTiers,memo,mmr:tierBaseMmr(tier),lineMmr:initialLineMmr(tier),added:Date.now()});
     added++;
   });
   if(added) markViewersDirty();
@@ -2791,7 +2833,7 @@ function addViewer(){
   if(viewers.find(v=>v.name.toLowerCase()===name.toLowerCase())){
     toast('이미 존재하는 닉네임입니다');return;
   }
-  viewers.push({id:++vid,name,chzzk,tier,positions,memo,mmr:tierBaseMmr(tier),added:Date.now()});
+  viewers.push({id:++vid,name,chzzk,tier,positions,memo,mmr:tierBaseMmr(tier),lineMmr:initialLineMmr(tier),added:Date.now()});
   markViewersDirty();
   save(); renderViewers();
   document.getElementById('vName').value='';
@@ -2834,6 +2876,15 @@ function saveEdit(id){
   if(pasEl) v.pass = Math.max(0, parseInt(pasEl.value)||0);
   if(tierEl)  v.tier  = tierEl.value;
   if(mmrEl) v.mmr = clampMmr(mmrEl.value);
+  ensureViewerLineMmrs(v);
+  let editedLineMmr=false;
+  LINE_POSITIONS.forEach((pos,idx)=>{
+    const el=document.getElementById('eline'+idx+'-'+id);
+    if(!el) return;
+    v.lineMmr[pos]=clampMmr(el.value);
+    editedLineMmr=true;
+  });
+  if(editedLineMmr) refreshViewerOverallMmr(v);
 
   v.positions = [
     p0el ? p0el.value||'무관' : '무관',
@@ -2970,7 +3021,13 @@ function renderViewers(){
             <input class="edit-inp" id="epas-${v.id}" type="number" min="0" value="${v.pass||0}" style="width:60px;text-align:center">
           </td>
           <td><select class="edit-inp" id="et-${v.id}" style="width:100%">${buildTierOptions(v.tier)}</select></td>
-          <td><input class="edit-inp" id="emmr-${v.id}" type="number" min="${MMR_MIN}" max="${MMR_MAX}" value="${viewerMmr(v)}" style="width:78px;text-align:center"></td>
+          <td>${(()=>{
+            const lm=ensureViewerLineMmrs(v);
+            return `<div style="display:grid;gap:3px;min-width:130px">
+              <input class="edit-inp" id="emmr-${v.id}" type="number" min="${MMR_MIN}" max="${MMR_MAX}" value="${viewerMmr(v)}" title="전체 평균 MMR" style="width:78px;text-align:center">
+              ${LINE_POSITIONS.map((pos,idx)=>`<label style="display:flex;align-items:center;gap:4px;font-size:.65rem;color:var(--txt2)"><span style="width:28px">${pos}</span><input class="edit-inp" id="eline${idx}-${v.id}" type="number" min="${MMR_MIN}" max="${MMR_MAX}" value="${lm[pos]}" style="width:70px;text-align:center;font-size:.68rem;padding:3px 4px"></label>`).join('')}
+            </div>`;
+          })()}</td>
           <td style="white-space:nowrap">${(()=>{
             const ps=Array.isArray(v.positions)?v.positions:normPositions(v);
             const slots=[ps[0]||'무관',ps[1]||'무관',ps[2]||'무관'];
@@ -3021,7 +3078,12 @@ function renderViewers(){
           </div>
         </td>
         <td>${tierBadge(v.tier)}</td>
-        <td style="font-size:.75rem;color:var(--txt2)">${viewerMmr(v)}</td>
+        <td style="font-size:.72rem;color:var(--txt2);min-width:140px">
+          <div style="font-weight:800;color:var(--txt)">${viewerMmr(v)} MMR</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">
+            ${LINE_POSITIONS.map(pos=>`<span style="padding:1px 5px;border:1px solid var(--line);border-radius:4px;background:var(--s2);white-space:nowrap">${pos} ${viewerLineMmr(v,pos)}</span>`).join('')}
+          </div>
+        </td>
         <td style="white-space:nowrap">${(()=>{ const ps=Array.isArray(v.positions)?v.positions:normPositions(v); return ps.filter(p=>p&&p!=='무관').map(p=>pip(p)).join('') || pip('무관'); })()} </td>
         <td style="font-size:.72rem;min-width:120px">${(()=>{
           const ps=Array.isArray(v.positions)?v.positions:normPositions(v);
@@ -3199,13 +3261,16 @@ function record(res){
       team.forEach(p=>{
         const v=findViewerForPlayer(p);
         if(!v) return;
-        const old=ensureViewerMmr(v);
+        ensureViewerMmr(v);
+        const linePos=playerLinePos(p);
+        const old=linePos ? viewerLineMmr(v,linePos) : viewerMmr(v);
         const games=viewerGames(v);
         const newbieBoost=games<10 ? Math.round(delta*0.35) : 0;
         const finalDelta=delta+newbieBoost;
-        v.mmr=clampMmr(old+finalDelta);
+        if(linePos) setViewerLineMmr(v,linePos,old+finalDelta);
+        else v.mmr=clampMmr(old+finalDelta);
         if(!Array.isArray(v.mmrHistory)) v.mmrHistory=[];
-        v.mmrHistory.unshift({id:Date.now()+v.id,before:old,after:v.mmr,delta:finalDelta,result:res,at:Date.now()});
+        v.mmrHistory.unshift({id:Date.now()+v.id,line:linePos||'전체',before:old,after:linePos?viewerLineMmr(v,linePos):v.mmr,delta:finalDelta,result:res,at:Date.now()});
         v.mmrHistory=v.mmrHistory.slice(0,30);
         changed=true;
       });
