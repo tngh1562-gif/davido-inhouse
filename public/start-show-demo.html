@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>내전 시작 연출 데모</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;background:
+    radial-gradient(circle at 18% 12%,rgba(0,220,170,.2),transparent 30%),
+    radial-gradient(circle at 82% 22%,rgba(80,140,255,.18),transparent 34%),
+    linear-gradient(135deg,#071018,#111827 52%,#070b12);
+  color:#eef6ff;font-family:Inter,system-ui,"Noto Sans KR",sans-serif;overflow:hidden;
+}
+.stage{position:relative;min-height:100vh;padding:38px 44px;display:grid;grid-template-columns:1fr 360px;gap:26px}
+.panel,.side{border:1px solid rgba(148,163,184,.16);background:rgba(15,23,42,.72);box-shadow:0 26px 80px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.04);backdrop-filter:blur(16px);border-radius:24px}
+.panel{padding:28px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:950;font-size:1.8rem;letter-spacing:-.3px}
+.mark{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#19e6a2,#3b82f6);display:grid;place-items:center;color:#041014;font-weight:1000;box-shadow:0 0 30px rgba(25,230,162,.35)}
+.badge{padding:9px 13px;border-radius:999px;border:1px solid rgba(49,242,178,.3);background:rgba(49,242,178,.1);color:#75ffd6;font-weight:900}
+.teams{display:grid;grid-template-columns:1fr 110px 1fr;gap:18px;align-items:stretch}
+.team{position:relative;min-height:520px;border-radius:22px;overflow:hidden;border:1px solid rgba(148,163,184,.16);background:#111827}
+.team::before{content:'';position:absolute;inset:0;opacity:.18;pointer-events:none}
+.team.blue{border-color:rgba(77,159,255,.42)}
+.team.red{border-color:rgba(255,83,99,.42)}
+.team.blue::before{background:linear-gradient(135deg,#2f80ff,transparent 55%)}
+.team.red::before{background:linear-gradient(135deg,#ff3d5a,transparent 55%)}
+.team-head{position:relative;padding:20px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08)}
+.team-title{font-size:1.24rem;font-weight:1000}
+.team.blue .team-title{color:#62a6ff}.team.red .team-title{color:#ff6576}
+.score{font-weight:950;color:#e7eefb}
+.players{position:relative;padding:18px;display:grid;gap:12px}
+.player{
+  display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;
+  padding:13px 14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.045);transform:translateY(16px);opacity:0;
+}
+.team.revealing .player{animation:reveal .72s cubic-bezier(.16,1,.3,1) forwards}
+.team.revealing .player:nth-child(1){animation-delay:.08s}
+.team.revealing .player:nth-child(2){animation-delay:.28s}
+.team.revealing .player:nth-child(3){animation-delay:.48s}
+.team.revealing .player:nth-child(4){animation-delay:.68s}
+.team.revealing .player:nth-child(5){animation-delay:.88s}
+@keyframes reveal{
+  0%{opacity:0;transform:translateY(20px) scale(.97);filter:blur(8px)}
+  70%{opacity:1;transform:translateY(-2px) scale(1.015);filter:blur(0)}
+  100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+}
+.pos{height:38px;border-radius:12px;display:grid;place-items:center;font-size:.8rem;font-weight:950;border:1px solid rgba(255,255,255,.12)}
+.blue .pos{background:rgba(77,159,255,.14);color:#93c5fd}.red .pos{background:rgba(255,83,99,.14);color:#fecaca}
+.nick{font-size:1.02rem;font-weight:950;line-height:1.2}.sub{margin-top:4px;color:#8da2bd;font-size:.78rem;font-weight:750}
+.tier{padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.08);font-weight:950;color:#facc15;font-size:.82rem}
+.vs{display:grid;place-items:center}
+.vs-core{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#f8fafc,#64748b 48%,#0f172a 70%);color:#071018;font-size:1.4rem;font-weight:1000;box-shadow:0 0 40px rgba(255,255,255,.16)}
+.side{padding:22px;display:flex;flex-direction:column;gap:14px}
+.side h2{margin:0;font-size:1.2rem}.side p{margin:0;color:#9fb0c6;line-height:1.55;font-size:.9rem}
+button{height:48px;border:0;border-radius:14px;cursor:pointer;font-weight:950;color:#061018;font-size:.94rem;background:linear-gradient(135deg,#20e7aa,#3b82f6);box-shadow:0 18px 42px rgba(32,231,170,.22)}
+button.secondary{background:#182233;color:#dbeafe;border:1px solid rgba(148,163,184,.18);box-shadow:none}
+.demo-note{margin-top:auto;padding:14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#b8c6d9;font-size:.82rem;line-height:1.5}
+.count-overlay,.reveal-splash{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:radial-gradient(circle,rgba(15,23,42,.34),rgba(2,6,23,.86));backdrop-filter:blur(10px)}
+.count-overlay.on,.reveal-splash.on{display:flex}
+.count-wrap{text-align:center}
+.count-number{font-size:clamp(7rem,18vw,18rem);font-weight:1000;line-height:.8;color:#f8fafc;text-shadow:0 0 46px rgba(49,242,178,.5);animation:pulse .82s ease}
+.count-label{margin-top:20px;color:#31f2b2;font-weight:950;letter-spacing:7px;font-size:1.05rem}
+@keyframes pulse{0%{opacity:0;transform:scale(.7);filter:blur(10px)}55%{opacity:1;transform:scale(1.08);filter:blur(0)}100%{opacity:1;transform:scale(1)}}
+.slash{position:absolute;width:72vw;height:3px;background:linear-gradient(90deg,transparent,#31f2b2,#3b82f6,transparent);box-shadow:0 0 24px #31f2b2;transform:rotate(-12deg);animation:slash 1.2s ease both}
+@keyframes slash{0%{opacity:0;transform:translateX(-30vw) rotate(-12deg) scaleX(.2)}45%{opacity:1;transform:translateX(0) rotate(-12deg) scaleX(1)}100%{opacity:0;transform:translateX(32vw) rotate(-12deg) scaleX(.65)}}
+.splash-card{position:relative;text-align:center;animation:splashIn 1.5s ease both}
+.splash-card b{display:block;font-size:3.8rem;font-weight:1000;letter-spacing:-1px}.splash-card span{display:block;margin-top:8px;color:#9fffe0;font-weight:950;letter-spacing:5px}
+@keyframes splashIn{0%{opacity:0;transform:scale(.9);filter:blur(12px)}35%{opacity:1;transform:scale(1.04);filter:blur(0)}100%{opacity:0;transform:scale(1.18);filter:blur(4px)}}
+@media(max-width:1100px){body{overflow:auto}.stage{grid-template-columns:1fr}.teams{grid-template-columns:1fr}.vs{display:none}.team{min-height:auto}}
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="panel">
+    <div class="top">
+      <div class="brand"><div class="mark">D</div>내전 시작 연출 데모</div>
+      <div class="badge">미리보기 전용</div>
+    </div>
+    <div class="teams">
+      <div class="team blue" id="blueTeam">
+        <div class="team-head"><div class="team-title">BLUE TEAM</div><div class="score">5242 MMR</div></div>
+        <div class="players" id="bluePlayers"></div>
+      </div>
+      <div class="vs"><div class="vs-core">VS</div></div>
+      <div class="team red" id="redTeam">
+        <div class="team-head"><div class="team-title">RED TEAM</div><div class="score">5241 MMR</div></div>
+        <div class="players" id="redPlayers"></div>
+      </div>
+    </div>
+  </section>
+  <aside class="side">
+    <h2>확인할 연출</h2>
+    <p>실제 내전 시작 버튼에 붙이기 전에 보는 데모입니다. 이 화면에서는 디코 이동이나 OBS 전환은 실행하지 않습니다.</p>
+    <button onclick="playCountdown()">1. 카운트다운 오버레이</button>
+    <button onclick="playReveal()">2. 팀 공개 연출</button>
+    <button onclick="playFull()">둘 다 이어서 보기</button>
+    <button class="secondary" onclick="resetReveal()">초기화</button>
+    <div class="demo-note">
+      실제 적용하면 <b>내전 시작하기</b> 클릭 시 카운트다운 후 디코 이동, OBS 장면 전환, 팀 공개 연출 순서로 묶을 수 있습니다.
+    </div>
+  </aside>
+</main>
+<div class="count-overlay" id="countOverlay">
+  <div class="count-wrap">
+    <div class="count-number" id="countNumber">3</div>
+    <div class="count-label">MATCH START</div>
+  </div>
+</div>
+<div class="reveal-splash" id="splash">
+  <div class="slash"></div>
+  <div class="splash-card"><b>TEAM REVEAL</b><span>라인업 공개</span></div>
+</div>
+<script>
+const positions=['TOP','JUG','MID','ADC','SUP'];
+const blue=[
+  ['리텐프로테#9510','정글 · 다이아 3','DI3'],
+  ['나 팔혈진데#1557','탑 · 에메랄드 3','EM3'],
+  ['마주 보고 말할래#KR1','미드 · 다이아 2','DI2'],
+  ['원딜던지게만드는님','원딜 · 골드 3','GO3'],
+  ['dabido#kr2','서폿 · 골드 4','GO4']
+];
+const red=[
+  ['초절명호살격난참#호랑이','탑 · 다이아 1','DI1'],
+  ['BELLllllllll#중중중','정글 · 골드 1','GO1'],
+  ['모코링#mkr','미드 · 마스터','MS'],
+  ['난 최강이다#sgh','원딜 · 브론즈 1','BR1'],
+  ['번역왕다리우스#444','서폿 · 에메랄드 4','EM4']
+];
+function shortName(name){return name.split('#')[0]}
+function playerHTML(p,i){return `<div class="player"><div class="pos">${positions[i]}</div><div><div class="nick">${shortName(p[0])}</div><div class="sub">${p[1]}</div></div><div class="tier">${p[2]}</div></div>`}
+function render(){
+  bluePlayers.innerHTML=blue.map(playerHTML).join('');
+  redPlayers.innerHTML=red.map(playerHTML).join('');
+}
+function resetReveal(){
+  blueTeam.classList.remove('revealing');
+  redTeam.classList.remove('revealing');
+  render();
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+async function playCountdown(){
+  countOverlay.classList.add('on');
+  for(const n of ['3','2','1','START']){
+    countNumber.textContent=n;
+    countNumber.style.animation='none';
+    countNumber.offsetHeight;
+    countNumber.style.animation='pulse .82s ease';
+    await sleep(n==='START'?900:820);
+  }
+  countOverlay.classList.remove('on');
+}
+async function playReveal(){
+  resetReveal();
+  splash.classList.add('on');
+  await sleep(1150);
+  splash.classList.remove('on');
+  blueTeam.classList.add('revealing');
+  await sleep(220);
+  redTeam.classList.add('revealing');
+}
+async function playFull(){
+  await playCountdown();
+  await sleep(180);
+  await playReveal();
+}
+render();
+</script>
+</body>
+</html>
