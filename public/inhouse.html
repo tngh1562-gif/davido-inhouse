@@ -2390,15 +2390,14 @@ function assignPositions(team){
 function effectiveScore(p){
   const v=findViewerForPlayer(p);
   const linePos=playerLinePos(p);
-  if(v && linePos) return viewerLineMmr(v,linePos);
-  const base = v ? viewerMmr(v) : tierBaseMmr(p.tier);
-  if(p.posSlot===0 && p.posTiers && p.posTiers[0]){
+  const base = v && linePos ? viewerLineMmr(v,linePos) : (v ? viewerMmr(v) : tierBaseMmr(p.tier));
+  if(!v && p.posSlot===0 && p.posTiers && p.posTiers[0]){
     return tierBaseMmr(p.posTiers[0]);
   }
-  if(p.posSlot===1 && p.posTiers && p.posTiers[1]){
+  if(!v && p.posSlot===1 && p.posTiers && p.posTiers[1]){
     return tierBaseMmr(p.posTiers[1]);
   }
-  if(p.posSlot===2 && p.posTiers && p.posTiers[2]){
+  if(!v && p.posSlot===2 && p.posTiers && p.posTiers[2]){
     return tierBaseMmr(p.posTiers[2]);
   }
   if(p.posSlot===0) return base;
