@@ -61,7 +61,7 @@ body{
 .inhouse-sidebar-logo{font-family:'Rajdhani',sans-serif;padding:16px 14px 12px;line-height:1.2;flex-shrink:0}
 .inhouse-sidebar-logo-top{font-size:11px;font-weight:700;color:#94a3b8;display:block}
 .inhouse-sidebar-logo-main{font-size:18px;font-weight:700;color:#00c8a0;display:block;letter-spacing:1px}
-.inhouse-sidebar-nav{display:flex;flex-direction:column;gap:2px;padding:0 8px;flex-shrink:0}
+.inhouse-sidebar-nav{display:flex;flex-direction:column;gap:2px;padding:12px 8px 0;flex-shrink:0}
 .inhouse-nav-btn{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:7px;border:none;border-left:3px solid transparent;background:transparent;color:#64748b;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;width:100%;text-align:left}
 .inhouse-nav-btn.on{color:#e2e8f0;background:rgba(0,200,160,.08);border-left-color:#00c8a0;font-weight:700}
 .inhouse-nav-btn:hover:not(.on){color:#94a3b8;background:rgba(255,255,255,.04)}
@@ -680,10 +680,6 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 
 <!-- SIDEBAR -->
 <div class="inhouse-sidebar">
-  <div class="inhouse-sidebar-logo">
-    <span class="inhouse-sidebar-logo-top">다비도의</span>
-    <span class="inhouse-sidebar-logo-main">내전</span>
-  </div>
   <nav class="inhouse-sidebar-nav">
     <button class="inhouse-nav-btn on"  onclick="goTab('main',this)"><span class="nav-icon">⚔</span>내전 진행</button>
     <button class="inhouse-nav-btn"     onclick="goTab('shop',this)"><span class="nav-icon">🛒</span>내전 상점</button>
