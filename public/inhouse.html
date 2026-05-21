@@ -727,6 +727,22 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 .side-history-names{font-size:.69rem;line-height:1.32;font-weight:750;word-break:keep-all;overflow-wrap:anywhere}
 .side-history-team.blue .side-history-names{color:#bfdbfe}
 .side-history-team.red .side-history-names{color:#fecaca}
+.record-lineups{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+.record-lineup{position:relative;display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid rgba(148,163,184,.16);background:rgba(15,23,42,.58);overflow:hidden}
+.record-lineup::before{content:'';position:absolute;inset:0;opacity:.08;pointer-events:none}
+.record-lineup.blue{border-color:rgba(77,159,255,.28)}
+.record-lineup.red{border-color:rgba(248,113,113,.28)}
+.record-lineup.blue::before{background:linear-gradient(135deg,var(--bl2),transparent 72%)}
+.record-lineup.red::before{background:linear-gradient(135deg,var(--rl2),transparent 72%)}
+.record-team-mark{position:relative;width:9px;height:9px;border-radius:50%;margin-top:4px;flex-shrink:0;box-shadow:0 0 14px currentColor}
+.record-lineup.blue .record-team-mark{background:var(--bl2);color:var(--bl2)}
+.record-lineup.red .record-team-mark{background:var(--rl2);color:var(--rl2)}
+.record-names{position:relative;font-size:.76rem;font-weight:800;line-height:1.38;word-break:keep-all;overflow-wrap:anywhere}
+.record-lineup.blue .record-names{color:#bfdbfe}
+.record-lineup.red .record-names{color:#fecaca}
+.record-hist-item{align-items:flex-start}
+.record-hist-main{flex:1;min-width:0;display:grid;gap:8px}
+@media(max-width:900px){.record-lineups{grid-template-columns:1fr}}
 .side-start{flex-shrink:0;padding:16px 18px;border-radius:14px;border:1px solid rgba(49,242,178,.35);background:linear-gradient(135deg,#19e6a2,#0d9f72);color:#eafff7;font-weight:950;font-size:1.02rem;letter-spacing:.2px;box-shadow:0 14px 34px rgba(0,200,160,.22);cursor:pointer;transition:transform .15s,filter .15s}
 .side-start:hover{transform:translateY(-1px);filter:brightness(1.06)}
 .side-mini-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -3510,10 +3526,7 @@ function renderRecords(){
   if(!curBlue.length||!curRed.length){
     if(el) el.innerHTML=`<p style="font-size:.8rem;color:var(--txt2)">Auto 또는 Draft에서 팀을 구성하세요.</p>`;
   } else {
-    if(el) el.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap">
-      <span class="ttag ttag-b">🔵 ${curBlue.map(p=>esc(p.name||'?')).join(', ')}</span>
-      <span class="ttag ttag-r">🔴 ${curRed.map(p=>esc(p.name||'?')).join(', ')}</span>
-    </div>`;
+    if(el) el.innerHTML=recordLineupsHTML(curBlue,curRed);
   }
   renderHist(); renderStats();
 }
@@ -3525,12 +3538,9 @@ function renderHist(){
     const dc=diff<40?'d-s':diff<120?'d-a':'d-b';
     const rl={blue:'🔵 블루 승',red:'🔴 레드 승',draw:'🤝 무승부'}[h.res];
     const rc={blue:'rp-bl',red:'rp-rl',draw:'rp-dr'}[h.res];
-    return `<div class="hist-item">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <span class="ttag ttag-b" style="font-size:.7rem">🔵 ${h.blue.map(p=>esc(p.name||'?')).join(', ')}</span>
-          <span class="ttag ttag-r" style="font-size:.7rem">🔴 ${h.red.map(p=>esc(p.name||'?')).join(', ')}</span>
-        </div>
+    return `<div class="hist-item record-hist-item">
+      <div class="record-hist-main">
+        ${recordLineupsHTML(h.blue,h.red)}
         <div class="hist-meta">${h.date} · <span class="diff-badge ${dc}" style="padding:1px 6px">${diff} MMR 차이</span></div>
       </div>
       <span class="r-pill ${rc}">${rl}</span>
@@ -4259,6 +4269,18 @@ function lineupChips(team){
 }
 function historyNames(team){
   return (team||[]).map(p=>esc(shortPlayerName(p.name))).join(' · ') || '기록 없음';
+}
+function recordLineupsHTML(blueTeam,redTeam){
+  return `<div class="record-lineups">
+    <div class="record-lineup blue">
+      <span class="record-team-mark"></span>
+      <span class="record-names">${historyNames(blueTeam)}</span>
+    </div>
+    <div class="record-lineup red">
+      <span class="record-team-mark"></span>
+      <span class="record-names">${historyNames(redTeam)}</span>
+    </div>
+  </div>`;
 }
 function sideLineupHTML(){
   return `<div class="side-lineups">
