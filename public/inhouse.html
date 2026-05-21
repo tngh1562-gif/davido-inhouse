@@ -692,6 +692,20 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 .side-kv-row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid rgba(148,163,184,.08);padding-bottom:8px}
 .side-kv-row:last-child{border-bottom:none;padding-bottom:0}
 .side-value{color:var(--txt);font-weight:800;text-align:right}
+.side-lineups{display:grid;gap:9px;margin-bottom:12px}
+.side-lineup{position:relative;border-radius:10px;padding:10px 11px 10px 12px;border:1px solid rgba(148,163,184,.14);overflow:hidden}
+.side-lineup::before{content:'';position:absolute;inset:0;opacity:.08;pointer-events:none}
+.side-lineup.blue{border-color:rgba(77,159,255,.28);background:rgba(26,110,240,.08)}
+.side-lineup.red{border-color:rgba(248,113,113,.28);background:rgba(220,38,38,.08)}
+.side-lineup.blue::before{background:linear-gradient(135deg,var(--bl2),transparent 70%)}
+.side-lineup.red::before{background:linear-gradient(135deg,var(--rl2),transparent 70%)}
+.side-lineup-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;font-size:.74rem;font-weight:950;letter-spacing:.8px}
+.side-lineup.blue .side-lineup-head{color:var(--bl2)}
+.side-lineup.red .side-lineup-head{color:var(--rl2)}
+.side-lineup-count{font-size:.66rem;color:var(--txt2);font-weight:800;letter-spacing:0}
+.side-lineup-names{display:flex;flex-wrap:wrap;gap:5px}
+.side-name-chip{max-width:100%;padding:3px 7px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:.68rem;font-weight:800;color:#dbeafe;line-height:1.25;word-break:break-all}
+.side-lineup.red .side-name-chip{color:#fee2e2}
 .side-balance{height:96px;display:grid;place-items:center;position:relative}
 .side-ring{width:78px;height:78px;border-radius:50%;background:conic-gradient(var(--bl2) 0 50%, var(--rl2) 50% 100%);display:grid;place-items:center;box-shadow:0 0 28px rgba(77,159,255,.16)}
 .side-ring::after{content:'';width:48px;height:48px;border-radius:50%;background:#121824;border:1px solid rgba(148,163,184,.12)}
@@ -4168,10 +4182,7 @@ function renderMainTeams(){
   }
 
   const ct=document.getElementById('mainCurTeam');
-  if(ct) ct.innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap">
-    <span class="ttag ttag-b" style="font-size:.72rem">🔵 ${curBlue.map(p=>esc(p.name||'?')).join(', ')}</span>
-    <span class="ttag ttag-r" style="font-size:.72rem">🔴 ${curRed.map(p=>esc(p.name||'?')).join(', ')}</span>
-  </div>`;
+  if(ct) ct.innerHTML=sideLineupHTML();
   renderMainSideRail();
 }
 function renderMainRecent(){
@@ -4217,6 +4228,25 @@ function renderMainSideRail(){
     <div class="side-kv-row"><span style="color:var(--bl2)">BLUE</span><span class="side-value">${total?bPct:0}% · ${avgEffScore(curBlue)||0}</span></div>
     <div class="side-kv-row"><span style="color:var(--rl2)">RED</span><span class="side-value">${total?rPct:0}% · ${avgEffScore(curRed)||0}</span></div>
     <div class="side-kv-row"><span>격차</span><span class="side-value" style="color:${diff<120?'#31f2b2':'var(--a)'}">${total?diff+' MMR':'-'}</span></div>`;
+}
+function shortPlayerName(name){
+  return (name||'?').split('#')[0].trim() || (name||'?');
+}
+function lineupChips(team){
+  if(!team.length) return '<span class="side-name-chip" style="opacity:.55">배정 대기</span>';
+  return team.map(p=>`<span class="side-name-chip">${esc(shortPlayerName(p.name))}</span>`).join('');
+}
+function sideLineupHTML(){
+  return `<div class="side-lineups">
+    <div class="side-lineup blue">
+      <div class="side-lineup-head"><span>BLUE TEAM</span><span class="side-lineup-count">${curBlue.length}명</span></div>
+      <div class="side-lineup-names">${lineupChips(curBlue)}</div>
+    </div>
+    <div class="side-lineup red">
+      <div class="side-lineup-head"><span>RED TEAM</span><span class="side-lineup-count">${curRed.length}명</span></div>
+      <div class="side-lineup-names">${lineupChips(curRed)}</div>
+    </div>
+  </div>`;
 }
 async function startInhouseMatch(){
   if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정하세요');return}
