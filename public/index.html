@@ -1482,6 +1482,39 @@ async function endVote() {
   setTimeout(() => autoDeductVoteRewards(), 800);
 }
 
+function normalizeRewardNick(value, leet=false) {
+  const key = String(value || '')
+    .normalize('NFKC')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[#＃].*$/g, '')
+    .replace(/[^\p{L}\p{N}가-힣]/gu, '');
+  return leet ? key.replace(/2/g, 'e') : key;
+}
+function rewardNickKeys(value) {
+  const raw = String(value || '').trim();
+  const taglessRaw = raw.split(/[#＃]/)[0];
+  return [...new Set([
+    normalizeRewardNick(raw),
+    normalizeRewardNick(taglessRaw),
+    normalizeRewardNick(raw, true),
+    normalizeRewardNick(taglessRaw, true),
+  ].filter(Boolean))];
+}
+function rewardEntityKeys(entity) {
+  if (!entity) return [];
+  return [...new Set([
+    ...rewardNickKeys(entity.name),
+    ...rewardNickKeys(entity.chzzk),
+  ])];
+}
+function hasRewardNickMatch(entity, targetKeys) {
+  if (!entity || !targetKeys.length) return false;
+  const keys = rewardEntityKeys(entity);
+  return keys.some(key => targetKeys.includes(key));
+}
+
 async function autoDeductVoteRewards() {
   const v = state.vote;
   if (!v || !v.items || !v.items.length) return;
@@ -1516,18 +1549,15 @@ async function autoDeductVoteRewards() {
   for (const item of targets) {
     for (const voterNick of item.votes) {
       // 치지직닉 → 인하우스뷰어 → LoL닉
-      const viewer = inhouseViewers.find(vw =>
-        (vw.chzzk||'').toLowerCase() === voterNick.toLowerCase() ||
-        (vw.name||'').toLowerCase() === voterNick.toLowerCase()
-      );
-      const botName = viewer?.name || voterNick;
+      const voterKeys = rewardNickKeys(voterNick);
+      const viewer = inhouseViewers.find(vw => hasRewardNickMatch(vw, voterKeys));
 
       // 봇 유저 찾기
-      const botUser = botUsers.find(u =>
-        u.name === botName ||
-        u.name === viewer?.chzzk ||
-        u.name.toLowerCase() === voterNick.toLowerCase()
-      );
+      const searchKeys = [...new Set([
+        ...voterKeys,
+        ...rewardEntityKeys(viewer),
+      ])];
+      const botUser = botUsers.find(u => hasRewardNickMatch(u, searchKeys));
 
       if (!botUser) {
         results.push({ reward: item.label, nick: voterNick, ok: false, msg: '봇 config에서 유저를 찾지 못함' });
@@ -1556,6 +1586,20 @@ async function autoDeductVoteRewards() {
   // 결과 표시
   const success = results.filter(r=>r.ok);
   const fail = results.filter(r=>!r.ok);
+  if (success.length) {
+    try {
+      const selectedName = _storageSelectedUser?.name || null;
+      await loadStorageData();
+      if (selectedName) {
+        const updated = _storageUsers.find(u => u.name === selectedName);
+        if (updated) {
+          _storageSelectedUser = updated;
+          _storageOriginalCounts = JSON.parse(JSON.stringify(updated.counts || {}));
+          renderStorageContent();
+        }
+      }
+    } catch(e) {}
+  }
   let msg = `🎫 보상 자동 차감 결과\n`;
   if (success.length) msg += `\n✅ 성공 (${success.length}건)\n` + success.map(r=>`• ${r.nick} → ${r.reward} -1`).join('\n');
   if (fail.length) msg += `\n❌ 실패 (${fail.length}건)\n` + fail.map(r=>`• ${r.nick}: ${r.msg}`).join('\n');
