@@ -866,7 +866,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 <div id="tab-auto" class="tab">
   <div class="card">
     <div class="card-title">⚡ 자동 팀 배정</div>
-    <p style="font-size:.82rem;color:var(--txt2);margin-bottom:14px">티어 세분화 점수 기반 최적 밸런스 계산</p>
+    <p style="font-size:.82rem;color:var(--txt2);margin-bottom:14px">MMR 기반 최적 밸런스 계산</p>
     <label style="font-size:.82rem;color:var(--txt2)">시뮬레이션 횟수
       <input type="number" id="tryN" value="500" min="10" max="5000" style="width:90px;margin-left:8px">
     </label>
@@ -1006,8 +1006,8 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
         <option>원딜</option><option>서포터</option><option>무관</option>
       </select>
       <select id="vSort" style="width:140px" onchange="renderViewers()">
-        <option value="tier_desc">티어 높은순</option>
-        <option value="tier_asc">티어 낮은순</option>
+        <option value="tier_desc">MMR 높은순</option>
+        <option value="tier_asc">MMR 낮은순</option>
         <option value="wr_desc">승률 높은순</option>
         <option value="wr_asc">승률 낮은순</option>
         <option value="pass_desc">내전 포인트 많은순</option>
@@ -1029,7 +1029,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
             <th>메모</th>
             <th>내전 포인트</th>
             <th class="sortable" onclick="toggleSort('tier')">티어 <span id="sh-tier"></span></th>
-            <th>점수</th>
+            <th>MMR</th>
             <th>포지션</th>
             <th>포지션별 티어</th>
             <th>내전 승률</th>
@@ -1257,6 +1257,36 @@ function avgLabel(score){
   return ALL_TIERS[0].label;
 }
 
+const MMR_MIN = 600;
+const MMR_MAX = 2600;
+const MMR_K = 28;
+function clampMmr(n){ return Math.max(MMR_MIN, Math.min(MMR_MAX, Math.round(Number(n)||0))); }
+function tierBaseMmr(key){
+  const score = SCORE_MAP[compatTierKey(key)] || SCORE_MAP.GO4 || 250;
+  return clampMmr(600 + score * 1.1);
+}
+function viewerGames(v){
+  const st=v?.stats||{};
+  return (Number(st.w)||0)+(Number(st.l)||0)+(Number(st.d)||0);
+}
+function viewerMmr(v){
+  if(!v) return tierBaseMmr('GO4');
+  const raw=Number(v.mmr);
+  if(Number.isFinite(raw) && raw>0) return clampMmr(raw);
+  return tierBaseMmr(v.tier);
+}
+function ensureViewerMmr(v){
+  if(!v) return tierBaseMmr('GO4');
+  const mmr=viewerMmr(v);
+  v.mmr=mmr;
+  return mmr;
+}
+function playerBaseMmr(p){
+  const v=findViewerForPlayer(p);
+  return v ? viewerMmr(v) : tierBaseMmr(p?.tier);
+}
+function mmrLabel(n){ return Math.round(Number(n)||0)+' MMR'; }
+
 // 구버전 키 → 신버전 키 호환 (마스터 단일 'MS' → 'MS0')
 function compatTierKey(key){
   if(!key) return 'GO4';
@@ -1479,7 +1509,7 @@ function loadLocal(){
 
 function normalizeLoadedData(){
   players.forEach(p=>{ p.tier=compatTierKey(p.tier); });
-  viewers.forEach(v=>{ v.tier=compatTierKey(v.tier); });
+  viewers.forEach(v=>{ v.tier=compatTierKey(v.tier); ensureViewerMmr(v); });
   curBlue.forEach(p=>{ p.tier=compatTierKey(p.tier); });
   curRed.forEach(p=>{  p.tier=compatTierKey(p.tier); });
   normalizeStoredData();
@@ -1537,7 +1567,7 @@ function viewerPoints(v){ return Math.max(0, Number(v?.pass)||0); }
 function findViewerForPlayer(p){
   if(!p) return null;
   if(p.viewerId){
-    const byId=viewers.find(v=>v.id===p.viewerId);
+    const byId=viewers.find(v=>Number(v.id)===Number(p.viewerId));
     if(byId) return byId;
   }
   const name=(p.name||'').trim().toLowerCase();
@@ -2243,7 +2273,7 @@ function copyOverlayUrl(){
 ══════════════════════════════════════ */
 const TS = ()=>parseInt(document.getElementById('teamSize').value);
 const active = ()=>players.filter(p=>p.name.trim());
-const teamScore = t=>t.reduce((s,p)=>s+(SCORE_MAP[p.tier]||0),0);
+const teamScore = t=>t.reduce((s,p)=>s+playerBaseMmr(p),0);
 const avgScore  = t=>t.length?Math.round(teamScore(t)/t.length):0;
 
 // 팀 내 포지션 배정: 각 플레이어에게 최적 포지션 할당
@@ -2315,27 +2345,32 @@ function assignPositions(team){
 }
 // 포지션 배정 결과를 반영한 유효 점수
 function effectiveScore(p){
-  // 포지션별 티어가 있으면 그 티어 점수로 계산 (패널티 없음)
-  // 없으면 기본 티어에 패널티 적용
+  const v=findViewerForPlayer(p);
+  const base = v ? viewerMmr(v) : tierBaseMmr(p.tier);
+  if(v && v.posMmr && p.assignedPos && Number(v.posMmr[p.assignedPos])>0){
+    return clampMmr(v.posMmr[p.assignedPos]);
+  }
   if(p.posSlot===0 && p.posTiers && p.posTiers[0]){
-    return SCORE_MAP[p.posTiers[0]] || SCORE_MAP[p.tier] || 0;
+    return tierBaseMmr(p.posTiers[0]);
   }
   if(p.posSlot===1 && p.posTiers && p.posTiers[1]){
-    return SCORE_MAP[p.posTiers[1]] || Math.round((SCORE_MAP[p.tier]||0)*0.8);
+    return tierBaseMmr(p.posTiers[1]);
   }
   if(p.posSlot===2 && p.posTiers && p.posTiers[2]){
-    return SCORE_MAP[p.posTiers[2]] || Math.round((SCORE_MAP[p.tier]||0)*0.7);
+    return tierBaseMmr(p.posTiers[2]);
   }
-  const base = SCORE_MAP[p.tier]||0;
   if(p.posSlot===0) return base;
-  if(p.posSlot===1) return Math.round(base*0.8);
-  if(p.posSlot===2) return Math.round(base*0.7);
-  return Math.round(base*0.6);
+  if(p.posSlot===1) return clampMmr(base*0.94);
+  if(p.posSlot===2) return clampMmr(base*0.90);
+  return clampMmr(base*0.86);
 }
 
 // 팀 유효 점수 합산 (포지션 배정 후)
 function teamEffScore(team){
   return team.reduce((s,p)=>s+effectiveScore(p),0);
+}
+function avgEffScore(team){
+  return team.length ? Math.round(teamEffScore(team)/team.length) : 0;
 }
 const esc = s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -2465,10 +2500,10 @@ function renderRoster(){
 
 function updateSummary(){
   const n=active().length, need=TS()*2;
-  const pts=n?Math.round(active().reduce((s,p)=>s+(SCORE_MAP[p.tier]||0),0)/n):0;
+  const pts=n?Math.round(active().reduce((s,p)=>s+playerBaseMmr(p),0)/n):0;
   let html=`<div class="chips">
     <div class="chip">인원 <b>${n}</b> / ${need}</div>
-    <div class="chip">평균 점수 <b>${pts}</b> (${avgLabel(pts)})</div>
+    <div class="chip">평균 MMR <b>${pts}</b></div>
     ${n<need?`<div class="chip chip-warn">⚠ ${need-n}명 부족</div>`:`<div class="chip chip-ok">✓ 인원 충족</div>`}
   </div>`;
   // tier dist
@@ -2502,7 +2537,7 @@ function importFromDB(){
 
   const sorted=[...viewers]
     .map((v,i)=>({...v,_origIdx:i}))
-    .sort((a,b)=>(SCORE_MAP[b.tier]||0)-(SCORE_MAP[a.tier]||0));
+    .sort((a,b)=>viewerMmr(b)-viewerMmr(a));
 
   const tierOpts=`<option value="">전체 티어</option>`+
     TIER_GROUPS.slice().reverse().map(([k,lbl])=>`<option value="${k}">${lbl}</option>`).join('');
@@ -2730,7 +2765,7 @@ function addViewerPaste(){
     const positions=[parsePosText(pos0raw),parsePosText(pos1raw),parsePosText(pos2raw)];
     const posTiers=(pt0||pt1||pt2)?[pt0||null,pt1||null,pt2||null]:null;
     if(viewers.find(v=>v.name.toLowerCase()===name.toLowerCase())){skipped++;return}
-    viewers.push({id:++vid,name,chzzk,tier,positions,posTiers,memo,added:Date.now()});
+    viewers.push({id:++vid,name,chzzk,tier,positions,posTiers,memo,mmr:tierBaseMmr(tier),added:Date.now()});
     added++;
   });
   if(added) markViewersDirty();
@@ -2756,7 +2791,7 @@ function addViewer(){
   if(viewers.find(v=>v.name.toLowerCase()===name.toLowerCase())){
     toast('이미 존재하는 닉네임입니다');return;
   }
-  viewers.push({id:++vid,name,chzzk,tier,positions,memo,added:Date.now()});
+  viewers.push({id:++vid,name,chzzk,tier,positions,memo,mmr:tierBaseMmr(tier),added:Date.now()});
   markViewersDirty();
   save(); renderViewers();
   document.getElementById('vName').value='';
@@ -2787,6 +2822,7 @@ function saveEdit(id){
   const chzzkEl = document.getElementById('ec-'+id);
   const memoEl  = document.getElementById('em-'+id);
   const tierEl  = document.getElementById('et-'+id);
+  const mmrEl   = document.getElementById('emmr-'+id);
   const p0el    = document.getElementById('ep0-'+id);
   const p1el    = document.getElementById('ep1-'+id);
   const p2el    = document.getElementById('ep2-'+id);
@@ -2797,6 +2833,7 @@ function saveEdit(id){
   const pasEl = document.getElementById('epas-'+id);
   if(pasEl) v.pass = Math.max(0, parseInt(pasEl.value)||0);
   if(tierEl)  v.tier  = tierEl.value;
+  if(mmrEl) v.mmr = clampMmr(mmrEl.value);
 
   v.positions = [
     p0el ? p0el.value||'무관' : '무관',
@@ -2871,8 +2908,8 @@ function getFiltered(){
 
   // sort
   list.sort((a,b)=>{
-    if(so==='tier_desc') return (SCORE_MAP[b.tier]||0)-(SCORE_MAP[a.tier]||0);
-    if(so==='tier_asc')  return (SCORE_MAP[a.tier]||0)-(SCORE_MAP[b.tier]||0);
+    if(so==='tier_desc') return viewerMmr(b)-viewerMmr(a);
+    if(so==='tier_asc')  return viewerMmr(a)-viewerMmr(b);
     if(so==='wr_desc'||so==='wr_asc'){
       const wra=(a.stats&&(a.stats.w+a.stats.l+(a.stats.d||0))>0)?a.stats.w/(a.stats.w+a.stats.l+(a.stats.d||0)):-1;
       const wrb=(b.stats&&(b.stats.w+b.stats.l+(b.stats.d||0))>0)?b.stats.w/(b.stats.w+b.stats.l+(b.stats.d||0)):-1;
@@ -2933,7 +2970,7 @@ function renderViewers(){
             <input class="edit-inp" id="epas-${v.id}" type="number" min="0" value="${v.pass||0}" style="width:60px;text-align:center">
           </td>
           <td><select class="edit-inp" id="et-${v.id}" style="width:100%">${buildTierOptions(v.tier)}</select></td>
-          <td style="color:var(--txt2);font-size:.72rem">${SCORE_MAP[v.tier]||0}</td>
+          <td><input class="edit-inp" id="emmr-${v.id}" type="number" min="${MMR_MIN}" max="${MMR_MAX}" value="${viewerMmr(v)}" style="width:78px;text-align:center"></td>
           <td style="white-space:nowrap">${(()=>{
             const ps=Array.isArray(v.positions)?v.positions:normPositions(v);
             const slots=[ps[0]||'무관',ps[1]||'무관',ps[2]||'무관'];
@@ -2984,7 +3021,7 @@ function renderViewers(){
           </div>
         </td>
         <td>${tierBadge(v.tier)}</td>
-        <td style="font-size:.75rem;color:var(--txt2)">${SCORE_MAP[v.tier]||0}</td>
+        <td style="font-size:.75rem;color:var(--txt2)">${viewerMmr(v)}</td>
         <td style="white-space:nowrap">${(()=>{ const ps=Array.isArray(v.positions)?v.positions:normPositions(v); return ps.filter(p=>p&&p!=='무관').map(p=>pip(p)).join('') || pip('무관'); })()} </td>
         <td style="font-size:.72rem;min-width:120px">${(()=>{
           const ps=Array.isArray(v.positions)?v.positions:normPositions(v);
@@ -3144,16 +3181,43 @@ function confirmMainTeams(){
 
 function record(res){
   if(!curBlue.length||!curRed.length){toast('팀이 없습니다');return}
+  const blueAvgBefore=avgEffScore(curBlue);
+  const redAvgBefore=avgEffScore(curRed);
   history.unshift({
     id:Date.now(),date:new Date().toLocaleString('ko-KR'),
     blue:curBlue.map(p=>({...p})),red:curRed.map(p=>({...p})),
-    bS:teamScore(curBlue),rS:teamScore(curRed),res
+    bS:teamEffScore(curBlue),rS:teamEffScore(curRed),res
   });
+  function applyMmrResult(){
+    const scoreBlue=res==='blue'?1:res==='red'?0:0.5;
+    const expectedBlue=1/(1+Math.pow(10,(redAvgBefore-blueAvgBefore)/400));
+    const rawDelta=MMR_K*(scoreBlue-expectedBlue);
+    const deltaBlue=Math.max(-36,Math.min(36,Math.round(rawDelta)));
+    const deltaRed=-deltaBlue;
+    let changed=false;
+    function apply(team,delta){
+      team.forEach(p=>{
+        const v=findViewerForPlayer(p);
+        if(!v) return;
+        const old=ensureViewerMmr(v);
+        const games=viewerGames(v);
+        const newbieBoost=games<10 ? Math.round(delta*0.35) : 0;
+        const finalDelta=delta+newbieBoost;
+        v.mmr=clampMmr(old+finalDelta);
+        if(!Array.isArray(v.mmrHistory)) v.mmrHistory=[];
+        v.mmrHistory.unshift({id:Date.now()+v.id,before:old,after:v.mmr,delta:finalDelta,result:res,at:Date.now()});
+        v.mmrHistory=v.mmrHistory.slice(0,30);
+        changed=true;
+      });
+    }
+    apply(curBlue,deltaBlue);
+    apply(curRed,deltaRed);
+    if(changed) markViewersDirty();
+  }
   function updateViewerStat(team,side){
     let changed=false;
     team.forEach(p=>{
-      const name=(p.name||'').trim().toLowerCase(); if(!name) return;
-      const v=viewers.find(v=>v.name.trim().toLowerCase()===name); if(!v) return;
+      const v=findViewerForPlayer(p); if(!v) return;
       if(!v.stats) v.stats={w:0,l:0,d:0};
       if(res===side) v.stats.w++;
       else if(res==='draw') v.stats.d++;
@@ -3162,6 +3226,7 @@ function record(res){
     });
     if(changed) markViewersDirty();
   }
+  applyMmrResult();
   updateViewerStat(curBlue,'blue'); updateViewerStat(curRed,'red');
   let bonusCount=0;
   if(res==='blue') bonusCount=grantInhousePoints(curBlue,3.5,'승리 보너스');
@@ -3185,25 +3250,25 @@ function renderAutoResult(){
   const bPct=(bS/tot*100).toFixed(1);
   const dc=diff<40?'d-s':diff<120?'d-a':'d-b';
   const dtxt=diff<40?'균형 우수':diff<120?'소폭 차이':'밸런스 주의';
-  const bAvg=avgScore(blue), rAvg=avgScore(red);
+  const bAvg=avgEffScore(blue), rAvg=avgEffScore(red);
   const el=document.getElementById('autoOut');
   if(!el) return;
   el.innerHTML=`
     <div class="compare-box">
       <div class="compare-nums">
-        <div class="c-score blue">${bS}<span style="font-size:.6rem;color:var(--txt2);margin-left:3px">pts</span></div>
+        <div class="c-score blue">${bS}<span style="font-size:.6rem;color:var(--txt2);margin-left:3px">MMR</span></div>
         <div style="text-align:center">
           <div class="c-vs">VS</div>
           <div class="diff ${dc}" style="margin-top:4px">${diff}차 · ${dtxt}</div>
         </div>
-        <div class="c-score red">${rS}<span style="font-size:.6rem;color:var(--txt2);margin-left:3px">pts</span></div>
+        <div class="c-score red">${rS}<span style="font-size:.6rem;color:var(--txt2);margin-left:3px">MMR</span></div>
       </div>
       <div class="bal-track" style="margin:10px 0 5px"><div class="bal-fill" style="width:${bPct}%"></div></div>
       <div class="bal-sub">
-        <span>🔵 ${bPct}% · 평균 <b>${bAvg}</b> (${avgLabel(bAvg)})</span>
-        <span>🔴 ${(100-parseFloat(bPct)).toFixed(1)}% · 평균 <b>${rAvg}</b> (${avgLabel(rAvg)})</span>
+        <span>🔵 ${bPct}% · 평균 <b>${mmrLabel(bAvg)}</b></span>
+        <span>🔴 ${(100-parseFloat(bPct)).toFixed(1)}% · 평균 <b>${mmrLabel(rAvg)}</b></span>
       </div>
-      <div style="font-size:.7rem;color:var(--txt2);text-align:center;margin-top:5px">※ 포지션 패널티: 부2포 -30% / 미배정 -40%</div>
+      <div style="font-size:.7rem;color:var(--txt2);text-align:center;margin-top:5px">MMR 기준 자동 밸런스 · 부포지션은 약한 패널티 적용</div>
     </div>
     <div class="teams-2col">
       ${teamBox(blue,'bl-box','🔵 BLUE',bS,bAvg)}
@@ -3233,7 +3298,7 @@ function slotBadgeHTML(slot, p){
 function memberHTML(p, pos, side){
   const slot=p.posSlot;
   const isSub=slot===1||slot===2||slot===-1;
-  const baseScore=SCORE_MAP[p.tier]||0;
+  const baseScore=playerBaseMmr(p);
   const effScore=effectiveScore(p);
   const chzzk=p.chzzk||(viewers.find(v=>v.name.toLowerCase()===(p.name||'').toLowerCase())||{}).chzzk||'';
   const ps=Array.isArray(p.positions)?p.positions:normPositions(p);
@@ -3246,8 +3311,8 @@ function memberHTML(p, pos, side){
   else slotBadge=`<span style="font-size:.6rem;padding:1px 6px;border-radius:3px;background:rgba(224,48,32,.1);color:#e03020;border:1px solid rgba(224,48,32,.2);font-weight:700">미배정</span>`;
 
   const scoreStr=isSub
-    ? `<span style="font-size:.68rem;color:#b0c0d0;text-decoration:line-through">${baseScore}</span><span style="font-size:.72rem;font-weight:700;color:#c08010;margin-left:2px">→${effScore}</span>`
-    : `<span style="font-size:.75rem;font-weight:700;color:#3a5a7a">${baseScore}</span>`;
+    ? `<span style="font-size:.68rem;color:#b0c0d0;text-decoration:line-through">${baseScore}</span><span style="font-size:.72rem;font-weight:700;color:#c08010;margin-left:2px">→${effScore} MMR</span>`
+    : `<span style="font-size:.75rem;font-weight:700;color:#3a5a7a">${baseScore} MMR</span>`;
 
   return `
     <div class="member swap-member" draggable="true"
@@ -3293,7 +3358,7 @@ function teamBox(team,cls,label,pts,avg){
   return `<div class="team-box ${cls}" style="min-height:220px;border-radius:12px;overflow:hidden;border:1px solid ${isBlue?'rgba(26,110,240,.2)':'rgba(224,48,32,.2)'}">
     <div style="padding:12px 16px;background:${teamBg};border-bottom:1px solid ${isBlue?'rgba(26,110,240,.1)':'rgba(224,48,32,.1)'};display:flex;align-items:center;justify-content:space-between">
       <div style="font-weight:700;font-size:.95rem;color:${teamColor}">${label}</div>
-      <div style="font-size:.72rem;color:#7898b8">유효 <b style="color:#a0b8d0">${pts}</b>pts · 평균 <b style="color:#a0b8d0">${avgLabel(avg)}</b></div>
+      <div style="font-size:.72rem;color:#7898b8">유효 <b style="color:#a0b8d0">${pts}</b> MMR · 평균 <b style="color:#a0b8d0">${mmrLabel(avg)}</b></div>
     </div>
     <div style="background:#161b27">${rows}</div></div>`;
 }
@@ -3324,7 +3389,7 @@ function renderHist(){
           <span class="ttag ttag-b" style="font-size:.7rem">🔵 ${h.blue.map(p=>esc(p.name||'?')).join(', ')}</span>
           <span class="ttag ttag-r" style="font-size:.7rem">🔴 ${h.red.map(p=>esc(p.name||'?')).join(', ')}</span>
         </div>
-        <div class="hist-meta">${h.date} · <span class="diff-badge ${dc}" style="padding:1px 6px">${diff}pts 차이</span></div>
+        <div class="hist-meta">${h.date} · <span class="diff-badge ${dc}" style="padding:1px 6px">${diff} MMR 차이</span></div>
       </div>
       <span class="r-pill ${rc}">${rl}</span>
       <button class="p-del" onclick="delHist(${h.id})">✕</button>
@@ -3373,11 +3438,13 @@ function runAuto(){
   const half=Math.floor(need/2);
   for(let i=0;i<tries;i++){
     const sh=[...p].sort(()=>Math.random()-.5);
-    const d=Math.abs(teamScore(sh.slice(0,half))-teamScore(sh.slice(half)));
-    if(d<bestDiff){bestDiff=d;best={b:sh.slice(0,half),r:sh.slice(half)}}
+    const b=assignPositions(sh.slice(0,half));
+    const r=assignPositions(sh.slice(half));
+    const d=Math.abs(teamEffScore(b)-teamEffScore(r));
+    if(d<bestDiff){bestDiff=d;best={b,r}}
     if(!bestDiff) break;
   }
-  curBlue=assignPositions(best.b); curRed=assignPositions(best.r);
+  curBlue=best.b; curRed=best.r;
   save(); renderAutoResult(); toast('최적 배정 완료!');
 }
 function runRandom(){
@@ -3466,7 +3533,7 @@ function confirmDraft(){
     <div class="card-title">✓ 팀 확정</div>
     <div class="bal-track" style="margin-bottom:6px"><div class="bal-fill" style="width:${(bS/(bS+rS)*100).toFixed(1)}%"></div></div>
     <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--txt2)">
-      <span>🔵 ${bS}pts</span><span class="diff-badge ${dc}">차이 ${diff}pts</span><span>🔴 ${rS}pts</span>
+      <span>🔵 ${bS} MMR</span><span class="diff-badge ${dc}">차이 ${diff} MMR</span><span>🔴 ${rS} MMR</span>
     </div>
     <p style="font-size:.75rem;color:#4dffaa;margin-top:10px">✓ Records 탭에서 결과를 기록하세요.</p>
   </div>`;
@@ -3539,7 +3606,7 @@ function renderDraftQuickSearch(){
 
   const matched=viewers
     .filter(v=>v.name.toLowerCase().includes(q)||(v.chzzk||'').toLowerCase().includes(q))
-    .sort((a,b)=>(SCORE_MAP[b.tier]||0)-(SCORE_MAP[a.tier]||0));
+    .sort((a,b)=>viewerMmr(b)-viewerMmr(a));
 
   if(!matched.length){
     drop.innerHTML='<div style="padding:14px;text-align:center;font-size:.78rem;color:var(--txt2)">검색 결과 없음</div>';
@@ -3607,7 +3674,7 @@ function renderQuickSearch(){
 
   const matched=viewers
     .filter(v=>v.name.toLowerCase().includes(q)||(v.chzzk||'').toLowerCase().includes(q))
-    .sort((a,b)=>(SCORE_MAP[b.tier]||0)-(SCORE_MAP[a.tier]||0));
+    .sort((a,b)=>viewerMmr(b)-viewerMmr(a));
 
   if(!matched.length){
     drop.innerHTML='<div style="padding:14px;text-align:center;font-size:.78rem;color:var(--txt2)">검색 결과 없음</div>';
@@ -3749,7 +3816,7 @@ function quickPickFromDB(playerId){
 
   const sorted=[...viewers]
     .filter(v=>!players.find(p=>p.id!==playerId && p.name.toLowerCase()===v.name.toLowerCase() && p.name.trim()))
-    .sort((a,b)=>(SCORE_MAP[b.tier]||0)-(SCORE_MAP[a.tier]||0));
+    .sort((a,b)=>viewerMmr(b)-viewerMmr(a));
 
   overlay.innerHTML=`
     <div style="background:var(--s1);border:1px solid var(--a);border-radius:6px;padding:18px;max-width:420px;width:100%;max-height:80vh;display:flex;flex-direction:column;gap:10px">
@@ -3908,12 +3975,12 @@ function renderMainRoster(){
 function renderMainSummary(){
   const el=document.getElementById('mainSummary'); if(!el) return;
   const n=active().length, need=mainTS()*2;
-  const pts=n?Math.round(active().reduce((s,p)=>s+(SCORE_MAP[p.tier]||0),0)/n):0;
+  const pts=n?Math.round(active().reduce((s,p)=>s+playerBaseMmr(p),0)/n):0;
   const okColor=n>=need?'rgba(77,255,170,.2)':'rgba(244,67,54,.15)';
   const okTxt=n>=need?'#4dffaa':'var(--rl2)';
   el.innerHTML=`
     <span style="font-size:.75rem;color:var(--txt2)">인원 <b style="color:var(--txt)">${n}/${need}</b></span>
-    <span style="font-size:.75rem;color:var(--txt2)">평균 <b style="color:var(--txt)">${pts}pts</b> <span style="color:var(--txt2)">(${avgLabel(pts)})</span></span>
+    <span style="font-size:.75rem;color:var(--txt2)">평균 <b style="color:var(--txt)">${mmrLabel(pts)}</b></span>
     <span style="font-size:.72rem;padding:2px 8px;border-radius:3px;background:${okColor};color:${okTxt};font-weight:700">
       ${n>=need?'✓ 충족':'⚠ '+(need-n)+'명 부족'}
     </span>`;
@@ -3926,11 +3993,13 @@ function mainAutoBalance(){
   const half=mainTS();
   for(let i=0;i<500;i++){
     const sh=[...p].sort(()=>Math.random()-.5);
-    const d=Math.abs(teamScore(sh.slice(0,half))-teamScore(sh.slice(half)));
-    if(d<bestDiff){bestDiff=d;best={b:sh.slice(0,half),r:sh.slice(half)}}
+    const b=assignPositions(sh.slice(0,half));
+    const r=assignPositions(sh.slice(half));
+    const d=Math.abs(teamEffScore(b)-teamEffScore(r));
+    if(d<bestDiff){bestDiff=d;best={b,r}}
     if(!bestDiff) break;
   }
-  curBlue=assignPositions(best.b); curRed=assignPositions(best.r);
+  curBlue=best.b; curRed=best.r;
   save(); renderMainTeams(); toast('최적 배정!');
 }
 function mainRandom(){
@@ -3962,25 +4031,25 @@ function renderMainTeams(){
   if(balBox) balBox.style.display='';
   if(balContent) balContent.innerHTML=`
     <div class="bal-nums">
-      <div class="bal-score bl">${bS}<span style="font-size:.6rem;color:var(--txt2);margin-left:3px">pts</span></div>
+      <div class="bal-score bl">${bS}<span style="font-size:.6rem;color:var(--txt2);margin-left:3px">MMR</span></div>
       <div style="text-align:center">
         <div class="bal-vs">VS</div>
         <div class="diff-badge ${dc}" style="margin-top:4px">${diff}차 · ${dtxt}</div>
       </div>
-      <div class="bal-score rl">${rS}<span style="font-size:.6rem;color:var(--txt2);margin-left:3px">pts</span></div>
+      <div class="bal-score rl">${rS}<span style="font-size:.6rem;color:var(--txt2);margin-left:3px">MMR</span></div>
     </div>
     <div class="bal-track" style="margin:10px 0 6px"><div class="bal-fill" style="width:${bPct}%"></div></div>
     <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--txt2)">
-      <span>🔵 ${bPct}% · 평균 ${avgLabel(avgScore(curBlue))}</span>
-      <span>🔴 ${(100-parseFloat(bPct)).toFixed(1)}% · 평균 ${avgLabel(avgScore(curRed))}</span>
+      <span>🔵 ${bPct}% · 평균 ${mmrLabel(avgEffScore(curBlue))}</span>
+      <span>🔴 ${(100-parseFloat(bPct)).toFixed(1)}% · 평균 ${mmrLabel(avgEffScore(curRed))}</span>
     </div>`;
 
   // 팀 카드 (라인업 표 없이 바로)
   const grid=document.getElementById('mainTeamsGrid');
   if(grid){
     grid.innerHTML=
-      teamBox(curBlue,'bl-box','🔵 BLUE',bS,avgScore(curBlue))+
-      teamBox(curRed,'rl-box','🔴 RED',rS,avgScore(curRed));
+      teamBox(curBlue,'bl-box','🔵 BLUE',bS,avgEffScore(curBlue))+
+      teamBox(curRed,'rl-box','🔴 RED',rS,avgEffScore(curRed));
     grid.querySelectorAll('.team-box').forEach(el=>el.style.minHeight='240px');
   }
 
