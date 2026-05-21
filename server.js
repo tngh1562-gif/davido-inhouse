@@ -58,6 +58,7 @@ const INHOUSE_BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const MANUAL_BACKUP_DIR = path.join(DATA_DIR, 'manual-backups');
 const MAX_MANUAL_BACKUPS = 5;
 const BOT_AUTH_FILE = path.join(DATA_DIR, 'bot-auth.json');
+const BOT_STATE_FILE = path.join(DATA_DIR, 'bot-state.json');
 const DISCORD_CONFIG_FILE = path.join(DATA_DIR, 'discord-config.json');
 // Optional: lets the inhouse site ask the separate Discord bot service to send button messages.
 function normalizeDiscordBotApiUrl(value) {
@@ -714,6 +715,13 @@ const state = {
   chatLog: [],
 };
 
+const savedBotState = loadBotRuntimeState();
+if (savedBotState.channelId) state.channelId = normalizeChzzkChannelId(savedBotState.channelId);
+if (savedBotState.bot && typeof savedBotState.bot === 'object') {
+  state.bot.enabled = savedBotState.bot.enabled !== false;
+  state.bot.sendToChat = savedBotState.bot.sendToChat === true;
+}
+
 let chzzkWs = null;
 let chzzkPing = null;
 let chzzkChatChannelId = null;
@@ -757,6 +765,33 @@ function saveBotAuth(nidAut, nidSes) {
 }
 
 const chzzkAuth = loadBotAuth();
+
+function loadBotRuntimeState() {
+  try {
+    if (!fs.existsSync(BOT_STATE_FILE)) return {};
+    const saved = readJsonFile(BOT_STATE_FILE);
+    return saved && typeof saved === 'object' ? saved : {};
+  } catch (e) {
+    console.error('[BOT_STATE] load failed:', e.message);
+    return {};
+  }
+}
+
+function saveBotRuntimeState() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(BOT_STATE_FILE, JSON.stringify({
+      channelId: state.channelId || null,
+      bot: {
+        enabled: state.bot.enabled !== false,
+        sendToChat: state.bot.sendToChat === true,
+      },
+      savedAt: new Date().toISOString(),
+    }), 'utf8');
+  } catch (e) {
+    console.error('[BOT_STATE] save failed:', e.message);
+  }
+}
 
 function normalizeChzzkChannelId(value) {
   let raw = String(value || '').trim();
@@ -1181,6 +1216,7 @@ async function connectChzzk(channelId) {
   await new Promise(r => setTimeout(r, 500));
 
   state.channelId = channelId;
+  saveBotRuntimeState();
   if (state.bot.sendToChat && !hasChzzkAuth()) {
     state.bot.lastSendError = '채팅답장 ON 상태지만 봇 계정 인증이 없어 읽기 연결만 시도합니다.';
   }
@@ -1469,6 +1505,7 @@ app.post('/api/action', async (req, res) => {
     case 'connect_chzzk':
       try {
         await connectChzzk(body.channelId);
+        saveBotRuntimeState();
         return res.json({ ok: true, data: publicState() });
       } catch (err) {
         return res.status(400).json({ ok: false, error: err.message || '치지직 연결 실패', data: publicState() });
@@ -1483,11 +1520,13 @@ app.post('/api/action', async (req, res) => {
       chzzkChatChannelId = null;
       chzzkAuthed = false;
       state.bot.status = 'idle';
+      saveBotRuntimeState();
       broadcastState();
       return res.json({ ok: true });
 
     case 'set_bot_enabled':
       state.bot.enabled = body.enabled !== false;
+      saveBotRuntimeState();
       broadcastState();
       return res.json({ ok: true, bot: state.bot });
 
@@ -1501,6 +1540,7 @@ app.post('/api/action', async (req, res) => {
         state.bot.lastSendError = err.message || '치지직 재연결 실패';
         broadcastState();
       });
+      saveBotRuntimeState();
       broadcastState();
       return res.json({ ok: true, bot: state.bot });
 
@@ -1528,6 +1568,7 @@ app.post('/api/action', async (req, res) => {
         state.bot.lastSendError = err.message || '치지직 재연결 실패';
         broadcastState();
       });
+      saveBotRuntimeState();
       broadcastState();
       return res.json({ ok: true, bot: state.bot });
 
@@ -1721,10 +1762,24 @@ app.post('/api/action', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+function restoreChzzkConnectionAfterBoot() {
+  if (!state.channelId || state.bot.enabled === false) return;
+  state.bot.status = 'reconnecting';
+  state.bot.lastSendError = null;
+  broadcastState();
+  console.log(`[CHZZK] restoring saved channel: ${state.channelId}`);
+  connectChzzk(state.channelId).catch(err => {
+    state.bot.status = 'closed';
+    state.bot.lastSendError = err.message || '치지직 자동 재연결 실패';
+    broadcastState();
+  });
+}
+
 server.listen(PORT, () => {
   console.log('========================================');
   console.log(`  다비도의 내전 서버 실행 중`);
   console.log(`  http://localhost:${PORT}`);
   console.log('========================================');
   startLcuPolling();
+  setTimeout(restoreChzzkConnectionAfterBoot, 1500);
 });
