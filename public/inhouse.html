@@ -710,8 +710,23 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 .side-ring{width:78px;height:78px;border-radius:50%;background:conic-gradient(var(--bl2) 0 50%, var(--rl2) 50% 100%);display:grid;place-items:center;box-shadow:0 0 28px rgba(77,159,255,.16)}
 .side-ring::after{content:'';width:48px;height:48px;border-radius:50%;background:#121824;border:1px solid rgba(148,163,184,.12)}
 .side-ring-text{position:absolute;text-align:center;font-size:.72rem;font-weight:900;color:#f8fafc;line-height:1.3}
-.side-recent{display:flex;flex-direction:column;gap:8px;font-size:.76rem;max-height:118px;overflow:auto;padding-right:2px}
+.side-recent{display:flex;flex-direction:column;gap:8px;font-size:.76rem;max-height:118px;overflow:auto;padding-right:3px;scrollbar-width:thin;scrollbar-color:rgba(49,242,178,.34) rgba(15,23,42,.5)}
+.side-recent::-webkit-scrollbar,.main-side::-webkit-scrollbar,.page::-webkit-scrollbar{width:7px}
+.side-recent::-webkit-scrollbar-track,.main-side::-webkit-scrollbar-track,.page::-webkit-scrollbar-track{background:rgba(15,23,42,.45);border-radius:999px}
+.side-recent::-webkit-scrollbar-thumb,.main-side::-webkit-scrollbar-thumb,.page::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(49,242,178,.78),rgba(77,159,255,.62));border-radius:999px}
 .side-recent-row{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--txt2)}
+.side-history-card{position:relative;padding:9px 10px;border:1px solid rgba(148,163,184,.14);border-radius:10px;background:linear-gradient(135deg,rgba(30,41,59,.78),rgba(15,23,42,.72));box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.side-history-card::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:999px;background:linear-gradient(180deg,var(--bl2),var(--rl2));opacity:.85}
+.side-history-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.side-history-date{font-size:.66rem;color:var(--txt2);font-weight:800}
+.side-history-teams{display:grid;gap:5px}
+.side-history-team{display:flex;align-items:flex-start;gap:6px;min-width:0;color:#cbd5e1}
+.side-history-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0;box-shadow:0 0 12px currentColor}
+.side-history-dot.blue{background:var(--bl2);color:var(--bl2)}
+.side-history-dot.red{background:var(--rl2);color:var(--rl2)}
+.side-history-names{font-size:.69rem;line-height:1.32;font-weight:750;word-break:keep-all;overflow-wrap:anywhere}
+.side-history-team.blue .side-history-names{color:#bfdbfe}
+.side-history-team.red .side-history-names{color:#fecaca}
 .side-start{flex-shrink:0;padding:16px 18px;border-radius:14px;border:1px solid rgba(49,242,178,.35);background:linear-gradient(135deg,#19e6a2,#0d9f72);color:#eafff7;font-weight:950;font-size:1.02rem;letter-spacing:.2px;box-shadow:0 14px 34px rgba(0,200,160,.22);cursor:pointer;transition:transform .15s,filter .15s}
 .side-start:hover{transform:translateY(-1px);filter:brightness(1.06)}
 .side-mini-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -4191,15 +4206,21 @@ function renderMainRecent(){
   el.innerHTML=history.slice(0,5).map(h=>{
     const rl={blue:'🔵 블루 승',red:'🔴 레드 승',draw:'🤝 무승부'}[h.res];
     const rc={blue:'rp-bl',red:'rp-rl',draw:'rp-dr'}[h.res];
-    return `<div class="hist-item" style="padding:8px 12px">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:.7rem;color:var(--txt2)">${h.date}</div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:2px">
-          <span class="ttag ttag-b" style="font-size:.68rem">🔵 ${h.blue.map(p=>esc(p.name||'?')).join(', ')}</span>
-          <span class="ttag ttag-r" style="font-size:.68rem">🔴 ${h.red.map(p=>esc(p.name||'?')).join(', ')}</span>
+    return `<div class="side-history-card">
+      <div class="side-history-top">
+        <span class="side-history-date">${esc(h.date||'')}</span>
+        <span class="r-pill ${rc}" style="font-size:.64rem;padding:2px 8px">${rl}</span>
+      </div>
+      <div class="side-history-teams">
+        <div class="side-history-team blue">
+          <span class="side-history-dot blue"></span>
+          <span class="side-history-names">${historyNames(h.blue)}</span>
+        </div>
+        <div class="side-history-team red">
+          <span class="side-history-dot red"></span>
+          <span class="side-history-names">${historyNames(h.red)}</span>
         </div>
       </div>
-      <span class="r-pill ${rc}" style="font-size:.68rem">${rl}</span>
     </div>`;
   }).join('');
 }
@@ -4235,6 +4256,9 @@ function shortPlayerName(name){
 function lineupChips(team){
   if(!team.length) return '<span class="side-name-chip" style="opacity:.55">배정 대기</span>';
   return team.map(p=>`<span class="side-name-chip">${esc(shortPlayerName(p.name))}</span>`).join('');
+}
+function historyNames(team){
+  return (team||[]).map(p=>esc(shortPlayerName(p.name))).join(' · ') || '기록 없음';
 }
 function sideLineupHTML(){
   return `<div class="side-lineups">
