@@ -816,7 +816,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
       <div style="position:relative;margin-left:4px">
         <input id="quickSearch" type="text" placeholder="🔍 빠른 추가..."
           style="background:var(--s2);border:1px solid var(--line);color:var(--txt);border-radius:3px;padding:6px 10px;font-family:'Noto Sans KR',sans-serif;font-size:.8rem;outline:none;width:160px;transition:border-color .15s"
-          oninput="renderQuickSearch()"
+          oninput="positionQuickDrop();renderQuickSearch()"
           onfocus="positionQuickDrop();renderQuickSearch();document.getElementById('quickDrop').style.display='block'"
           onblur="setTimeout(()=>{const d=document.getElementById('quickDrop');if(d)d.style.display='none'},200)"
           onkeydown="if(event.key==='Escape'){this.value='';document.getElementById('quickDrop').style.display='none'}">
@@ -3842,8 +3842,16 @@ function positionQuickDrop(){
   const drop=document.getElementById('quickDrop');
   if(!inp||!drop) return;
   const rect=inp.getBoundingClientRect();
+  const dropW=300;
   drop.style.top=(rect.bottom+4)+'px';
-  drop.style.left=rect.left+'px';
+  // 오른쪽으로 넘치면 입력창 우측 기준으로 우측 정렬
+  if(rect.left+dropW>window.innerWidth-8){
+    drop.style.left='';
+    drop.style.right=(window.innerWidth-rect.right)+'px';
+  } else {
+    drop.style.right='';
+    drop.style.left=rect.left+'px';
+  }
 }
 
 function renderQuickSearch(){
@@ -4174,12 +4182,12 @@ function renderMainSummary(){
 }
 
 function mainAutoBalance(){
-  const need=mainTS()*2, pool=active();
-  if(pool.length<need){toast(need+'명 필요');return}
-  const p=pool.slice(0,need); let best=null,bestDiff=Infinity;
-  const half=mainTS();
+  const pool=active();
+  if(!pool.length){toast('참가자를 추가해주세요');return}
+  const half=Math.ceil(pool.length/2);
+  let best=null,bestDiff=Infinity;
   for(let i=0;i<500;i++){
-    const sh=[...p].sort(()=>Math.random()-.5);
+    const sh=[...pool].sort(()=>Math.random()-.5);
     const b=assignPositions(sh.slice(0,half));
     const r=assignPositions(sh.slice(half));
     const d=Math.abs(teamEffScore(b)-teamEffScore(r));
@@ -4190,9 +4198,10 @@ function mainAutoBalance(){
   save(); renderMainTeams(); toast('최적 배정!');
 }
 function mainRandom(){
-  const need=mainTS()*2, pool=active();
-  if(pool.length<need){toast(need+'명 필요');return}
-  const sh=[...pool.slice(0,need)].sort(()=>Math.random()-.5), h=mainTS();
+  const pool=active();
+  if(!pool.length){toast('참가자를 추가해주세요');return}
+  const sh=[...pool].sort(()=>Math.random()-.5);
+  const h=Math.ceil(pool.length/2);
   curBlue=assignPositions(sh.slice(0,h)); curRed=assignPositions(sh.slice(h));
   save(); renderMainTeams(); toast('랜덤!');
 }
@@ -4205,7 +4214,7 @@ function mainShuffle(){
 }
 
 function renderMainTeams(){
-  if(!curBlue.length||!curRed.length) return;
+  if(!curBlue.length&&!curRed.length) return;
   const bS=teamEffScore(curBlue), rS=teamEffScore(curRed);
   const diff=Math.abs(bS-rS), tot=bS+rS||1;
   const bPct=(bS/tot*100).toFixed(1);
