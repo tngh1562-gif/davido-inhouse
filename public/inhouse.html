@@ -2131,7 +2131,7 @@ function prepareDiscordMovePayload(){
   return {blueDiscordIds,redDiscordIds,playersByDiscordId,excluded};
 }
 async function moveDiscordVoiceTeams(){
-  if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정해주세요');return}
+  if(!curBlue.length&&!curRed.length){toast('먼저 팀을 배정해주세요');return}
 
   // 1. discordConfig가 없으면 서버에서 로드 (탭 미방문 시에도 채널 ID 확보)
   if(!discordConfig){
