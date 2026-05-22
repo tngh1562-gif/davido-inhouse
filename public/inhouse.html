@@ -1863,6 +1863,7 @@ function goTab(name,btn){
 }
 
 let discordConfig=null;
+let discordVoiceSaveTimer=null;
 async function fetchDiscordConfig(){
   const res=await fetch('/api/discord-config',{cache:'no-store'});
   discordConfig=await res.json();
@@ -1874,7 +1875,8 @@ async function saveDiscordConfig(next){
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(next)
   });
-  const data=await res.json();
+  const data=await res.json().catch(()=>({ok:false,error:'서버 응답을 읽지 못했습니다.'}));
+  if(!res.ok || data.ok===false) throw new Error(data.error||'디스코드 설정 저장 실패');
   if(data.data) discordConfig=data.data;
   renderDiscordTab();
   return discordConfig;
@@ -1915,9 +1917,9 @@ async function renderDiscordTab(){
   if(label && document.activeElement!==label) label.value=cfg.buttonLabel||'내전 참가 등록';
   if(style && document.activeElement!==style) style.value=cfg.buttonStyle||'primary';
   if(desc && document.activeElement!==desc) desc.value=cfg.messageContent||cfg.panelDescription||'';
-  if(lobbyVoice && document.activeElement!==lobbyVoice) lobbyVoice.value=cfg.voiceLobbyChannelId||'';
-  if(blueVoice && document.activeElement!==blueVoice) blueVoice.value=cfg.voiceBlueChannelId||'';
-  if(redVoice && document.activeElement!==redVoice) redVoice.value=cfg.voiceRedChannelId||'';
+  if(lobbyVoice && document.activeElement!==lobbyVoice && !lobbyVoice.dataset.dirty) lobbyVoice.value=cfg.voiceLobbyChannelId||'';
+  if(blueVoice && document.activeElement!==blueVoice && !blueVoice.dataset.dirty) blueVoice.value=cfg.voiceBlueChannelId||'';
+  if(redVoice && document.activeElement!==redVoice && !redVoice.dataset.dirty) redVoice.value=cfg.voiceRedChannelId||'';
   if(channelList){
     const overrides=cfg.channelOverrides||{};
     const rows=Object.entries(overrides);
@@ -1932,6 +1934,7 @@ async function renderDiscordTab(){
     `).join(''):'<div style="font-size:.78rem;color:var(--txt2);padding:10px;border:1px solid var(--line);border-radius:10px;background:#1a2030">채널별 설정 없음 · 전체 ON/OFF 설정을 따릅니다.</div>';
   }
   [label,style,desc].forEach(el=>{ if(el && !el.dataset.discordBound){ el.dataset.discordBound='1'; el.addEventListener('input',syncDiscordPreview); el.addEventListener('change',syncDiscordPreview); }});
+  bindDiscordVoiceInputs();
   const state=document.getElementById('discordConfigState');
   if(state) state.textContent='저장됨: '+(cfg.updatedAt?new Date(cfg.updatedAt).toLocaleString('ko-KR'):'기본 설정');
   syncDiscordPreview();
@@ -1987,69 +1990,61 @@ function getVoiceChannelPayload(){
     voiceRedChannelId:(document.getElementById('discordVoiceRedId')?.value||'').replace(/\D/g,''),
   };
 }
+function getVoiceMoveChannelPayload(){
+  const p=getVoiceChannelPayload();
+  return {
+    lobbyChannelId:p.voiceLobbyChannelId,
+    blueChannelId:p.voiceBlueChannelId,
+    redChannelId:p.voiceRedChannelId,
+  };
+}
+function rememberDiscordVoiceInputs(){
+  discordConfig={...(discordConfig||{}),...getVoiceChannelPayload()};
+}
+function scheduleDiscordVoiceSave(){
+  rememberDiscordVoiceInputs();
+  clearTimeout(discordVoiceSaveTimer);
+  discordVoiceSaveTimer=setTimeout(saveDiscordVoiceConfigSilent,450);
+}
+function bindDiscordVoiceInputs(){
+  [
+    document.getElementById('discordVoiceLobbyId'),
+    document.getElementById('discordVoiceBlueId'),
+    document.getElementById('discordVoiceRedId'),
+  ].forEach(el=>{
+    if(!el||el.dataset.voiceBound)return;
+    el.dataset.voiceBound='1';
+    el.addEventListener('input',()=>{
+      el.dataset.dirty='1';
+      scheduleDiscordVoiceSave();
+    });
+    el.addEventListener('change',saveDiscordVoiceConfigSilent);
+    el.addEventListener('blur',saveDiscordVoiceConfigSilent);
+  });
+}
 async function saveDiscordVoiceConfig(){
-  await saveDiscordConfig(getVoiceChannelPayload());
+  const payload=getVoiceChannelPayload();
+  const saved=await saveDiscordConfig(payload);
+  const mismatch=['voiceLobbyChannelId','voiceBlueChannelId','voiceRedChannelId']
+    .filter(key=>String(saved?.[key]||'')!==String(payload[key]||''));
+  if(mismatch.length) throw new Error('음성방 ID 저장값 확인 실패');
+  ['discordVoiceLobbyId','discordVoiceBlueId','discordVoiceRedId'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) delete el.dataset.dirty;
+  });
   toast('디스코드 음성방 설정 저장');
 }
 async function saveDiscordVoiceConfigSilent(){
   const p=getVoiceChannelPayload();
   if(!p.voiceLobbyChannelId&&!p.voiceBlueChannelId&&!p.voiceRedChannelId) return;
-  await saveDiscordConfig(p);
-}
-async function moveDiscordVoiceTeams(){
-  if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정하세요');return}
-  await saveDiscordVoiceConfig();
-  const blueDiscordIds=curBlue.map(discordIdForPlayer).filter(Boolean);
-  const redDiscordIds=curRed.map(discordIdForPlayer).filter(Boolean);
-  const missing=[...curBlue,...curRed].filter(p=>!discordIdForPlayer(p)).map(p=>p.name||'?');
-  if(missing.length){
-    toast('디스코드 미등록: '+missing.slice(0,3).join(', ')+(missing.length>3?' 외 '+(missing.length-3)+'명':''));
-    return;
-  }
-  const res=await botAction('move_discord_voice_teams',{blueDiscordIds,redDiscordIds});
-  if(res.ok){
-    const moved=(res.moved?.blue||0)+(res.moved?.red||0);
-    const skipped=(res.skipped||[]).length;
-    toast(`팀 음성방 이동 완료: ${moved}명${skipped?`, 제외 ${skipped}명`:''}`);
-  } else {
-    toast(res.error||'팀 음성방 이동 실패');
-  }
-}
-function discordMoveReasonText(reason){
-  const text=String(reason||'');
-  if(text==='not_in_lobby') return '내전대기방에 없음';
-  if(text==='missing_permission') return '봇 권한 부족';
-  if(text.includes('Unknown Member')) return '서버 멤버를 찾을 수 없음';
-  return text || '알 수 없음';
-}
-async function moveDiscordVoiceTeams(){
-  if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정하세요');return}
-  await saveDiscordVoiceConfig();
-  const blueDiscordIds=curBlue.map(discordIdForPlayer).filter(Boolean);
-  const redDiscordIds=curRed.map(discordIdForPlayer).filter(Boolean);
-  const playersByDiscordId={};
-  curBlue.forEach(p=>{const id=discordIdForPlayer(p); if(id) playersByDiscordId[id]=p.name||'?';});
-  curRed.forEach(p=>{const id=discordIdForPlayer(p); if(id) playersByDiscordId[id]=p.name||'?';});
-  const missing=[...curBlue,...curRed].filter(p=>!discordIdForPlayer(p)).map(p=>p.name||'?');
-  if(!blueDiscordIds.length&&!redDiscordIds.length){
-    alert('이동 가능한 디스코드 연동 인원이 없습니다.\n\n디코 미연동:\n- '+missing.join('\n- '));
-    return;
-  }
-  const res=await botAction('move_discord_voice_teams',{blueDiscordIds,redDiscordIds});
-  if(res.ok){
-    const moved=(res.moved?.blue||0)+(res.moved?.red||0);
-    const skipped=(res.skipped||[]).map(item=>{
-      const id=String(item.discordId||'');
-      return `${playersByDiscordId[id]||id}: ${discordMoveReasonText(item.reason)}`;
+  try{
+    await saveDiscordConfig(p);
+    ['discordVoiceLobbyId','discordVoiceBlueId','discordVoiceRedId'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) delete el.dataset.dirty;
     });
-    const lines=[`이동 완료: ${moved}명`];
-    if(missing.length) lines.push('', '디코 미연동:', ...missing.map(name=>'- '+name));
-    if(skipped.length) lines.push('', '이동 안 됨:', ...skipped.map(text=>'- '+text));
-    alert(lines.join('\n'));
-    toast(`팀 음성방 이동: ${moved}명 이동, ${missing.length+skipped.length}명 제외`);
-  } else {
-    toast(res.error||'팀 음성방 이동 실패');
   }
+  catch(err){toast(err.message||'디스코드 음성방 설정 저장 실패')}
 }
 function cleanDiscordMoveKey(value){
   return String(value||'').trim().toLowerCase();
@@ -2137,26 +2132,29 @@ function prepareDiscordMovePayload(){
 }
 async function moveDiscordVoiceTeams(){
   if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정해주세요');return}
-  await saveDiscordVoiceConfig();
+  try{await saveDiscordVoiceConfig()}
+  catch(err){toast(err.message||'디스코드 음성방 설정 저장 실패');return}
   const {blueDiscordIds,redDiscordIds,playersByDiscordId,excluded}=prepareDiscordMovePayload();
   if(!blueDiscordIds.length&&!redDiscordIds.length){
     alert('이동 가능한 디스코드 연동 인원이 없습니다.\n\n제외된 인원\n- '+excluded.map(item=>`${item.name}: ${item.reason}`).join('\n- '));
     return;
   }
-  const res=await botAction('move_discord_voice_teams',{blueDiscordIds,redDiscordIds});
-  if(res.ok){
+  try{
+    const res=await botAction('move_discord_voice_teams',{...getVoiceMoveChannelPayload(),blueDiscordIds,redDiscordIds});
     const moved=(res.moved?.blue||0)+(res.moved?.red||0);
     const skipped=(res.skipped||[]).map(item=>{
       const id=String(item.discordId||'');
       return `${playersByDiscordId[id]||id}: ${discordMoveReasonText(item.reason)}`;
     });
     const lines=[`이동 완료: ${moved}명`];
-    if(excluded.length) lines.push('', '요청 제외', ...excluded.map(item=>`- ${item.name}: ${item.reason}`));
-    if(skipped.length) lines.push('', '이동 실패/건너뜀', ...skipped.map(text=>'- '+text));
+    if(excluded.length) lines.push('','요청 제외',...excluded.map(item=>`- ${item.name}: ${item.reason}`));
+    if(skipped.length) lines.push('','이동 실패/건너뜀',...skipped.map(text=>'- '+text));
     alert(lines.join('\n'));
     toast(`팀 음성방 이동: ${moved}명 이동, ${excluded.length+skipped.length}명 제외`);
-  } else {
-    toast(res.error||'팀 음성방 이동 실패');
+  } catch(err){
+    const msg=err.message||'알 수 없는 오류';
+    toast('팀 음성방 이동 실패: '+msg);
+    alert('팀 음성방 이동 실패\n\n'+msg+'\n\n확인사항:\n- 디스코드 관리 탭에서 음성채널 ID 저장 여부\n- Railway 환경변수 DISCORD_BOT_API_URL / DISCORD_BOT_API_SECRET 설정 여부\n- 봇이 내전대기방에서 멤버 이동 권한 보유 여부');
   }
 }
 async function saveDiscordChannelOverride(){
@@ -3325,13 +3323,14 @@ function swapTeams(){
   toast('블루 ⇄ 레드 팀 전체 스왑!');
 }
 
-function confirmMainTeams(){
+async function confirmMainTeams(){
   if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정하세요');return}
   const joinedCount=grantInhousePoints([...curBlue,...curRed],3.5,'팀 확정 참가');
   save();
   renderViewers();
   if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
   toast(joinedCount?`포인트 지급! 참가자 ${joinedCount}명 +3.5P`:'포인트 지급 완료');
+  try{await moveDiscordVoiceTeams()}catch(e){toast('디코 팀방 이동 실패: '+(e.message||e))}
 }
 
 function record(res){
@@ -3671,7 +3670,7 @@ function dzDrop(e,side){
   if(from==='bl'||from==='rl') fromSide(id,from);
   moveTo(id,side);
 }
-function confirmDraft(){
+async function confirmDraft(){
   // 인원 제한 없음 - 양팀 인원만 같으면 OK (1:1 ~ 5:5)
   if(!dBl.length||!dRl.length){toast('양팀에 최소 1명씩 배정하세요');return}
   if(dBl.length!==dRl.length){toast('양팀 인원이 같아야 합니다 (현재 블루 '+dBl.length+'명 vs 레드 '+dRl.length+'명)');return}
@@ -3692,6 +3691,7 @@ function confirmDraft(){
   renderViewers();
   if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
   toast(joinedCount?`팀 확정! 참가자 ${joinedCount}명 +1P`:'팀 확정!');
+  try{await moveDiscordVoiceTeams()}catch(e){toast('디코 팀방 이동 실패: '+(e.message||e))}
 }
 
 function syncTeamSize(){
