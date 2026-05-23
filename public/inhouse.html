@@ -2099,9 +2099,11 @@ function buildDiscordMoveEntries(teamName,players){
   });
 }
 function prepareDiscordMovePayload(){
+  const blueTeam=curBlue.length||curRed.length?curBlue:players.filter((p,i)=>i<5&&p.name.trim());
+  const redTeam=curBlue.length||curRed.length?curRed:players.filter((p,i)=>i>=5&&p.name.trim());
   const entries=[
-    ...buildDiscordMoveEntries('blue',curBlue),
-    ...buildDiscordMoveEntries('red',curRed),
+    ...buildDiscordMoveEntries('blue',blueTeam),
+    ...buildDiscordMoveEntries('red',redTeam),
   ];
   const byId=new Map();
   entries.forEach(entry=>{
@@ -2131,7 +2133,7 @@ function prepareDiscordMovePayload(){
   return {blueDiscordIds,redDiscordIds,playersByDiscordId,excluded};
 }
 async function moveDiscordVoiceTeams(){
-  if(!curBlue.length&&!curRed.length){toast('먼저 팀을 배정해주세요');return}
+  if(!active().length&&!curBlue.length&&!curRed.length){toast('먼저 참가자를 추가하세요');return}
 
   // 1. discordConfig가 없으면 서버에서 로드 (탭 미방문 시에도 채널 ID 확보)
   if(!discordConfig){
