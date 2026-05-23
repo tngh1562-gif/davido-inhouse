@@ -3358,8 +3358,9 @@ function swapTeams(){
 }
 
 async function confirmMainTeams(){
-  if(!curBlue.length&&!curRed.length){toast('먼저 팀을 배정하세요');return}
-  const joinedCount=grantInhousePoints([...curBlue,...curRed],3.5,'팀 확정 참가');
+  const targets=active().length?active():[...curBlue,...curRed];
+  if(!targets.length){toast('먼저 참가자를 추가하세요');return}
+  const joinedCount=grantInhousePoints(targets,3.5,'팀 확정 참가');
   save();
   renderViewers();
   if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
@@ -4337,7 +4338,7 @@ function sideLineupHTML(){
   </div>`;
 }
 async function startInhouseMatch(){
-  if(!curBlue.length&&!curRed.length){toast('먼저 팀을 배정하세요');return}
+  if(!active().length&&!curBlue.length&&!curRed.length){toast('먼저 참가자를 추가하세요');return}
   try{await moveDiscordVoiceTeams()}catch(e){toast('디코 팀방 이동 실패: '+(e.message||e))}
 }
 function mainImportFromDB(){ importFromDB(); setTimeout(()=>renderMainRoster(),300); }
