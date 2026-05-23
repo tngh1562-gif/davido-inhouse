@@ -61,7 +61,7 @@ body{
 .inhouse-sidebar-logo{font-family:'Rajdhani',sans-serif;padding:16px 14px 12px;line-height:1.2;flex-shrink:0}
 .inhouse-sidebar-logo-top{font-size:11px;font-weight:700;color:#94a3b8;display:block}
 .inhouse-sidebar-logo-main{font-size:18px;font-weight:700;color:#00c8a0;display:block;letter-spacing:1px}
-.inhouse-sidebar-nav{display:flex;flex-direction:column;gap:4px;padding:14px 10px 0;flex-shrink:0}
+.inhouse-sidebar-nav{display:flex;flex-direction:column;gap:4px;padding:14px 10px 10px;flex-shrink:0;flex:1}
 .inhouse-nav-btn{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:8px;border:none;border-left:3px solid transparent;background:transparent;color:#64748b;font-family:'Noto Sans KR',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;width:100%;text-align:left}
 .inhouse-nav-btn.on{color:#e2e8f0;background:rgba(0,200,160,.08);border-left-color:#00c8a0;font-weight:700}
 .inhouse-nav-btn:hover:not(.on){color:#94a3b8;background:rgba(255,255,255,.04)}
@@ -763,6 +763,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
     <button class="inhouse-nav-btn"     onclick="goTab('viewers',this)"><span class="nav-icon">👥</span>시청자 DB</button>
     <button class="inhouse-nav-btn"     onclick="goTab('overlay',this)"><span class="nav-icon">🖥</span>오버레이</button>
     <button class="inhouse-nav-btn"     onclick="goTab('bot',this)"><span class="nav-icon">🤖</span>치지직 봇</button>
+    <button class="inhouse-nav-btn"     onclick="goTab('settings',this)" style="margin-top:auto"><span class="nav-icon">⚙</span>설정</button>
   </nav>
 </div>
 
@@ -1212,46 +1213,6 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 <div id="tab-bot" class="tab">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div class="card">
-      <div class="card-title">치지직 봇 연결</div>
-      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:12px">
-        <input id="botChannelId" type="text" placeholder="치지직 채널 ID">
-        <button class="btn btn-g" onclick="connectBotChannel()">연결</button>
-        <button class="btn btn-o" onclick="disconnectBotChannel()">해제</button>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <span id="botConnState" class="tb">연결 확인 중</span>
-        <span id="botEnableState" class="tb">봇 ON</span>
-        <span id="botSendState" class="tb">채팅답장 OFF</span>
-        <button class="btn btn-o" style="padding:7px 12px" onclick="toggleBotEnabled()">봇 ON/OFF</button>
-        <button class="btn btn-o" style="padding:7px 12px" onclick="toggleBotChatSend()">채팅답장 ON/OFF</button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:12px">
-        <input id="botSendTestText" type="text" placeholder="치지직 채팅 직접 전송 테스트">
-        <button class="btn btn-o" onclick="testBotChatSend()">전송 테스트</button>
-      </div>
-      <div id="botSendError" style="font-size:.72rem;color:var(--rl2);margin-top:8px;min-height:18px"></div>
-      <p style="font-size:.74rem;color:var(--txt2);line-height:1.55;margin-top:12px">
-        현재 시험판은 채팅을 읽어서 사이트/OBS에 응답을 띄우는 단계입니다. 치지직 채팅창에 직접 답장하는 기능은 봇 계정 인증을 붙인 뒤 확장합니다.
-      </p>
-    </div>
-
-    <div class="card">
-      <div class="card-title">봇 계정 인증</div>
-      <div style="display:grid;gap:8px;margin-bottom:10px">
-        <input id="botNidAut" type="password" placeholder="NID_AUT">
-        <input id="botNidSes" type="password" placeholder="NID_SES">
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <button class="btn btn-g" onclick="saveBotAuth()">인증 적용</button>
-        <button class="btn btn-o" onclick="clearBotAuth()">인증 지우기</button>
-        <span id="botAuthState" class="tb">인증 없음</span>
-      </div>
-      <p style="font-size:.72rem;color:var(--txt2);line-height:1.55;margin-top:10px">
-        입력값은 서버 메모리에만 보관되고 파일에는 저장하지 않습니다. 서버를 재시작하면 다시 입력해야 합니다.
-      </p>
-    </div>
-
-    <div class="card">
       <div class="card-title">!포인트 테스트</div>
       <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:12px">
         <input id="botTestNick" type="text" placeholder="치지직 닉네임 입력">
@@ -1275,6 +1236,59 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
       <div class="card-title">명령어 상태</div>
       <div id="botCommandState" style="display:grid;gap:8px;font-size:.82rem;color:var(--txt2)"></div>
     </div>
+  </div>
+</div>
+
+<!-- ══════ TAB: 설정 ══════ -->
+<div id="tab-settings" class="tab">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:720px">
+
+    <div class="card">
+      <div class="card-title">디코 음성방 ID</div>
+      <div style="display:grid;gap:8px;margin-bottom:12px">
+        <input id="discordVoiceLobbyId" type="text" placeholder="내전대기방 ID"
+          oninput="rememberDiscordVoiceInputs()" onblur="saveDiscordVoiceConfigSilent()">
+        <input id="discordVoiceBlueId" type="text" placeholder="1팀 음성채널 ID"
+          oninput="rememberDiscordVoiceInputs()" onblur="saveDiscordVoiceConfigSilent()">
+        <input id="discordVoiceRedId" type="text" placeholder="2팀 음성채널 ID"
+          oninput="rememberDiscordVoiceInputs()" onblur="saveDiscordVoiceConfigSilent()">
+      </div>
+      <button class="btn btn-g" onclick="saveDiscordVoiceConfig()">저장</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">봇 계정 인증</div>
+      <div style="display:grid;gap:8px;margin-bottom:10px">
+        <input id="botNidAut" type="password" placeholder="NID_AUT">
+        <input id="botNidSes" type="password" placeholder="NID_SES">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-g" onclick="saveBotAuth()">인증 적용</button>
+        <button class="btn btn-o" onclick="clearBotAuth()">인증 지우기</button>
+        <span id="botAuthState" class="tb">인증 없음</span>
+      </div>
+      <p style="font-size:.72rem;color:var(--txt2);line-height:1.55;margin-top:10px">
+        입력값은 서버 메모리에만 보관되고 파일에는 저장하지 않습니다. 서버를 재시작하면 다시 입력해야 합니다.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">치지직 채널 연결</div>
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:12px">
+        <input id="botChannelId" type="text" placeholder="채널 ID">
+        <button class="btn btn-g" onclick="connectBotChannel()">연결</button>
+        <button class="btn btn-o" onclick="disconnectBotChannel()">해제</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span id="botConnState" class="tb">연결 확인 중</span>
+        <span id="botEnableState" class="tb">봇 ON</span>
+        <span id="botSendState" class="tb">채팅답장 OFF</span>
+        <button class="btn btn-o" style="padding:7px 12px" onclick="toggleBotEnabled()">봇 ON/OFF</button>
+        <button class="btn btn-o" style="padding:7px 12px" onclick="toggleBotChatSend()">채팅답장 ON/OFF</button>
+      </div>
+      <div id="botSendError" style="font-size:.72rem;color:var(--rl2);margin-top:8px;min-height:18px"></div>
+    </div>
+
   </div>
 </div>
 
