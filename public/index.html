@@ -1180,6 +1180,10 @@ async function storageUpdate() {
 
   if (!changes.length) { alert('변경된 내용이 없습니다.'); return; }
 
+  // 즉시 상단 반영 (업데이트 클릭 순간 바로 바뀜)
+  _storageOriginalCounts = JSON.parse(JSON.stringify(cur));
+  renderStorageContent();
+
   let hasError = false;
   for (const { reward, delta } of changes) {
     const cmd = delta > 0 ? '추가' : '차감';
@@ -1201,14 +1205,6 @@ async function storageUpdate() {
         body: JSON.stringify({ command: '전체업데이트', options: {} }),
       });
     } catch(e) {}
-    // 서버에서 최신 데이터 다시 로드 → 상단 박스 실시간 갱신
-    await loadStorageData();
-    const reloaded = _storageUsers.find(u2 => u2.name === u.name);
-    if (reloaded) {
-      _storageSelectedUser = reloaded;
-      _storageOriginalCounts = JSON.parse(JSON.stringify(reloaded.counts || {}));
-    }
-    renderStorageContent();
     alert('✅ 업데이트 완료');
   }
 }
