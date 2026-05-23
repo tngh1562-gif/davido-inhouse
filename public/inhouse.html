@@ -816,11 +816,11 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
       <div style="position:relative;margin-left:4px">
         <input id="quickSearch" type="text" placeholder="🔍 빠른 추가..."
           style="background:var(--s2);border:1px solid var(--line);color:var(--txt);border-radius:3px;padding:6px 10px;font-family:'Noto Sans KR',sans-serif;font-size:.8rem;outline:none;width:160px;transition:border-color .15s"
-          oninput="positionQuickDrop();renderQuickSearch()"
-          onfocus="positionQuickDrop();renderQuickSearch();document.getElementById('quickDrop').style.display='block'"
+          oninput="renderQuickSearch()"
+          onfocus="renderQuickSearch();document.getElementById('quickDrop').style.display='block'"
           onblur="setTimeout(()=>{const d=document.getElementById('quickDrop');if(d)d.style.display='none'},200)"
           onkeydown="if(event.key==='Escape'){this.value='';document.getElementById('quickDrop').style.display='none'}">
-        <div id="quickDrop" style="display:none;position:fixed;width:300px;background:var(--s1);border:1px solid var(--a);border-radius:4px;z-index:9999;max-height:360px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.7)"></div>
+        <div id="quickDrop" style="display:none;position:absolute;top:calc(100% + 4px);left:0;width:300px;background:var(--s1);border:1px solid var(--a);border-radius:4px;z-index:9999;max-height:360px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.7)"></div>
       </div>
     </div>
   </div>
