@@ -3364,7 +3364,6 @@ async function confirmMainTeams(){
   renderViewers();
   if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
   toast(joinedCount?`포인트 지급! 참가자 ${joinedCount}명 +3.5P`:'포인트 지급 완료');
-  try{await moveDiscordVoiceTeams()}catch(e){toast('디코 팀방 이동 실패: '+(e.message||e))}
 }
 
 function record(res){
