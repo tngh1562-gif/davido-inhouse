@@ -3358,7 +3358,7 @@ function swapTeams(){
 }
 
 async function confirmMainTeams(){
-  if(!curBlue.length||!curRed.length){toast('먼저 팀을 배정하세요');return}
+  if(!curBlue.length&&!curRed.length){toast('먼저 팀을 배정하세요');return}
   const joinedCount=grantInhousePoints([...curBlue,...curRed],3.5,'팀 확정 참가');
   save();
   renderViewers();
