@@ -1037,13 +1037,18 @@ function findViewerByChzzkNickname(nickname) {
   const key = normalizeChatName(nickname);
   if (!key) return null;
   const db = readInhouseDB();
+  const stripTag = n => normalizeChatName(String(n || '').replace(/#.+$/, ''));
   return db.viewers.find(viewer =>
-    normalizeChatName(viewer.chzzk) === key || normalizeChatName(viewer.name) === key
+    normalizeChatName(viewer.chzzk) === key ||
+    normalizeChatName(viewer.name) === key ||
+    stripTag(viewer.name) === key
   ) || db.viewers.find(viewer => {
     const chzzk = normalizeChatName(viewer.chzzk);
     const name = normalizeChatName(viewer.name);
+    const nameNoTag = stripTag(viewer.name);
     return (chzzk && (chzzk.includes(key) || key.includes(chzzk)))
-      || (name && (name.includes(key) || key.includes(name)));
+      || (name && (name.includes(key) || key.includes(name)))
+      || (nameNoTag && (nameNoTag.includes(key) || key.includes(nameNoTag)));
   }) || null;
 }
 
