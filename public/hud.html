@@ -6,235 +6,307 @@
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{
-  background:transparent;
-  width:900px;height:72px;
-  overflow:hidden;
-  font-family:'Rajdhani','Arial',sans-serif;
-}
+html,body{background:transparent;width:960px;height:82px;overflow:hidden;font-family:'Rajdhani','Arial',sans-serif;}
 
 #hud{
-  width:900px;height:72px;
+  width:960px;height:82px;
   display:flex;align-items:stretch;
-  background:rgba(5,8,18,.90);
-  position:relative;
-  overflow:hidden;
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(9,14,30,.97) 0%,rgba(4,7,16,.99) 100%);
 }
 
-/* 상단 강조선 (파란쪽→빨간쪽) */
+/* 미세 격자 */
 #hud::before{
-  content:'';position:absolute;
-  top:0;left:0;right:0;height:2px;
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(50,90,230,.028) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(50,90,230,.028) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+
+/* ── 상단/하단 테두리 ─── */
+#topline{
+  position:absolute;top:0;left:0;right:0;height:2px;z-index:10;overflow:hidden;
   background:linear-gradient(90deg,
-    #1a6ef0 0%,#1a6ef0 38%,
-    rgba(255,255,255,.12) 50%,
-    #dc3820 62%,#dc3820 100%);
+    #0a4cf5 0%,#3a9bff 26%,rgba(255,255,255,.07) 48%,rgba(255,255,255,.07) 52%,#ff4422 74%,#f00 100%);
+  box-shadow:0 0 12px rgba(80,140,255,.5),0 0 12px rgba(255,60,30,.45);
+}
+#topline::after{
+  content:'';position:absolute;top:0;bottom:0;width:16%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  animation:scan 4.5s linear infinite;
+}
+@keyframes scan{0%{left:-20%}100%{left:120%}}
+
+#botline{
+  position:absolute;bottom:0;left:0;right:0;height:1px;z-index:10;
+  background:linear-gradient(90deg,
+    rgba(10,76,245,.5) 0%,rgba(58,155,255,.28) 35%,
+    rgba(255,255,255,.05) 50%,
+    rgba(255,68,34,.28) 65%,rgba(240,10,10,.5) 100%);
 }
 
 /* ── 팀 사이드 ─── */
-.team{
-  flex:1;display:flex;align-items:center;
-}
+.team{position:relative;z-index:2;flex:1;display:flex;align-items:center;overflow:hidden;}
 .team.blue{
-  padding:0 0 0 18px;
-  background:linear-gradient(90deg,rgba(26,110,240,.18) 0%,transparent 100%);
-  border-right:1px solid rgba(255,255,255,.07);
+  padding:0 0 0 22px;justify-content:flex-start;
+  background:linear-gradient(100deg,rgba(14,66,210,.28) 0%,rgba(14,66,210,.1) 55%,transparent 82%);
 }
 .team.red{
-  padding:0 18px 0 0;
-  background:linear-gradient(270deg,rgba(220,56,32,.18) 0%,transparent 100%);
-  border-left:1px solid rgba(255,255,255,.07);
-  justify-content:flex-end;
+  padding:0 22px 0 0;justify-content:flex-end;
+  background:linear-gradient(260deg,rgba(200,36,16,.28) 0%,rgba(200,36,16,.1) 55%,transparent 82%);
 }
+/* 양쪽 끝 세로 강조선 */
+.team.blue::after{content:'';position:absolute;left:0;top:0;bottom:0;width:2.5px;
+  background:linear-gradient(180deg,transparent,rgba(50,135,255,.9),transparent);
+  box-shadow:0 0 8px rgba(50,135,255,.55);}
+.team.red::after{content:'';position:absolute;right:0;top:0;bottom:0;width:2.5px;
+  background:linear-gradient(180deg,transparent,rgba(255,55,38,.9),transparent);
+  box-shadow:0 0 8px rgba(255,55,38,.55);}
 
 /* ── 스탯 블록 ─── */
-.stat{
-  display:flex;flex-direction:column;
-  align-items:center;
-  padding:0 16px;
-  position:relative;
-}
+.stat{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:0 18px;}
 .stat+.stat::before{
-  content:'';position:absolute;
-  left:0;top:18%;height:64%;
-  width:1px;background:rgba(255,255,255,.08);
+  content:'';position:absolute;left:0;top:16%;height:68%;width:1px;
+  background:linear-gradient(180deg,transparent,rgba(255,255,255,.12) 40%,rgba(255,255,255,.12) 60%,transparent);
 }
-.sv{/* stat value */
-  font-size:1.55rem;font-weight:700;
-  line-height:1;color:#e8edf8;
-  letter-spacing:.5px;
-}
-.sl{/* stat label */
-  font-size:.44rem;letter-spacing:3.5px;
-  text-transform:uppercase;
-  color:rgba(255,255,255,.3);
-  margin-top:3px;
+/* 구분점 다이아몬드 */
+.stat+.stat::after{
+  content:'';position:absolute;left:-3px;top:50%;transform:translateY(-50%);
+  width:6px;height:6px;
+  background:rgba(255,255,255,.1);
+  clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
 }
 
-.team.blue .stat:first-child .sv{color:#6aadff}
-.team.red  .stat:last-child  .sv{color:#ff7060}
+.sv{font-size:1.45rem;font-weight:700;line-height:1;letter-spacing:.5px;color:#ccd7f0;}
+.sl{font-size:.38rem;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.24);margin-top:3px;}
 
-/* ── 센터 블록 ─── */
+/* 킬 수치 네온 */
+.team.blue .stat:first-child .sv{color:#52b8ff;text-shadow:0 0 18px rgba(60,155,255,.75);}
+.team.red  .stat:last-child  .sv{color:#ff6650;text-shadow:0 0 18px rgba(255,85,55,.75);}
+
+/* ── 센터 ─── */
 .center{
-  flex-shrink:0;min-width:188px;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:0 8px;
-  gap:3px;
+  position:relative;z-index:3;flex-shrink:0;width:200px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
 }
-.kscore{
-  display:flex;align-items:center;gap:10px;
+.center::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 180px 82px at 50% 50%,rgba(15,24,50,.92) 0%,transparent 100%);
 }
-.ks-b{font-size:2rem;font-weight:900;line-height:1;color:#5fb2ff;}
-.ks-r{font-size:2rem;font-weight:900;line-height:1;color:#ff6855;}
-.ks-sep{
-  font-size:1.1rem;font-weight:700;
-  color:rgba(255,255,255,.22);
-  letter-spacing:1px;
-}
-.timer{
-  font-size:.78rem;font-weight:600;
-  letter-spacing:4px;
-  color:rgba(255,255,255,.42);
-}
+.kscore{position:relative;z-index:1;display:flex;align-items:center;gap:16px;}
+.ks-b{font-size:2.4rem;font-weight:900;line-height:1;color:#4daaff;
+  text-shadow:0 0 22px rgba(55,140,255,.9),0 0 44px rgba(55,140,255,.3);}
+.ks-r{font-size:2.4rem;font-weight:900;line-height:1;color:#ff5540;
+  text-shadow:0 0 22px rgba(255,70,40,.9),0 0 44px rgba(255,70,40,.3);}
+.timer-row{position:relative;z-index:1;display:flex;align-items:center;gap:6px;}
+.t-dash{width:18px;height:1px;background:rgba(255,255,255,.12);}
+.timer{font-size:.7rem;font-weight:600;letter-spacing:5px;color:rgba(185,210,255,.38);}
 
-/* ── 게임 대기 오버레이 ─── */
-#waiting{
-  position:absolute;inset:0;
-  background:rgba(5,8,18,.92);
-  display:flex;align-items:center;justify-content:center;
-  gap:10px;
-  font-size:.55rem;letter-spacing:7px;text-transform:uppercase;
-  color:rgba(255,255,255,.22);
-  transition:opacity .6s;
-}
-.dot{animation:blink 1.4s ease infinite}
-.dot:nth-child(2){animation-delay:.2s}
-.dot:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:.9}}
+/* ── 대기 오버레이 ─── */
+#waiting{position:absolute;inset:0;z-index:20;background:rgba(4,7,16,.95);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-size:.48rem;letter-spacing:8px;text-transform:uppercase;color:rgba(255,255,255,.15);
+  transition:opacity .6s;opacity:0;pointer-events:none;}
+.dot{animation:blink 1.6s ease infinite}
+.dot:nth-child(2){animation-delay:.25s}.dot:nth-child(3){animation-delay:.5s}
+@keyframes blink{0%,80%,100%{opacity:.1}40%{opacity:.7}}
+
+@keyframes killFlash{0%{transform:scale(1.4);filter:brightness(2)}100%{transform:scale(1);filter:brightness(1)}}
+.kill-flash{animation:killFlash .4s cubic-bezier(.16,1,.3,1) forwards}
 </style>
 </head>
 <body>
 <div id="hud">
+  <div id="topline"></div>
+  <div id="botline"></div>
 
   <!-- 블루 사이드 -->
   <div class="team blue">
-    <div class="stat">
-      <span class="sv" id="bk">0</span>
-      <span class="sl">킬</span>
-    </div>
-    <div class="stat">
-      <span class="sv" id="bt">0</span>
-      <span class="sl">타워</span>
-    </div>
-    <div class="stat">
-      <span class="sv" id="bg">—</span>
-      <span class="sl">골드</span>
-    </div>
+    <div class="stat"><span class="sv" id="bk">7</span><span class="sl">킬</span></div>
+    <div class="stat"><span class="sv" id="bt">3</span><span class="sl">타워</span></div>
+    <div class="stat"><span class="sv" id="bg">~37.4K</span><span class="sl">골드</span></div>
   </div>
 
   <!-- 센터 -->
   <div class="center">
     <div class="kscore">
-      <span class="ks-b" id="bsc">0</span>
-      <span class="ks-sep">—</span>
-      <span class="ks-r" id="rsc">0</span>
+      <span class="ks-b" id="bsc">7</span>
+      <span class="ks-r" id="rsc">15</span>
     </div>
-    <div class="timer" id="tmr">00:00</div>
+    <div class="timer-row">
+      <div class="t-dash"></div>
+      <span class="timer" id="tmr">21:19</span>
+      <div class="t-dash"></div>
+    </div>
   </div>
 
   <!-- 레드 사이드 -->
   <div class="team red">
-    <div class="stat">
-      <span class="sv" id="rg">—</span>
-      <span class="sl">골드</span>
-    </div>
-    <div class="stat">
-      <span class="sv" id="rt">0</span>
-      <span class="sl">타워</span>
-    </div>
-    <div class="stat">
-      <span class="sv" id="rk">0</span>
-      <span class="sl">킬</span>
-    </div>
+    <div class="stat"><span class="sv" id="rg">~42.3K</span><span class="sl">골드</span></div>
+    <div class="stat"><span class="sv" id="rt">0</span><span class="sl">타워</span></div>
+    <div class="stat"><span class="sv" id="rk">15</span><span class="sl">킬</span></div>
   </div>
 
-  <!-- 게임 미시작 시 오버레이 -->
+  <!-- ══════════════════════════════════════════════════
+       SVG 휘장 + 날개 장식 레이어
+  ══════════════════════════════════════════════════ -->
+  <svg id="deco" width="960" height="82" viewBox="0 0 960 82"
+       xmlns="http://www.w3.org/2000/svg"
+       style="position:absolute;inset:0;z-index:6;pointer-events:none;overflow:visible">
+
+    <!-- ────────────────────────────────────
+         중앙 휘장 (Center Crest)
+    ──────────────────────────────────── -->
+    <g transform="translate(480,41)">
+      <!-- 바깥 마름모 -->
+      <polygon points="0,-18 13,0 0,18 -13,0"
+               fill="none" stroke="rgba(185,215,255,.48)" stroke-width="1.1"/>
+      <!-- 안쪽 마름모 -->
+      <polygon points="0,-10 7,0 0,10 -7,0"
+               fill="rgba(30,60,140,.45)" stroke="rgba(185,215,255,.28)" stroke-width=".7"/>
+      <!-- 중심 원 -->
+      <circle cx="0" cy="0" r="2.8" fill="rgba(185,215,255,.8)"/>
+      <!-- 가로 장식선 -->
+      <line x1="-22" y1="0" x2="-13" y2="0" stroke="rgba(185,215,255,.32)" stroke-width=".7"/>
+      <line x1="13"  y1="0" x2="22"  y2="0" stroke="rgba(185,215,255,.32)" stroke-width=".7"/>
+      <!-- 끝 마커 -->
+      <circle cx="-22" cy="0" r="1.2" fill="rgba(185,215,255,.4)"/>
+      <circle cx="22"  cy="0" r="1.2" fill="rgba(185,215,255,.4)"/>
+      <!-- 위아래 단 장식 -->
+      <line x1="0" y1="-22" x2="0" y2="-18" stroke="rgba(185,215,255,.28)" stroke-width=".7"/>
+      <line x1="0" y1="18"  x2="0" y2="22"  stroke="rgba(185,215,255,.28)" stroke-width=".7"/>
+      <line x1="-4" y1="-22" x2="4" y2="-22" stroke="rgba(185,215,255,.2)" stroke-width=".6"/>
+      <line x1="-4" y1="22"  x2="4" y2="22"  stroke="rgba(185,215,255,.2)" stroke-width=".6"/>
+    </g>
+
+    <!-- ────────────────────────────────────
+         블루 날개 (좌측 퍼짐)
+    ──────────────────────────────────── -->
+    <g>
+      <!-- 메인 수평선 -->
+      <line x1="457" y1="41" x2="330" y2="41" stroke="rgba(55,125,255,.55)" stroke-width=".8"/>
+      <!-- 위 날개선 1 -->
+      <line x1="457" y1="41" x2="360" y2="30" stroke="rgba(55,125,255,.35)" stroke-width=".6"/>
+      <!-- 위 날개선 2 -->
+      <line x1="457" y1="41" x2="378" y2="22" stroke="rgba(55,125,255,.2)"  stroke-width=".5"/>
+      <!-- 아래 날개선 1 -->
+      <line x1="457" y1="41" x2="360" y2="52" stroke="rgba(55,125,255,.35)" stroke-width=".6"/>
+      <!-- 아래 날개선 2 -->
+      <line x1="457" y1="41" x2="378" y2="60" stroke="rgba(55,125,255,.2)"  stroke-width=".5"/>
+      <!-- 끝 마름모 -->
+      <polygon points="330,41 337,35.5 344,41 337,46.5"
+               fill="rgba(55,125,255,.55)" stroke="rgba(120,180,255,.4)" stroke-width=".6"/>
+      <!-- 중간 작은 마커 -->
+      <polygon points="390,41 394,37.5 398,41 394,44.5"
+               fill="none" stroke="rgba(55,125,255,.3)" stroke-width=".5"/>
+    </g>
+
+    <!-- ────────────────────────────────────
+         레드 날개 (우측 퍼짐)
+    ──────────────────────────────────── -->
+    <g>
+      <line x1="503" y1="41" x2="630" y2="41" stroke="rgba(255,55,35,.55)" stroke-width=".8"/>
+      <line x1="503" y1="41" x2="600" y2="30" stroke="rgba(255,55,35,.35)" stroke-width=".6"/>
+      <line x1="503" y1="41" x2="582" y2="22" stroke="rgba(255,55,35,.2)"  stroke-width=".5"/>
+      <line x1="503" y1="41" x2="600" y2="52" stroke="rgba(255,55,35,.35)" stroke-width=".6"/>
+      <line x1="503" y1="41" x2="582" y2="60" stroke="rgba(255,55,35,.2)"  stroke-width=".5"/>
+      <polygon points="630,41 623,35.5 616,41 623,46.5"
+               fill="rgba(255,55,35,.55)" stroke="rgba(255,130,100,.4)" stroke-width=".6"/>
+      <polygon points="570,41 566,37.5 562,41 566,44.5"
+               fill="none" stroke="rgba(255,55,35,.3)" stroke-width=".5"/>
+    </g>
+
+    <!-- ────────────────────────────────────
+         코너 브라켓 장식 (사방)
+    ──────────────────────────────────── -->
+    <!-- 블루 왼쪽 위 -->
+    <g stroke="rgba(55,125,255,.45)" stroke-width="1" fill="none">
+      <line x1="6"  y1="6"  x2="6"  y2="22"/>
+      <line x1="6"  y1="6"  x2="24" y2="6"/>
+      <line x1="12" y1="6"  x2="12" y2="10"/>
+      <line x1="6"  y1="12" x2="10" y2="12"/>
+    </g>
+    <!-- 블루 왼쪽 아래 -->
+    <g stroke="rgba(55,125,255,.35)" stroke-width="1" fill="none">
+      <line x1="6"  y1="76" x2="6"  y2="60"/>
+      <line x1="6"  y1="76" x2="24" y2="76"/>
+      <line x1="12" y1="76" x2="12" y2="72"/>
+      <line x1="6"  y1="70" x2="10" y2="70"/>
+    </g>
+    <!-- 레드 오른쪽 위 -->
+    <g stroke="rgba(255,55,35,.45)" stroke-width="1" fill="none">
+      <line x1="954" y1="6"  x2="954" y2="22"/>
+      <line x1="954" y1="6"  x2="936" y2="6"/>
+      <line x1="948" y1="6"  x2="948" y2="10"/>
+      <line x1="954" y1="12" x2="950" y2="12"/>
+    </g>
+    <!-- 레드 오른쪽 아래 -->
+    <g stroke="rgba(255,55,35,.35)" stroke-width="1" fill="none">
+      <line x1="954" y1="76" x2="954" y2="60"/>
+      <line x1="954" y1="76" x2="936" y2="76"/>
+      <line x1="948" y1="76" x2="948" y2="72"/>
+      <line x1="954" y1="70" x2="950" y2="70"/>
+    </g>
+
+    <!-- ────────────────────────────────────
+         상단 중앙 마름모 장식
+    ──────────────────────────────────── -->
+    <polygon points="480,3 484,7 480,11 476,7"
+             fill="rgba(255,255,255,.14)" stroke="rgba(255,255,255,.22)" stroke-width=".6"/>
+    <!-- 좌우 대칭 작은 틱 -->
+    <line x1="450" y1="2" x2="450" y2="7"  stroke="rgba(255,255,255,.15)" stroke-width=".7"/>
+    <line x1="510" y1="2" x2="510" y2="7"  stroke="rgba(255,255,255,.15)" stroke-width=".7"/>
+    <line x1="420" y1="2" x2="420" y2="5"  stroke="rgba(255,255,255,.1)"  stroke-width=".6"/>
+    <line x1="540" y1="2" x2="540" y2="5"  stroke="rgba(255,255,255,.1)"  stroke-width=".6"/>
+
+    <!-- ────────────────────────────────────
+         하단 중앙 마름모 장식
+    ──────────────────────────────────── -->
+    <polygon points="480,79 484,75 480,71 476,75"
+             fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.16)" stroke-width=".6"/>
+  </svg>
+
   <div id="waiting">
     게임 대기 중
     <span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>
   </div>
-
 </div>
 
 <script>
 const API='http://127.0.0.1:2999/liveclientdata/allgamedata';
+let prevBK=7,prevRK=15;
 
-function fmtTime(sec){
-  const m=Math.floor(sec/60);
-  return `${String(m).padStart(2,'0')}:${String(Math.floor(sec%60)).padStart(2,'0')}`;
-}
-function fmtGold(g){
-  return g>=1000?(g/1000).toFixed(1)+'K':String(Math.round(g));
-}
-
-function set(id,v){
-  const el=document.getElementById(id);
-  if(el&&el.textContent!==String(v)) el.textContent=v;
-}
+function fmtTime(s){const m=Math.floor(s/60);return`${String(m).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
+function fmtGold(g){return'~'+(g>=1000?(g/1000).toFixed(1)+'K':Math.round(g));}
+function set(id,v){const el=document.getElementById(id);if(el&&el.textContent!==String(v))el.textContent=v;}
+function flash(id){const el=document.getElementById(id);if(!el)return;el.classList.remove('kill-flash');void el.offsetWidth;el.classList.add('kill-flash');}
 
 async function poll(){
   try{
     const res=await fetch(API,{cache:'no-store'});
-    if(!res.ok) throw 0;
+    if(!res.ok)throw 0;
     const d=await res.json();
-
-    // 오버레이 숨기기
     document.getElementById('waiting').style.opacity='0';
-    document.getElementById('waiting').style.pointerEvents='none';
-
-    // 타이머
-    set('tmr', fmtTime(d.gameData.gameTime));
-
-    // 팀 킬 합산 (ORDER=블루, CHAOS=레드)
+    set('tmr',fmtTime(d.gameData.gameTime));
     let bk=0,rk=0;
-    for(const p of d.allPlayers){
-      if(p.team==='ORDER') bk+=p.scores.kills;
-      else                  rk+=p.scores.kills;
-    }
-    set('bk',bk); set('bsc',bk);
-    set('rk',rk); set('rsc',rk);
-
-    // 타워 (이벤트에서 집계)
-    // T1_ 구조물 파괴 → 블루팀 구조물 사망 → 레드팀 타워 획득
-    // T2_ 구조물 파괴 → 레드팀 구조물 사망 → 블루팀 타워 획득
+    for(const p of d.allPlayers){p.team==='ORDER'?bk+=p.scores.kills:rk+=p.scores.kills;}
+    if(bk!==prevBK){flash('bk');flash('bsc');prevBK=bk;}
+    if(rk!==prevRK){flash('rk');flash('rsc');prevRK=rk;}
+    set('bk',bk);set('bsc',bk);set('rk',rk);set('rsc',rk);
     let bt=0,rt=0;
     for(const ev of d.events.Events){
-      if(ev.EventName==='TurretKilled'){
-        const n=ev.TurretKilled||'';
-        if(n.includes('T1_'))      rt++;
-        else if(n.includes('T2_')) bt++;
-      }
+      if(ev.EventName==='TurretKilled'){const n=ev.TurretKilled||'';if(n.includes('T1_'))rt++;else if(n.includes('T2_'))bt++;}
     }
-    set('bt',bt); set('rt',rt);
-
-    // 골드 추정 (Live Client API에서 골드 미제공)
-    // 추정식: 기본500 + CS×19.8 + 킬×300 + 어시스트×150
+    set('bt',bt);set('rt',rt);
     let bg=0,rg=0;
     for(const p of d.allPlayers){
       const g=500+(p.scores.creepScore*19.8)+(p.scores.kills*300)+(p.scores.assists*150);
-      if(p.team==='ORDER') bg+=g;
-      else                  rg+=g;
+      p.team==='ORDER'?bg+=g:rg+=g;
     }
-    set('bg','~'+fmtGold(bg));
-    set('rg','~'+fmtGold(rg));
-
-  }catch{
-    document.getElementById('waiting').style.opacity='1';
-    document.getElementById('waiting').style.pointerEvents='auto';
-  }
+    set('bg',fmtGold(bg));set('rg',fmtGold(rg));
+  }catch{}
 }
-
 poll();
 setInterval(poll,2000);
 </script>
