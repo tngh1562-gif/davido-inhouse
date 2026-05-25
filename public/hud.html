@@ -6,270 +6,385 @@
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{background:transparent;width:960px;height:82px;overflow:hidden;font-family:'Rajdhani','Arial',sans-serif;}
+html,body{
+  width:1280px;
+  height:132px;
+  overflow:hidden;
+  background:transparent;
+  font-family:"Rajdhani","Arial",sans-serif;
+}
 
 #hud{
-  width:960px;height:82px;
-  display:flex;align-items:stretch;
-  position:relative;overflow:hidden;
-  background:linear-gradient(180deg,rgba(9,14,30,.97) 0%,rgba(4,7,16,.99) 100%);
+  position:relative;
+  width:1280px;
+  height:132px;
+  color:#eef5ff;
+  isolation:isolate;
 }
 
-/* 미세 격자 */
-#hud::before{
-  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+.backplate{
+  position:absolute;
+  left:18px;
+  right:18px;
+  top:16px;
+  height:92px;
+  background:
+    linear-gradient(90deg,rgba(20,83,190,.28),rgba(7,11,24,.96) 27%,rgba(7,11,24,.98) 73%,rgba(195,32,25,.28)),
+    linear-gradient(180deg,rgba(19,28,52,.98),rgba(4,7,17,.98));
+  clip-path:polygon(0 26px,22px 0,48% 0,50% 12px,52% 0,calc(100% - 22px) 0,100% 26px,100% calc(100% - 16px),calc(100% - 16px) 100%,52% 100%,50% calc(100% - 12px),48% 100%,16px 100%,0 calc(100% - 16px));
+  border-top:1px solid rgba(255,255,255,.18);
+  border-bottom:1px solid rgba(255,255,255,.14);
+  box-shadow:
+    inset 0 0 32px rgba(0,0,0,.78),
+    0 10px 34px rgba(0,0,0,.42);
+}
+.backplate::before{
+  content:"";
+  position:absolute;
+  inset:0;
   background-image:
-    linear-gradient(rgba(50,90,230,.028) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(50,90,230,.028) 1px,transparent 1px);
-  background-size:24px 24px;
+    linear-gradient(90deg,transparent 0 19px,rgba(255,255,255,.035) 20px,transparent 21px),
+    linear-gradient(transparent 0 19px,rgba(255,255,255,.025) 20px,transparent 21px);
+  background-size:40px 40px;
+  opacity:.55;
+}
+.backplate::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:3px;
+  background:linear-gradient(90deg,#246cff,#58c0ff 22%,transparent 43%,transparent 57%,#ff694f 78%,#ff1e1e);
+  box-shadow:0 0 18px rgba(72,152,255,.6),0 0 18px rgba(255,60,42,.48);
 }
 
-/* ── 상단/하단 테두리 ─── */
-#topline{
-  position:absolute;top:0;left:0;right:0;height:2px;z-index:10;overflow:hidden;
-  background:linear-gradient(90deg,
-    #0a4cf5 0%,#3a9bff 26%,rgba(255,255,255,.07) 48%,rgba(255,255,255,.07) 52%,#ff4422 74%,#f00 100%);
-  box-shadow:0 0 12px rgba(80,140,255,.5),0 0 12px rgba(255,60,30,.45);
+.side{
+  position:absolute;
+  top:24px;
+  width:448px;
+  height:76px;
+  z-index:2;
+  display:grid;
+  grid-template-columns:112px repeat(3,1fr);
+  gap:10px;
+  align-items:center;
 }
-#topline::after{
-  content:'';position:absolute;top:0;bottom:0;width:16%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
-  animation:scan 4.5s linear infinite;
-}
-@keyframes scan{0%{left:-20%}100%{left:120%}}
-
-#botline{
-  position:absolute;bottom:0;left:0;right:0;height:1px;z-index:10;
-  background:linear-gradient(90deg,
-    rgba(10,76,245,.5) 0%,rgba(58,155,255,.28) 35%,
-    rgba(255,255,255,.05) 50%,
-    rgba(255,68,34,.28) 65%,rgba(240,10,10,.5) 100%);
+.side.blue{left:42px}
+.side.red{
+  right:42px;
+  grid-template-columns:repeat(3,1fr) 112px;
 }
 
-/* ── 팀 사이드 ─── */
-.team{position:relative;z-index:2;flex:1;display:flex;align-items:center;overflow:hidden;}
-.team.blue{
-  padding:0 0 0 22px;justify-content:flex-start;
-  background:linear-gradient(100deg,rgba(14,66,210,.28) 0%,rgba(14,66,210,.1) 55%,transparent 82%);
+.team-tag{
+  position:relative;
+  height:66px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:0 15px;
+  overflow:hidden;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.14);
 }
-.team.red{
-  padding:0 22px 0 0;justify-content:flex-end;
-  background:linear-gradient(260deg,rgba(200,36,16,.28) 0%,rgba(200,36,16,.1) 55%,transparent 82%);
+.blue .team-tag{
+  clip-path:polygon(0 0,100% 0,84% 100%,0 100%);
+  border-left:3px solid #4da7ff;
+  box-shadow:inset 18px 0 26px rgba(46,126,255,.20),0 0 22px rgba(52,126,255,.12);
 }
-/* 양쪽 끝 세로 강조선 */
-.team.blue::after{content:'';position:absolute;left:0;top:0;bottom:0;width:2.5px;
-  background:linear-gradient(180deg,transparent,rgba(50,135,255,.9),transparent);
-  box-shadow:0 0 8px rgba(50,135,255,.55);}
-.team.red::after{content:'';position:absolute;right:0;top:0;bottom:0;width:2.5px;
-  background:linear-gradient(180deg,transparent,rgba(255,55,38,.9),transparent);
-  box-shadow:0 0 8px rgba(255,55,38,.55);}
+.red .team-tag{
+  order:4;
+  text-align:right;
+  clip-path:polygon(16% 0,100% 0,100% 100%,0 100%);
+  border-right:3px solid #ff5645;
+  box-shadow:inset -18px 0 26px rgba(255,70,46,.18),0 0 22px rgba(255,55,38,.10);
+}
+.team-small{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:3px;
+  color:rgba(224,234,255,.38);
+}
+.team-name{
+  margin-top:4px;
+  font-size:24px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:1px;
+}
+.blue .team-name{color:#5db2ff;text-shadow:0 0 18px rgba(73,156,255,.72)}
+.red .team-name{color:#ff6857;text-shadow:0 0 18px rgba(255,85,62,.72)}
 
-/* ── 스탯 블록 ─── */
-.stat{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:0 18px;}
-.stat+.stat::before{
-  content:'';position:absolute;left:0;top:16%;height:68%;width:1px;
-  background:linear-gradient(180deg,transparent,rgba(255,255,255,.12) 40%,rgba(255,255,255,.12) 60%,transparent);
+.stat{
+  position:relative;
+  height:62px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:inset 0 0 18px rgba(0,0,0,.45);
 }
-/* 구분점 다이아몬드 */
-.stat+.stat::after{
-  content:'';position:absolute;left:-3px;top:50%;transform:translateY(-50%);
-  width:6px;height:6px;
-  background:rgba(255,255,255,.1);
-  clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+.blue .stat{clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.red .stat{clip-path:polygon(0 0,calc(100% - 10px) 0,100% 100%,10px 100%)}
+.stat::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  opacity:.16;
+}
+.blue .stat::before{background:linear-gradient(100deg,#3898ff,transparent 70%)}
+.red .stat::before{background:linear-gradient(260deg,#ff4f3b,transparent 70%)}
+.icon{
+  position:relative;
+  width:25px;
+  height:25px;
+  display:grid;
+  place-items:center;
+  color:rgba(231,239,255,.62);
+  border:1px solid rgba(255,255,255,.12);
+  transform:rotate(45deg);
+  background:rgba(255,255,255,.045);
+}
+.icon span{
+  transform:rotate(-45deg);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:0;
+}
+.value{
+  position:relative;
+  min-width:50px;
+  font-size:28px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:0;
+  text-align:center;
+  white-space:nowrap;
+}
+.label{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:7px;
+  text-align:center;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:3px;
+  color:rgba(219,231,255,.30);
+}
+.blue .stat.kill .value{color:#55b5ff;text-shadow:0 0 19px rgba(71,158,255,.78)}
+.red .stat.kill .value{color:#ff6a59;text-shadow:0 0 19px rgba(255,82,58,.74)}
+.stat.gold{
+  gap:7px;
+}
+.stat.gold .value{
+  min-width:64px;
+  font-size:24px;
 }
 
-.sv{font-size:1.45rem;font-weight:700;line-height:1;letter-spacing:.5px;color:#ccd7f0;}
-.sl{font-size:.38rem;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.24);margin-top:3px;}
-
-/* 킬 수치 네온 */
-.team.blue .stat:first-child .sv{color:#52b8ff;text-shadow:0 0 18px rgba(60,155,255,.75);}
-.team.red  .stat:last-child  .sv{color:#ff6650;text-shadow:0 0 18px rgba(255,85,55,.75);}
-
-/* ── 센터 ─── */
-.center{
-  position:relative;z-index:3;flex-shrink:0;width:200px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+.core{
+  position:absolute;
+  left:50%;
+  top:2px;
+  z-index:4;
+  width:256px;
+  height:124px;
+  transform:translateX(-50%);
+  display:grid;
+  place-items:center;
 }
-.center::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 180px 82px at 50% 50%,rgba(15,24,50,.92) 0%,transparent 100%);
+.core-shell{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 50% 46%,rgba(64,81,130,.86),rgba(8,12,27,.98) 56%,transparent 57%),
+    linear-gradient(90deg,rgba(56,132,255,.18),rgba(255,255,255,.035),rgba(255,77,52,.18));
+  clip-path:polygon(50% 0,66% 20%,100% 34%,80% 50%,100% 66%,66% 80%,50% 100%,34% 80%,0 66%,20% 50%,0 34%,34% 20%);
+  filter:drop-shadow(0 0 26px rgba(48,111,255,.24)) drop-shadow(0 0 24px rgba(255,62,39,.20));
 }
-.kscore{position:relative;z-index:1;display:flex;align-items:center;gap:16px;}
-.ks-b{font-size:2.4rem;font-weight:900;line-height:1;color:#4daaff;
-  text-shadow:0 0 22px rgba(55,140,255,.9),0 0 44px rgba(55,140,255,.3);}
-.ks-r{font-size:2.4rem;font-weight:900;line-height:1;color:#ff5540;
-  text-shadow:0 0 22px rgba(255,70,40,.9),0 0 44px rgba(255,70,40,.3);}
-.timer-row{position:relative;z-index:1;display:flex;align-items:center;gap:6px;}
-.t-dash{width:18px;height:1px;background:rgba(255,255,255,.12);}
-.timer{font-size:.7rem;font-weight:600;letter-spacing:5px;color:rgba(185,210,255,.38);}
+.core-shell::before{
+  content:"";
+  position:absolute;
+  inset:17px 38px;
+  border:1px solid rgba(218,230,255,.25);
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+  background:rgba(3,6,17,.56);
+}
+.score-row{
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-columns:84px 20px 84px;
+  align-items:center;
+  transform:translateY(-3px);
+}
+.ks-b,.ks-r{
+  font-size:54px;
+  font-weight:900;
+  line-height:.85;
+  letter-spacing:0;
+}
+.ks-b{text-align:right;color:#4aaaff;text-shadow:0 0 24px rgba(63,150,255,.9)}
+.ks-r{text-align:left;color:#ff5847;text-shadow:0 0 24px rgba(255,75,50,.86)}
+.slash{
+  height:46px;
+  position:relative;
+}
+.slash::before,.slash::after{
+  content:"";
+  position:absolute;
+  left:8px;
+  width:3px;
+  height:21px;
+  background:rgba(229,239,255,.30);
+  transform:skewX(-16deg);
+}
+.slash::before{top:0}
+.slash::after{bottom:0}
+.timer-row{
+  position:absolute;
+  z-index:3;
+  left:0;
+  right:0;
+  bottom:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+}
+.timer-row::before,.timer-row::after{
+  content:"";
+  width:28px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(220,232,255,.28),transparent);
+}
+.timer{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:5px;
+  color:rgba(207,222,252,.54);
+}
 
-/* ── 대기 오버레이 ─── */
-#waiting{position:absolute;inset:0;z-index:20;background:rgba(4,7,16,.95);
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  font-size:.48rem;letter-spacing:8px;text-transform:uppercase;color:rgba(255,255,255,.15);
-  transition:opacity .6s;opacity:0;pointer-events:none;}
+#deco{
+  position:absolute;
+  inset:0;
+  z-index:3;
+  pointer-events:none;
+}
+
+#waiting{
+  position:absolute;
+  inset:16px 18px 24px;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  background:rgba(4,7,16,.94);
+  color:rgba(222,233,255,.24);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:8px;
+  text-transform:uppercase;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .55s;
+  clip-path:polygon(0 26px,22px 0,calc(100% - 22px) 0,100% 26px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0 calc(100% - 16px));
+}
 .dot{animation:blink 1.6s ease infinite}
-.dot:nth-child(2){animation-delay:.25s}.dot:nth-child(3){animation-delay:.5s}
+.dot:nth-child(2){animation-delay:.25s}
+.dot:nth-child(3){animation-delay:.5s}
 @keyframes blink{0%,80%,100%{opacity:.1}40%{opacity:.7}}
 
-@keyframes killFlash{0%{transform:scale(1.4);filter:brightness(2)}100%{transform:scale(1);filter:brightness(1)}}
-.kill-flash{animation:killFlash .4s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes killFlash{
+  0%{transform:scale(1.35);filter:brightness(2.25)}
+  100%{transform:scale(1);filter:brightness(1)}
+}
+.kill-flash{animation:killFlash .42s cubic-bezier(.16,1,.3,1) forwards}
 </style>
 </head>
 <body>
 <div id="hud">
-  <div id="topline"></div>
-  <div id="botline"></div>
+  <div class="backplate"></div>
 
-  <!-- 블루 사이드 -->
-  <div class="team blue">
-    <div class="stat"><span class="sv" id="bk">7</span><span class="sl">킬</span></div>
-    <div class="stat"><span class="sv" id="bt">3</span><span class="sl">타워</span></div>
-    <div class="stat"><span class="sv" id="bg">~37.4K</span><span class="sl">골드</span></div>
-  </div>
+  <section class="side blue">
+    <div class="team-tag">
+      <span class="team-small">SUMMONER</span>
+      <strong class="team-name">BLUE</strong>
+    </div>
+    <div class="stat kill">
+      <i class="icon"><span>K</span></i>
+      <span class="value" id="bk">7</span>
+      <span class="label">킬</span>
+    </div>
+    <div class="stat">
+      <i class="icon"><span>T</span></i>
+      <span class="value" id="bt">3</span>
+      <span class="label">타워</span>
+    </div>
+    <div class="stat gold">
+      <i class="icon"><span>G</span></i>
+      <span class="value" id="bg">~37.4K</span>
+      <span class="label">골드</span>
+    </div>
+  </section>
 
-  <!-- 센터 -->
-  <div class="center">
-    <div class="kscore">
+  <div class="core">
+    <div class="core-shell"></div>
+    <div class="score-row">
       <span class="ks-b" id="bsc">7</span>
+      <span class="slash"></span>
       <span class="ks-r" id="rsc">15</span>
     </div>
-    <div class="timer-row">
-      <div class="t-dash"></div>
-      <span class="timer" id="tmr">21:19</span>
-      <div class="t-dash"></div>
+    <div class="timer-row"><span class="timer" id="tmr">21:19</span></div>
+  </div>
+
+  <section class="side red">
+    <div class="stat gold">
+      <i class="icon"><span>G</span></i>
+      <span class="value" id="rg">~42.3K</span>
+      <span class="label">골드</span>
     </div>
-  </div>
+    <div class="stat">
+      <i class="icon"><span>T</span></i>
+      <span class="value" id="rt">0</span>
+      <span class="label">타워</span>
+    </div>
+    <div class="stat kill">
+      <i class="icon"><span>K</span></i>
+      <span class="value" id="rk">15</span>
+      <span class="label">킬</span>
+    </div>
+    <div class="team-tag">
+      <span class="team-small">SUMMONER</span>
+      <strong class="team-name">RED</strong>
+    </div>
+  </section>
 
-  <!-- 레드 사이드 -->
-  <div class="team red">
-    <div class="stat"><span class="sv" id="rg">~42.3K</span><span class="sl">골드</span></div>
-    <div class="stat"><span class="sv" id="rt">0</span><span class="sl">타워</span></div>
-    <div class="stat"><span class="sv" id="rk">15</span><span class="sl">킬</span></div>
-  </div>
-
-  <!-- ══════════════════════════════════════════════════
-       SVG 휘장 + 날개 장식 레이어
-  ══════════════════════════════════════════════════ -->
-  <svg id="deco" width="960" height="82" viewBox="0 0 960 82"
-       xmlns="http://www.w3.org/2000/svg"
-       style="position:absolute;inset:0;z-index:6;pointer-events:none;overflow:visible">
-
-    <!-- ────────────────────────────────────
-         중앙 휘장 (Center Crest)
-    ──────────────────────────────────── -->
-    <g transform="translate(480,41)">
-      <!-- 바깥 마름모 -->
-      <polygon points="0,-18 13,0 0,18 -13,0"
-               fill="none" stroke="rgba(185,215,255,.48)" stroke-width="1.1"/>
-      <!-- 안쪽 마름모 -->
-      <polygon points="0,-10 7,0 0,10 -7,0"
-               fill="rgba(30,60,140,.45)" stroke="rgba(185,215,255,.28)" stroke-width=".7"/>
-      <!-- 중심 원 -->
-      <circle cx="0" cy="0" r="2.8" fill="rgba(185,215,255,.8)"/>
-      <!-- 가로 장식선 -->
-      <line x1="-22" y1="0" x2="-13" y2="0" stroke="rgba(185,215,255,.32)" stroke-width=".7"/>
-      <line x1="13"  y1="0" x2="22"  y2="0" stroke="rgba(185,215,255,.32)" stroke-width=".7"/>
-      <!-- 끝 마커 -->
-      <circle cx="-22" cy="0" r="1.2" fill="rgba(185,215,255,.4)"/>
-      <circle cx="22"  cy="0" r="1.2" fill="rgba(185,215,255,.4)"/>
-      <!-- 위아래 단 장식 -->
-      <line x1="0" y1="-22" x2="0" y2="-18" stroke="rgba(185,215,255,.28)" stroke-width=".7"/>
-      <line x1="0" y1="18"  x2="0" y2="22"  stroke="rgba(185,215,255,.28)" stroke-width=".7"/>
-      <line x1="-4" y1="-22" x2="4" y2="-22" stroke="rgba(185,215,255,.2)" stroke-width=".6"/>
-      <line x1="-4" y1="22"  x2="4" y2="22"  stroke="rgba(185,215,255,.2)" stroke-width=".6"/>
+  <svg id="deco" width="1280" height="132" viewBox="0 0 1280 132" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke-linecap="round">
+      <path d="M38 22h166M38 22v24M1242 22h-166M1242 22v24" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+      <path d="M38 100h166M38 100V76M1242 100h-166M1242 100V76" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <path d="M42 22h126M42 100h126" stroke="rgba(73,151,255,.48)" stroke-width="1.2"/>
+      <path d="M1238 22h-126M1238 100h-126" stroke="rgba(255,73,51,.48)" stroke-width="1.2"/>
+      <path d="M490 38 552 66 490 94M790 38 728 66 790 94" stroke="rgba(220,232,255,.11)" stroke-width="1"/>
+      <path d="M512 47 558 66 512 85" stroke="rgba(80,155,255,.30)" stroke-width="1"/>
+      <path d="M768 47 722 66 768 85" stroke="rgba(255,84,62,.30)" stroke-width="1"/>
     </g>
-
-    <!-- ────────────────────────────────────
-         블루 날개 (좌측 퍼짐)
-    ──────────────────────────────────── -->
-    <g>
-      <!-- 메인 수평선 -->
-      <line x1="457" y1="41" x2="330" y2="41" stroke="rgba(55,125,255,.55)" stroke-width=".8"/>
-      <!-- 위 날개선 1 -->
-      <line x1="457" y1="41" x2="360" y2="30" stroke="rgba(55,125,255,.35)" stroke-width=".6"/>
-      <!-- 위 날개선 2 -->
-      <line x1="457" y1="41" x2="378" y2="22" stroke="rgba(55,125,255,.2)"  stroke-width=".5"/>
-      <!-- 아래 날개선 1 -->
-      <line x1="457" y1="41" x2="360" y2="52" stroke="rgba(55,125,255,.35)" stroke-width=".6"/>
-      <!-- 아래 날개선 2 -->
-      <line x1="457" y1="41" x2="378" y2="60" stroke="rgba(55,125,255,.2)"  stroke-width=".5"/>
-      <!-- 끝 마름모 -->
-      <polygon points="330,41 337,35.5 344,41 337,46.5"
-               fill="rgba(55,125,255,.55)" stroke="rgba(120,180,255,.4)" stroke-width=".6"/>
-      <!-- 중간 작은 마커 -->
-      <polygon points="390,41 394,37.5 398,41 394,44.5"
-               fill="none" stroke="rgba(55,125,255,.3)" stroke-width=".5"/>
+    <g fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.22)" stroke-width=".7">
+      <polygon points="640,14 646,20 640,26 634,20"/>
+      <polygon points="640,118 646,112 640,106 634,112"/>
+      <polygon points="466,66 474,58 482,66 474,74" fill="rgba(73,151,255,.44)" stroke="rgba(130,190,255,.45)"/>
+      <polygon points="814,66 806,58 798,66 806,74" fill="rgba(255,73,51,.44)" stroke="rgba(255,142,122,.45)"/>
     </g>
-
-    <!-- ────────────────────────────────────
-         레드 날개 (우측 퍼짐)
-    ──────────────────────────────────── -->
-    <g>
-      <line x1="503" y1="41" x2="630" y2="41" stroke="rgba(255,55,35,.55)" stroke-width=".8"/>
-      <line x1="503" y1="41" x2="600" y2="30" stroke="rgba(255,55,35,.35)" stroke-width=".6"/>
-      <line x1="503" y1="41" x2="582" y2="22" stroke="rgba(255,55,35,.2)"  stroke-width=".5"/>
-      <line x1="503" y1="41" x2="600" y2="52" stroke="rgba(255,55,35,.35)" stroke-width=".6"/>
-      <line x1="503" y1="41" x2="582" y2="60" stroke="rgba(255,55,35,.2)"  stroke-width=".5"/>
-      <polygon points="630,41 623,35.5 616,41 623,46.5"
-               fill="rgba(255,55,35,.55)" stroke="rgba(255,130,100,.4)" stroke-width=".6"/>
-      <polygon points="570,41 566,37.5 562,41 566,44.5"
-               fill="none" stroke="rgba(255,55,35,.3)" stroke-width=".5"/>
-    </g>
-
-    <!-- ────────────────────────────────────
-         코너 브라켓 장식 (사방)
-    ──────────────────────────────────── -->
-    <!-- 블루 왼쪽 위 -->
-    <g stroke="rgba(55,125,255,.45)" stroke-width="1" fill="none">
-      <line x1="6"  y1="6"  x2="6"  y2="22"/>
-      <line x1="6"  y1="6"  x2="24" y2="6"/>
-      <line x1="12" y1="6"  x2="12" y2="10"/>
-      <line x1="6"  y1="12" x2="10" y2="12"/>
-    </g>
-    <!-- 블루 왼쪽 아래 -->
-    <g stroke="rgba(55,125,255,.35)" stroke-width="1" fill="none">
-      <line x1="6"  y1="76" x2="6"  y2="60"/>
-      <line x1="6"  y1="76" x2="24" y2="76"/>
-      <line x1="12" y1="76" x2="12" y2="72"/>
-      <line x1="6"  y1="70" x2="10" y2="70"/>
-    </g>
-    <!-- 레드 오른쪽 위 -->
-    <g stroke="rgba(255,55,35,.45)" stroke-width="1" fill="none">
-      <line x1="954" y1="6"  x2="954" y2="22"/>
-      <line x1="954" y1="6"  x2="936" y2="6"/>
-      <line x1="948" y1="6"  x2="948" y2="10"/>
-      <line x1="954" y1="12" x2="950" y2="12"/>
-    </g>
-    <!-- 레드 오른쪽 아래 -->
-    <g stroke="rgba(255,55,35,.35)" stroke-width="1" fill="none">
-      <line x1="954" y1="76" x2="954" y2="60"/>
-      <line x1="954" y1="76" x2="936" y2="76"/>
-      <line x1="948" y1="76" x2="948" y2="72"/>
-      <line x1="954" y1="70" x2="950" y2="70"/>
-    </g>
-
-    <!-- ────────────────────────────────────
-         상단 중앙 마름모 장식
-    ──────────────────────────────────── -->
-    <polygon points="480,3 484,7 480,11 476,7"
-             fill="rgba(255,255,255,.14)" stroke="rgba(255,255,255,.22)" stroke-width=".6"/>
-    <!-- 좌우 대칭 작은 틱 -->
-    <line x1="450" y1="2" x2="450" y2="7"  stroke="rgba(255,255,255,.15)" stroke-width=".7"/>
-    <line x1="510" y1="2" x2="510" y2="7"  stroke="rgba(255,255,255,.15)" stroke-width=".7"/>
-    <line x1="420" y1="2" x2="420" y2="5"  stroke="rgba(255,255,255,.1)"  stroke-width=".6"/>
-    <line x1="540" y1="2" x2="540" y2="5"  stroke="rgba(255,255,255,.1)"  stroke-width=".6"/>
-
-    <!-- ────────────────────────────────────
-         하단 중앙 마름모 장식
-    ──────────────────────────────────── -->
-    <polygon points="480,79 484,75 480,71 476,75"
-             fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.16)" stroke-width=".6"/>
   </svg>
 
   <div id="waiting">
-    게임 대기 중
-    <span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>
+    게임 대기중
+    <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
   </div>
 </div>
 
