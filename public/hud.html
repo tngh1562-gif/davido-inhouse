@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>LoL HUD</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  background:transparent;
+  width:900px;height:72px;
+  overflow:hidden;
+  font-family:'Rajdhani','Arial',sans-serif;
+}
+
+#hud{
+  width:900px;height:72px;
+  display:flex;align-items:stretch;
+  background:rgba(5,8,18,.90);
+  position:relative;
+  overflow:hidden;
+}
+
+/* 상단 강조선 (파란쪽→빨간쪽) */
+#hud::before{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,
+    #1a6ef0 0%,#1a6ef0 38%,
+    rgba(255,255,255,.12) 50%,
+    #dc3820 62%,#dc3820 100%);
+}
+
+/* ── 팀 사이드 ─── */
+.team{
+  flex:1;display:flex;align-items:center;
+}
+.team.blue{
+  padding:0 0 0 18px;
+  background:linear-gradient(90deg,rgba(26,110,240,.18) 0%,transparent 100%);
+  border-right:1px solid rgba(255,255,255,.07);
+}
+.team.red{
+  padding:0 18px 0 0;
+  background:linear-gradient(270deg,rgba(220,56,32,.18) 0%,transparent 100%);
+  border-left:1px solid rgba(255,255,255,.07);
+  justify-content:flex-end;
+}
+
+/* ── 스탯 블록 ─── */
+.stat{
+  display:flex;flex-direction:column;
+  align-items:center;
+  padding:0 16px;
+  position:relative;
+}
+.stat+.stat::before{
+  content:'';position:absolute;
+  left:0;top:18%;height:64%;
+  width:1px;background:rgba(255,255,255,.08);
+}
+.sv{/* stat value */
+  font-size:1.55rem;font-weight:700;
+  line-height:1;color:#e8edf8;
+  letter-spacing:.5px;
+}
+.sl{/* stat label */
+  font-size:.44rem;letter-spacing:3.5px;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.3);
+  margin-top:3px;
+}
+
+.team.blue .stat:first-child .sv{color:#6aadff}
+.team.red  .stat:last-child  .sv{color:#ff7060}
+
+/* ── 센터 블록 ─── */
+.center{
+  flex-shrink:0;min-width:188px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:0 8px;
+  gap:3px;
+}
+.kscore{
+  display:flex;align-items:center;gap:10px;
+}
+.ks-b{font-size:2rem;font-weight:900;line-height:1;color:#5fb2ff;}
+.ks-r{font-size:2rem;font-weight:900;line-height:1;color:#ff6855;}
+.ks-sep{
+  font-size:1.1rem;font-weight:700;
+  color:rgba(255,255,255,.22);
+  letter-spacing:1px;
+}
+.timer{
+  font-size:.78rem;font-weight:600;
+  letter-spacing:4px;
+  color:rgba(255,255,255,.42);
+}
+
+/* ── 게임 대기 오버레이 ─── */
+#waiting{
+  position:absolute;inset:0;
+  background:rgba(5,8,18,.92);
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;
+  font-size:.55rem;letter-spacing:7px;text-transform:uppercase;
+  color:rgba(255,255,255,.22);
+  transition:opacity .6s;
+}
+.dot{animation:blink 1.4s ease infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:.9}}
+</style>
+</head>
+<body>
+<div id="hud">
+
+  <!-- 블루 사이드 -->
+  <div class="team blue">
+    <div class="stat">
+      <span class="sv" id="bk">0</span>
+      <span class="sl">킬</span>
+    </div>
+    <div class="stat">
+      <span class="sv" id="bt">0</span>
+      <span class="sl">타워</span>
+    </div>
+    <div class="stat">
+      <span class="sv" id="bg">—</span>
+      <span class="sl">골드</span>
+    </div>
+  </div>
+
+  <!-- 센터 -->
+  <div class="center">
+    <div class="kscore">
+      <span class="ks-b" id="bsc">0</span>
+      <span class="ks-sep">—</span>
+      <span class="ks-r" id="rsc">0</span>
+    </div>
+    <div class="timer" id="tmr">00:00</div>
+  </div>
+
+  <!-- 레드 사이드 -->
+  <div class="team red">
+    <div class="stat">
+      <span class="sv" id="rg">—</span>
+      <span class="sl">골드</span>
+    </div>
+    <div class="stat">
+      <span class="sv" id="rt">0</span>
+      <span class="sl">타워</span>
+    </div>
+    <div class="stat">
+      <span class="sv" id="rk">0</span>
+      <span class="sl">킬</span>
+    </div>
+  </div>
+
+  <!-- 게임 미시작 시 오버레이 -->
+  <div id="waiting">
+    게임 대기 중
+    <span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>
+  </div>
+
+</div>
+
+<script>
+const API='http://127.0.0.1:2999/liveclientdata/allgamedata';
+
+function fmtTime(sec){
+  const m=Math.floor(sec/60);
+  return `${String(m).padStart(2,'0')}:${String(Math.floor(sec%60)).padStart(2,'0')}`;
+}
+function fmtGold(g){
+  return g>=1000?(g/1000).toFixed(1)+'K':String(Math.round(g));
+}
+
+function set(id,v){
+  const el=document.getElementById(id);
+  if(el&&el.textContent!==String(v)) el.textContent=v;
+}
+
+async function poll(){
+  try{
+    const res=await fetch(API,{cache:'no-store'});
+    if(!res.ok) throw 0;
+    const d=await res.json();
+
+    // 오버레이 숨기기
+    document.getElementById('waiting').style.opacity='0';
+    document.getElementById('waiting').style.pointerEvents='none';
+
+    // 타이머
+    set('tmr', fmtTime(d.gameData.gameTime));
+
+    // 팀 킬 합산 (ORDER=블루, CHAOS=레드)
+    let bk=0,rk=0;
+    for(const p of d.allPlayers){
+      if(p.team==='ORDER') bk+=p.scores.kills;
+      else                  rk+=p.scores.kills;
+    }
+    set('bk',bk); set('bsc',bk);
+    set('rk',rk); set('rsc',rk);
+
+    // 타워 (이벤트에서 집계)
+    // T1_ 구조물 파괴 → 블루팀 구조물 사망 → 레드팀 타워 획득
+    // T2_ 구조물 파괴 → 레드팀 구조물 사망 → 블루팀 타워 획득
+    let bt=0,rt=0;
+    for(const ev of d.events.Events){
+      if(ev.EventName==='TurretKilled'){
+        const n=ev.TurretKilled||'';
+        if(n.includes('T1_'))      rt++;
+        else if(n.includes('T2_')) bt++;
+      }
+    }
+    set('bt',bt); set('rt',rt);
+
+    // 골드 추정 (Live Client API에서 골드 미제공)
+    // 추정식: 기본500 + CS×19.8 + 킬×300 + 어시스트×150
+    let bg=0,rg=0;
+    for(const p of d.allPlayers){
+      const g=500+(p.scores.creepScore*19.8)+(p.scores.kills*300)+(p.scores.assists*150);
+      if(p.team==='ORDER') bg+=g;
+      else                  rg+=g;
+    }
+    set('bg','~'+fmtGold(bg));
+    set('rg','~'+fmtGold(rg));
+
+  }catch{
+    document.getElementById('waiting').style.opacity='1';
+    document.getElementById('waiting').style.pointerEvents='auto';
+  }
+}
+
+poll();
+setInterval(poll,2000);
+</script>
+</body>
+</html>
