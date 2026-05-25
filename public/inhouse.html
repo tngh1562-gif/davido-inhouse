@@ -1722,9 +1722,14 @@ function findViewerForPlayer(p){
     const byId=viewers.find(v=>Number(v.id)===Number(p.viewerId));
     if(byId) return byId;
   }
-  const name=(p.name||'').trim().toLowerCase();
+  if(p.id){
+    const byId=viewers.find(v=>Number(v.id)===Number(p.id));
+    if(byId) return byId;
+  }
+  const stripTag=n=>(n||'').trim().toLowerCase().replace(/#.+$/,'');
+  const name=stripTag(p.name);
   if(!name) return null;
-  return viewers.find(v=>(v.name||'').trim().toLowerCase()===name) || null;
+  return viewers.find(v=>stripTag(v.name)===name) || null;
 }
 function grantInhousePoints(team,amount,reason){
   let count=0;

@@ -490,6 +490,7 @@ function handleDiscordInhouseRegister(req, res) {
   if (!validateDiscordBotSecret(req, res)) return;
   try {
     const result = upsertViewerFromDiscordRegistration(req.body || {});
+    broadcastState();
     res.json({
       ok: true,
       viewer: result.viewer,
@@ -1559,6 +1560,10 @@ function handleChat(msg) {
 
     if (/^!참가(?:\s|$)/.test(text)) {
       broadcast({ type: 'inhouse_join', nickname, text, ts: Date.now() });
+    }
+
+    if (/^!디코(?:\s|$)/.test(text)) {
+      sendBotNotice(nickname, '다비도 디스코드 👉 https://discord.gg/2fxXMQH7');
     }
 
     // 투표
