@@ -1369,11 +1369,13 @@ function closeDeeplolVoteModal() {
 function buildDrawPool(voteIdx) {
   const it = state.vote.items[voteIdx];
   if (!it) return [];
-  const exclEl = document.getElementById(`draw-excl-${voteIdx}`);
   const subEl  = document.getElementById(`draw-sub-${voteIdx}`);
   let pool = [...it.votes];
-  if (exclEl?.checked && drawnPeople[voteIdx]?.size) {
-    pool = pool.filter(n => !drawnPeople[voteIdx].has(n));
+  if (drawnPeople[voteIdx]?.size) {
+    pool = pool.filter(n => {
+      const name = typeof n === 'object' ? n.name : n;
+      return !drawnPeople[voteIdx].has(name);
+    });
   }
   // 구독자 필터: votes 배열이 객체 {name, subscriber} 형태이면 필터 적용
   if (subEl?.checked) {
