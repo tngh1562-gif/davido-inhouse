@@ -401,12 +401,12 @@ html,body{
   </svg>
 
   <div class="obj-strip blue" id="bobj">
-    <div class="obj-icon" style="background:#ff8c4022;border-color:#ff8c4099"><img src="https://raw.communitydragon.org/latest/game/assets/ux/dragonheads/drag_fire.png" width="26" height="26" style="object-fit:contain"/></div>
-    <div class="obj-icon" style="background:#4d90d822;border-color:#4d90d899"><img src="https://raw.communitydragon.org/latest/game/assets/ux/dragonheads/drag_water.png" width="26" height="26" style="object-fit:contain"/></div>
-    <div class="obj-icon" style="background:#c060ff22;border-color:#c060ff99"><img src="https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/objective/baron_nashor.png" width="26" height="26" style="object-fit:contain"/></div>
+    <div class="obj-icon" style="background:#ff8c4022;border-color:#ff8c4099"><img src="https://raw.communitydragon.org/latest/game/assets/ux/announcements/dragon_circle_fire.png" width="26" height="26" style="object-fit:contain"/></div>
+    <div class="obj-icon" style="background:#4d90d822;border-color:#4d90d899"><img src="https://raw.communitydragon.org/latest/game/assets/ux/announcements/dragon_circle_water.png" width="26" height="26" style="object-fit:contain"/></div>
+    <div class="obj-icon" style="background:#c060ff22;border-color:#c060ff99"><img src="https://raw.communitydragon.org/latest/game/assets/ux/announcements/baron_circle.png" width="26" height="26" style="object-fit:contain"/></div>
   </div>
   <div class="obj-strip red" id="robj">
-    <div class="obj-icon" style="background:#9dd0d422;border-color:#9dd0d499"><img src="https://raw.communitydragon.org/latest/game/assets/ux/dragonheads/drag_air.png" width="26" height="26" style="object-fit:contain"/></div>
+    <div class="obj-icon" style="background:#9dd0d422;border-color:#9dd0d499"><img src="https://raw.communitydragon.org/latest/game/assets/ux/announcements/dragon_circle_air.png" width="26" height="26" style="object-fit:contain"/></div>
   </div>
 
   <div id="waiting">
@@ -420,19 +420,20 @@ const API='http://127.0.0.1:2999/liveclientdata/allgamedata';
 const W=document.getElementById('waiting');
 let prevBK=-1,prevRK=-1;
 
-const CDN='https://raw.communitydragon.org/latest/game/assets/ux/dragonheads';
+const ANN='https://raw.communitydragon.org/latest/game/assets/ux/announcements';
+const MM='https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons';
 const OBJ={
   dragon:{
-    Air:     {c:'#9dd0d4', img:`${CDN}/drag_air.png`},
-    Fire:    {c:'#ff8c40', img:`${CDN}/drag_fire.png`},
-    Earth:   {c:'#c09060', img:`${CDN}/drag_earth.png`},
-    Water:   {c:'#4d90d8', img:`${CDN}/drag_water.png`},
-    Hextech: {c:'#a566ff', img:`${CDN}/drag_hextech.png`},
-    Chemtech:{c:'#54b848', img:`${CDN}/drag_chemtech.png`},
-    Elder:   {c:'#ffd93d', img:`${CDN}/drag_elder.png`},
+    Air:     {c:'#9dd0d4', img:`${ANN}/dragon_circle_air.png`},
+    Fire:    {c:'#ff8c40', img:`${ANN}/dragon_circle_fire.png`},
+    Earth:   {c:'#c09060', img:`${ANN}/dragon_circle_earth.png`},
+    Water:   {c:'#4d90d8', img:`${ANN}/dragon_circle_water.png`},
+    Hextech: {c:'#a566ff', img:`${ANN}/dragon_circle_hextech.png`},
+    Chemtech:{c:'#54b848', img:`${ANN}/dragon_circle_chemtech.png`},
+    Elder:   {c:'#ffd93d', img:`${MM}/dragon_elder.png`},
   },
-  baron: {c:'#c060ff', img:'https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/objective/baron_nashor.png'},
-  herald:{c:'#9070e0', img:'https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/objective/rift_herald.png'},
+  baron: {c:'#c060ff', img:`${ANN}/baron_circle.png`},
+  herald:{c:'#9070e0', img:`${ANN}/sruriftherald_circle.png`},
 };
 
 function mkIcon(imgUrl,c){
