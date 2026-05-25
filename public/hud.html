@@ -390,7 +390,8 @@ html,body{
 
 <script>
 const API='http://127.0.0.1:2999/liveclientdata/allgamedata';
-let prevBK=7,prevRK=15;
+const W=document.getElementById('waiting');
+let prevBK=-1,prevRK=-1;
 
 function fmtTime(s){const m=Math.floor(s/60);return`${String(m).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
 function fmtGold(g){return'~'+(g>=1000?(g/1000).toFixed(1)+'K':Math.round(g));}
@@ -402,15 +403,16 @@ async function poll(){
     const res=await fetch(API,{cache:'no-store'});
     if(!res.ok)throw 0;
     const d=await res.json();
-    document.getElementById('waiting').style.opacity='0';
+    W.style.opacity='0';W.style.pointerEvents='none';
     set('tmr',fmtTime(d.gameData.gameTime));
     let bk=0,rk=0;
     for(const p of d.allPlayers){p.team==='ORDER'?bk+=p.scores.kills:rk+=p.scores.kills;}
-    if(bk!==prevBK){flash('bk');flash('bsc');prevBK=bk;}
-    if(rk!==prevRK){flash('rk');flash('rsc');prevRK=rk;}
+    if(prevBK!==-1&&bk!==prevBK){flash('bk');flash('bsc');}
+    if(prevRK!==-1&&rk!==prevRK){flash('rk');flash('rsc');}
+    prevBK=bk;prevRK=rk;
     set('bk',bk);set('bsc',bk);set('rk',rk);set('rsc',rk);
     let bt=0,rt=0;
-    for(const ev of d.events.Events){
+    for(const ev of (d.events?.Events||[])){
       if(ev.EventName==='TurretKilled'){const n=ev.TurretKilled||'';if(n.includes('T1_'))rt++;else if(n.includes('T2_'))bt++;}
     }
     set('bt',bt);set('rt',rt);
@@ -420,7 +422,9 @@ async function poll(){
       p.team==='ORDER'?bg+=g:rg+=g;
     }
     set('bg',fmtGold(bg));set('rg',fmtGold(rg));
-  }catch{}
+  }catch{
+    W.style.opacity='1';W.style.pointerEvents='auto';
+  }
 }
 poll();
 setInterval(poll,2000);
