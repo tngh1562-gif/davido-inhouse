@@ -7,8 +7,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{
-  width:1280px;
-  height:164px;
+  width:940px;
+  height:136px;
   overflow:hidden;
   background:transparent;
   font-family:"Rajdhani","Arial",sans-serif;
@@ -16,8 +16,8 @@ html,body{
 
 #hud{
   position:relative;
-  width:1280px;
-  height:164px;
+  width:940px;
+  height:136px;
   color:#eef5ff;
   isolation:isolate;
 }
@@ -26,8 +26,8 @@ html,body{
   position:absolute;
   left:18px;
   right:18px;
-  top:16px;
-  height:122px;
+  top:14px;
+  height:108px;
   background:
     linear-gradient(90deg,rgba(20,83,190,.28),rgba(7,11,24,.96) 27%,rgba(7,11,24,.98) 73%,rgba(195,32,25,.28)),
     linear-gradient(180deg,rgba(19,28,52,.98),rgba(4,7,17,.98));
@@ -61,67 +61,54 @@ html,body{
 
 .side{
   position:absolute;
-  top:24px;
-  width:448px;
-  height:76px;
+  top:50%;
+  transform:translateY(-50%);
+  width:318px;
+  height:64px;
   z-index:2;
   display:grid;
-  grid-template-columns:112px repeat(3,1fr);
-  gap:10px;
-  align-items:center;
+  grid-template-columns:88px repeat(2,1fr);
+  gap:7px;
+  align-items:stretch;
 }
-.side.blue{left:42px}
+.side.blue{left:36px}
 .side.red{
-  right:42px;
-  grid-template-columns:repeat(3,1fr) 112px;
+  right:36px;
+  grid-template-columns:repeat(2,1fr) 88px;
 }
 
 .team-tag{
   position:relative;
-  height:66px;
+  height:100%;
   display:flex;
-  flex-direction:column;
-  justify-content:center;
-  padding:0 15px;
+  flex-wrap:wrap;
+  align-content:center;
+  gap:3px;
   overflow:hidden;
   background:rgba(255,255,255,.045);
   border:1px solid rgba(255,255,255,.14);
 }
 .blue .team-tag{
+  padding:4px 16px 4px 6px;
   clip-path:polygon(0 0,100% 0,84% 100%,0 100%);
   border-left:3px solid #4da7ff;
   box-shadow:inset 18px 0 26px rgba(46,126,255,.20),0 0 22px rgba(52,126,255,.12);
 }
 .red .team-tag{
   order:4;
-  text-align:right;
+  padding:4px 6px 4px 16px;
   clip-path:polygon(16% 0,100% 0,100% 100%,0 100%);
   border-right:3px solid #ff5645;
   box-shadow:inset -18px 0 26px rgba(255,70,46,.18),0 0 22px rgba(255,55,38,.10);
 }
-.team-small{
-  font-size:10px;
-  font-weight:800;
-  letter-spacing:3px;
-  color:rgba(224,234,255,.38);
-}
-.team-name{
-  margin-top:4px;
-  font-size:24px;
-  font-weight:900;
-  line-height:1;
-  letter-spacing:1px;
-}
-.blue .team-name{color:#5db2ff;text-shadow:0 0 18px rgba(73,156,255,.72)}
-.red .team-name{color:#ff6857;text-shadow:0 0 18px rgba(255,85,62,.72)}
 
 .stat{
   position:relative;
-  height:62px;
+  height:100%;
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:10px;
+  gap:8px;
   overflow:hidden;
   background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
   border:1px solid rgba(255,255,255,.13);
@@ -139,24 +126,15 @@ html,body{
 .red .stat::before{background:linear-gradient(260deg,#ff4f3b,transparent 70%)}
 .icon{
   position:relative;
-  width:25px;
-  height:25px;
+  width:28px;
+  height:28px;
   display:grid;
   place-items:center;
-  color:rgba(231,239,255,.62);
-  border:1px solid rgba(255,255,255,.12);
-  transform:rotate(45deg);
-  background:rgba(255,255,255,.045);
-}
-.icon span{
-  transform:rotate(-45deg);
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:0;
+  flex-shrink:0;
 }
 .value{
   position:relative;
-  min-width:50px;
+  min-width:36px;
   font-size:28px;
   font-weight:900;
   line-height:1;
@@ -164,25 +142,20 @@ html,body{
   text-align:center;
   white-space:nowrap;
 }
-.label{
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:7px;
-  text-align:center;
-  font-size:8px;
-  font-weight:800;
-  letter-spacing:3px;
-  color:rgba(219,231,255,.30);
-}
+.label{display:none}
 .blue .stat.kill .value{color:#55b5ff;text-shadow:0 0 19px rgba(71,158,255,.78)}
 .red .stat.kill .value{color:#ff6a59;text-shadow:0 0 19px rgba(255,82,58,.74)}
 .stat.gold{
-  gap:7px;
+  gap:5px;
 }
 .stat.gold .value{
-  min-width:64px;
-  font-size:24px;
+  min-width:0;
+  font-size:22px;
+}
+.icon img{
+  display:block;
+  object-fit:contain;
+  opacity:.82;
 }
 
 .core{
@@ -191,7 +164,7 @@ html,body{
   top:2px;
   z-index:4;
   width:256px;
-  height:124px;
+  height:132px;
   transform:translateX(-50%);
   display:grid;
   place-items:center;
@@ -215,22 +188,25 @@ html,body{
 .score-row{
   position:relative;
   z-index:2;
-  display:grid;
-  grid-template-columns:84px 20px 84px;
+  display:flex;
   align-items:center;
+  justify-content:center;
+  gap:2px;
   transform:translateY(-3px);
 }
 .ks-b,.ks-r{
-  font-size:54px;
+  font-size:52px;
   font-weight:900;
   line-height:.85;
   letter-spacing:0;
 }
-.ks-b{text-align:right;color:#4aaaff;text-shadow:0 0 24px rgba(63,150,255,.9)}
-.ks-r{text-align:left;color:#ff5847;text-shadow:0 0 24px rgba(255,75,50,.86)}
+.ks-b{color:#4aaaff;text-shadow:0 0 24px rgba(63,150,255,.9)}
+.ks-r{color:#ff5847;text-shadow:0 0 24px rgba(255,75,50,.86)}
 .slash{
+  width:16px;
   height:46px;
   position:relative;
+  flex-shrink:0;
 }
 .slash::before,.slash::after{
   content:"";
@@ -276,7 +252,7 @@ html,body{
 
 #waiting{
   position:absolute;
-  inset:16px 18px 24px;
+  inset:14px 15px 18px;
   z-index:20;
   display:flex;
   align-items:center;
@@ -298,31 +274,53 @@ html,body{
 .dot:nth-child(3){animation-delay:.5s}
 @keyframes blink{0%,80%,100%{opacity:.1}40%{opacity:.7}}
 
+/* ── 바론 버프 네온 ── */
+.baron-ov{
+  position:absolute;
+  top:14px;height:3px;
+  width:44%;
+  pointer-events:none;
+  z-index:8;
+  opacity:0;
+  transition:opacity .4s;
+}
+#baron-ov-blue{
+  left:18px;
+  background:linear-gradient(90deg,#8822ee,#bb66ff 50%,transparent);
+  box-shadow:0 0 20px rgba(130,30,240,.9);
+}
+#baron-ov-red{
+  right:18px;
+  background:linear-gradient(270deg,#cc00ff,#aa44ff 50%,transparent);
+  box-shadow:0 0 20px rgba(180,0,255,.9);
+}
+.baron-ov.active{opacity:1}
+@keyframes baronBlink{0%,49%{opacity:1}50%,100%{opacity:.08}}
+.baron-ov.blink{animation:baronBlink .7s step-end infinite}
+#hud.baron-blue .blue .team-tag{
+  border-left-color:#9933ff;
+  box-shadow:inset 18px 0 26px rgba(110,30,220,.28),0 0 22px rgba(130,40,255,.22);
+}
+#hud.baron-red .red .team-tag{
+  border-right-color:#cc00ff;
+  box-shadow:inset -18px 0 26px rgba(160,0,255,.25),0 0 22px rgba(180,0,255,.18);
+}
+@keyframes tagBlink{0%,49%{opacity:1}50%,100%{opacity:.15}}
+#hud.baron-blue-blink .blue .team-tag{animation:tagBlink .7s step-end infinite}
+#hud.baron-red-blink .red .team-tag{animation:tagBlink .7s step-end infinite}
+
 @keyframes killFlash{
   0%{transform:scale(1.35);filter:brightness(2.25)}
   100%{transform:scale(1);filter:brightness(1)}
 }
 .kill-flash{animation:killFlash .42s cubic-bezier(.16,1,.3,1) forwards}
 
-/* ── 오브젝트 스트립 ── */
-.obj-strip{
-  position:absolute;
-  top:110px;
-  height:28px;
-  display:flex;
-  align-items:center;
-  gap:5px;
-  z-index:5;
-}
-.obj-strip.blue{left:42px}
-.obj-strip.red{right:42px;flex-direction:row-reverse}
 .obj-icon{
-  width:28px;height:28px;
+  width:18px;height:18px;
   display:flex;align-items:center;justify-content:center;
-  border:1px solid;
   flex-shrink:0;
 }
-@keyframes objIn{0%{opacity:0;transform:translateY(-5px) scale(.8)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes objIn{0%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:scale(1)}}
 .obj-icon{animation:objIn .3s cubic-bezier(.16,1,.3,1) forwards}
 </style>
 </head>
@@ -331,23 +329,21 @@ html,body{
   <div class="backplate"></div>
 
   <section class="side blue">
-    <div class="team-tag">
-      <span class="team-small">SUMMONER</span>
-      <strong class="team-name">BLUE</strong>
-    </div>
-    <div class="stat kill">
-      <i class="icon"><span>K</span></i>
-      <span class="value" id="bk">7</span>
-      <span class="label">킬</span>
+    <div class="team-tag" id="bobj">
+      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_infernaldrake.png" width="17" height="17" style="object-fit:contain"/></div>
+      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_clouddrake.png" width="17" height="17" style="object-fit:contain"/></div>
+      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_mountaindrake.png" width="17" height="17" style="object-fit:contain"/></div>
+      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_oceandrake.png" width="17" height="17" style="object-fit:contain"/></div>
+      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_hextechdrake.png" width="17" height="17" style="object-fit:contain"/></div>
     </div>
     <div class="stat">
-      <i class="icon"><span>T</span></i>
+      <i class="icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/tower.png" width="26" height="26"/></i>
       <span class="value" id="bt">3</span>
       <span class="label">타워</span>
     </div>
     <div class="stat gold">
-      <i class="icon"><span>G</span></i>
-      <span class="value" id="bg">~37.4K</span>
+      <i class="icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/floatingtext/goldicon.png" width="26" height="26"/></i>
+      <span class="value" id="bg">37.4K</span>
       <span class="label">골드</span>
     </div>
   </section>
@@ -355,7 +351,7 @@ html,body{
   <div class="core">
     <div class="core-shell"></div>
     <div class="score-row">
-      <span class="ks-b" id="bsc">7</span>
+      <span class="ks-b" id="bsc">20</span>
       <span class="slash"></span>
       <span class="ks-r" id="rsc">15</span>
     </div>
@@ -364,52 +360,44 @@ html,body{
 
   <section class="side red">
     <div class="stat gold">
-      <i class="icon"><span>G</span></i>
-      <span class="value" id="rg">~42.3K</span>
+      <i class="icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/floatingtext/goldicon.png" width="26" height="26"/></i>
+      <span class="value" id="rg">42.3K</span>
       <span class="label">골드</span>
     </div>
     <div class="stat">
-      <i class="icon"><span>T</span></i>
+      <i class="icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/tower.png" width="26" height="26"/></i>
       <span class="value" id="rt">0</span>
       <span class="label">타워</span>
     </div>
-    <div class="stat kill">
-      <i class="icon"><span>K</span></i>
-      <span class="value" id="rk">15</span>
-      <span class="label">킬</span>
-    </div>
-    <div class="team-tag">
-      <span class="team-small">SUMMONER</span>
-      <strong class="team-name">RED</strong>
+    <div class="team-tag" id="robj">
+      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_chemtechdrake.png" width="17" height="17" style="object-fit:contain"/></div>
+      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_baronnashor.png" width="17" height="17" style="object-fit:contain"/></div>
+      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/grub.png" width="17" height="17" style="object-fit:contain"/></div>
+      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_riftherald.png" width="17" height="17" style="object-fit:contain"/></div>
     </div>
   </section>
 
-  <svg id="deco" width="1280" height="132" viewBox="0 0 1280 132" xmlns="http://www.w3.org/2000/svg">
+  <svg id="deco" width="940" height="136" viewBox="0 0 940 136" xmlns="http://www.w3.org/2000/svg">
     <g fill="none" stroke-linecap="round">
-      <path d="M38 22h166M38 22v24M1242 22h-166M1242 22v24" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
-      <path d="M38 100h166M38 100V76M1242 100h-166M1242 100V76" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
-      <path d="M42 22h126M42 100h126" stroke="rgba(73,151,255,.48)" stroke-width="1.2"/>
-      <path d="M1238 22h-126M1238 100h-126" stroke="rgba(255,73,51,.48)" stroke-width="1.2"/>
-      <path d="M490 38 552 66 490 94M790 38 728 66 790 94" stroke="rgba(220,232,255,.11)" stroke-width="1"/>
-      <path d="M512 47 558 66 512 85" stroke="rgba(80,155,255,.30)" stroke-width="1"/>
-      <path d="M768 47 722 66 768 85" stroke="rgba(255,84,62,.30)" stroke-width="1"/>
+      <path d="M36 22h130M36 22v24M904 22h-130M904 22v24" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+      <path d="M36 114h130M36 114V90M904 114h-130M904 114V90" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <path d="M36 22h100M36 114h100" stroke="rgba(73,151,255,.48)" stroke-width="1.2"/>
+      <path d="M904 22h-100M904 114h-100" stroke="rgba(255,73,51,.48)" stroke-width="1.2"/>
+      <path d="M360 38 422 66 360 94M580 38 518 66 580 94" stroke="rgba(220,232,255,.11)" stroke-width="1"/>
+      <path d="M382 47 422 66 382 85" stroke="rgba(80,155,255,.30)" stroke-width="1"/>
+      <path d="M558 47 518 66 558 85" stroke="rgba(255,84,62,.30)" stroke-width="1"/>
     </g>
     <g fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.22)" stroke-width=".7">
-      <polygon points="640,14 646,20 640,26 634,20"/>
-      <polygon points="640,118 646,112 640,106 634,112"/>
+      <polygon points="470,14 476,20 470,26 464,20"/>
+      <polygon points="470,118 476,112 470,106 464,112"/>
     </g>
   </svg>
 
-  <div class="obj-strip blue" id="bobj">
-    <div class="obj-icon" style="background:#ff8c4022;border-color:#ff8c4099"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_infernaldrake.png" width="26" height="26" style="object-fit:contain"/></div>
-    <div class="obj-icon" style="background:#4d90d822;border-color:#4d90d899"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_oceandrake.png" width="26" height="26" style="object-fit:contain"/></div>
-    <div class="obj-icon" style="background:#c060ff22;border-color:#c060ff99"><img src="https://raw.communitydragon.org/latest/game/assets/ux/announcements/baron_circle.png" width="26" height="26" style="object-fit:contain"/></div>
-  </div>
-  <div class="obj-strip red" id="robj">
-    <div class="obj-icon" style="background:#9dd0d422;border-color:#9dd0d499"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_clouddrake.png" width="26" height="26" style="object-fit:contain"/></div>
-  </div>
 
-  <div id="waiting">
+  <div id="baron-ov-blue" class="baron-ov"></div>
+  <div id="baron-ov-red" class="baron-ov"></div>
+
+  <div id="waiting" style="display:none">
     게임 대기중
     <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
   </div>
@@ -419,6 +407,27 @@ html,body{
 const API='http://127.0.0.1:2999/liveclientdata/allgamedata';
 const W=document.getElementById('waiting');
 let prevBK=-1,prevRK=-1;
+const BARON_DUR=180;
+const baronKill={blue:-1,red:-1};
+const ovBlue=document.getElementById('baron-ov-blue');
+const ovRed=document.getElementById('baron-ov-red');
+const HUD=document.getElementById('hud');
+
+function applyBaronFx(gameTime){
+  for(const[team,ov] of [['blue',ovBlue],['red',ovRed]]){
+    const rem=baronKill[team]>=0?(baronKill[team]+BARON_DUR)-gameTime:0;
+    if(rem>10){
+      ov.className='baron-ov active';
+      HUD.classList.add(`baron-${team}`);HUD.classList.remove(`baron-${team}-blink`);
+    }else if(rem>0){
+      ov.className='baron-ov active blink';
+      HUD.classList.add(`baron-${team}`,`baron-${team}-blink`);
+    }else{
+      ov.className='baron-ov';
+      HUD.classList.remove(`baron-${team}`,`baron-${team}-blink`);
+    }
+  }
+}
 
 const SB='https://raw.communitydragon.org/latest/game/assets/ux/scoreboard';
 const ANN='https://raw.communitydragon.org/latest/game/assets/ux/announcements';
@@ -432,16 +441,13 @@ const OBJ={
     Chemtech:{c:'#54b848', img:`${SB}/_chemtechdrake.png`},
     Elder:   {c:'#ffd93d', img:`${SB}/_elderdrake.png`},
   },
-  baron:  {c:'#c060ff', img:`${ANN}/baron_circle.png`},
-  herald: {c:'#9070e0', img:`${ANN}/sruriftherald_circle.png`},
-  grub:   {c:'#8855ff', img:`${ANN}/sru_voidgrub_circle.png`},
+  baron:  {c:'#c060ff', img:`${SB}/_baronnashor.png`},
+  herald: {c:'#9070e0', img:`${SB}/_riftherald.png`},
+  grub:   {c:'#8855ff', img:'https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/grub.png'},
 };
 
-function mkIcon(imgUrl,c){
-  return `<div class="obj-icon" style="background:${c}22;border-color:${c}99">
-    <img src="${imgUrl}" width="26" height="26" style="object-fit:contain;display:block"
-         onerror="this.parentElement.style.background='${c}33';this.style.display='none'"/>
-  </div>`;
+function mkIcon(imgUrl){
+  return `<div class="obj-icon"><img src="${imgUrl}" width="17" height="17" style="object-fit:contain;display:block" onerror="this.style.display='none'"/></div>`;
 }
 
 function renderObjs(events,players){
@@ -451,13 +457,13 @@ function renderObjs(events,players){
     const arr=killer?.team==='ORDER'?bo:ro;
     if(ev.EventName==='DragonKill'){
       const d=OBJ.dragon[ev.DragonType]||OBJ.dragon.Fire;
-      arr.push(mkIcon(d.img,d.c));
+      arr.push(mkIcon(d.img));
     }else if(ev.EventName==='BaronKill'){
-      arr.push(mkIcon(OBJ.baron.img,OBJ.baron.c));
+      arr.push(mkIcon(OBJ.baron.img));
     }else if(ev.EventName==='HeraldKill'){
-      arr.push(mkIcon(OBJ.herald.img,OBJ.herald.c));
+      arr.push(mkIcon(OBJ.herald.img));
     }else if(ev.EventName==='VoidGrubKill'){
-      arr.push(mkIcon(OBJ.grub.img,OBJ.grub.c));
+      arr.push(mkIcon(OBJ.grub.img));
     }
   }
   document.getElementById('bobj').innerHTML=bo.join('');
@@ -465,7 +471,7 @@ function renderObjs(events,players){
 }
 
 function fmtTime(s){const m=Math.floor(s/60);return`${String(m).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
-function fmtGold(g){return'~'+(g>=1000?(g/1000).toFixed(1)+'K':Math.round(g));}
+function fmtGold(g){return g>=1000?(g/1000).toFixed(1)+'K':Math.round(g);}
 function set(id,v){const el=document.getElementById(id);if(el&&el.textContent!==String(v))el.textContent=v;}
 function flash(id){const el=document.getElementById(id);if(!el)return;el.classList.remove('kill-flash');void el.offsetWidth;el.classList.add('kill-flash');}
 
@@ -493,7 +499,16 @@ async function poll(){
       p.team==='ORDER'?bg+=g:rg+=g;
     }
     set('bg',fmtGold(bg));set('rg',fmtGold(rg));
-    renderObjs(d.events?.Events||[],d.allPlayers);
+    const evs=d.events?.Events||[];
+    for(const ev of evs){
+      if(ev.EventName==='BaronKill'){
+        const killer=d.allPlayers.find(p=>p.summonerName===ev.KillerName||p.riotIdGameName===ev.KillerName);
+        const team=killer?.team==='ORDER'?'blue':'red';
+        if(ev.EventTime>baronKill[team])baronKill[team]=ev.EventTime;
+      }
+    }
+    applyBaronFx(d.gameData.gameTime);
+    renderObjs(evs, d.allPlayers);
   }catch{
     W.style.opacity='1';W.style.pointerEvents='auto';
   }
