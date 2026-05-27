@@ -169,9 +169,17 @@ function mergeViewers(existing, incoming) {
   return merged;
 }
 
-function writeViewerUpsert(viewer) {
+function writeViewerUpsert(viewer, clearDiscordId) {
   const existing = readInhouseDB();
-  const viewers = mergeViewers(existing.viewers, [viewer]);
+  let base = existing.viewers;
+  if (clearDiscordId) {
+    base = base.map(v =>
+      String(v.discordId || '').replace(/\D/g, '') === clearDiscordId && String(v.id) !== String(viewer.id)
+        ? { ...v, discordId: undefined }
+        : v
+    );
+  }
+  const viewers = mergeViewers(base, [viewer]);
   return writeInhouseDB(
     {
       baseUpdatedAt: existing.updatedAt,
@@ -390,7 +398,7 @@ function upsertViewerFromDiscordRegistration(body) {
   }
 
   db.vid = Math.max(Number(db.vid) || 0, Number(viewer.id) || 0);
-  return { db: writeViewerUpsert(viewer), viewer };
+  return { db: writeViewerUpsert(viewer, discordId || null), viewer };
 }
 
 function defaultDiscordConfig() {
