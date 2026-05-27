@@ -1450,8 +1450,8 @@ function redraw(){
 
 function excludeAndClose(){
   if(lastDrawWinner&&currentDrawVoteIdx!==null){
-    fetch('/api/control',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'vote_exclude',voteIdx:currentDrawVoteIdx,name:lastDrawWinner})});
+    fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({type:'vote_exclude',voteIdx:currentDrawVoteIdx,name:lastDrawWinner})});
   }
   closeDrawModal();
 }
@@ -1462,8 +1462,8 @@ function closeDrawModal(){
 }
 
 function removeDrawnPerson(voteIdx,name){
-  fetch('/api/control',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({action:'vote_unexclude',voteIdx,name})});
+  fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({type:'vote_unexclude',voteIdx,name})});
 }
 
 // ── 투표 액션 ──
