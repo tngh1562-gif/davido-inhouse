@@ -560,7 +560,8 @@ let spinning = false;
 let currentVideoId = null;
 let expandedVoteIdx = null;
 const voterListMode = new Set(); // 투표자 목록 보기 모드인 항목
-const drawnPeople = {}; // voteIdx -> Set<nickname>
+// 제외 목록은 서버 state(it.excluded)로 관리 — 이 변수는 더 이상 사용 안 함
+const drawnPeople = {};
 let currentDrawVoteIdx = null;
 let currentDrawPool = [];
 let lastDrawWinner = null;
@@ -802,7 +803,7 @@ function renderVote() {
     const pct = total > 0 ? Math.round(it.votes.length / total * 100) : 0;
     const isOpen = expandedVoteIdx === i;
     const labelHtml = hidden ? '<span style="filter:blur(5px);user-select:none;color:var(--txt)">● ● ●</span>' : esc(it.label);
-    const excluded = drawnPeople[i] ? [...drawnPeople[i]] : [];
+    const excluded = Array.isArray(it.excluded) ? it.excluded : [];
     const votersHtml = it.votes.length
       ? it.votes.map(n=>`<span class="voter-chip" onclick="addToInhouse('${n.replace(/'/g,"\'")}',${i},this)" title="내전 팀박스에 추가">${esc(n)} <span style="color:var(--acc2);font-size:10px">+</span></span>`).join('')
       : '<span style="font-size:12px;color:var(--txt2)">투표자 없음</span>';
@@ -1369,15 +1370,12 @@ function closeDeeplolVoteModal() {
 function buildDrawPool(voteIdx) {
   const it = state.vote.items[voteIdx];
   if (!it) return [];
-  const subEl  = document.getElementById(`draw-sub-${voteIdx}`);
-  let pool = [...it.votes];
-  if (drawnPeople[voteIdx]?.size) {
-    pool = pool.filter(n => {
-      const name = typeof n === 'object' ? n.name : n;
-      return !drawnPeople[voteIdx].has(name);
-    });
-  }
-  // 구독자 필터: votes 배열이 객체 {name, subscriber} 형태이면 필터 적용
+  const subEl = document.getElementById(`draw-sub-${voteIdx}`);
+  const excluded = new Set(Array.isArray(it.excluded) ? it.excluded : []);
+  let pool = [...it.votes].filter(n => {
+    const name = typeof n === 'object' ? n.name : n;
+    return !excluded.has(name);
+  });
   if (subEl?.checked) {
     const subPool = pool.filter(n => typeof n === 'object' && n.subscriber);
     if (subPool.length) pool = subPool;
@@ -1452,10 +1450,10 @@ function redraw(){
 
 function excludeAndClose(){
   if(lastDrawWinner&&currentDrawVoteIdx!==null){
-    if(!drawnPeople[currentDrawVoteIdx])drawnPeople[currentDrawVoteIdx]=new Set();
-    drawnPeople[currentDrawVoteIdx].add(lastDrawWinner);
+    fetch('/api/control',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'vote_exclude',voteIdx:currentDrawVoteIdx,name:lastDrawWinner})});
   }
-  closeDrawModal();renderVote();
+  closeDrawModal();
 }
 
 function closeDrawModal(){
@@ -1464,7 +1462,8 @@ function closeDrawModal(){
 }
 
 function removeDrawnPerson(voteIdx,name){
-  drawnPeople[voteIdx]?.delete(name);renderVote();
+  fetch('/api/control',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'vote_unexclude',voteIdx,name})});
 }
 
 // ── 투표 액션 ──

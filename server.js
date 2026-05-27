@@ -1793,11 +1793,30 @@ app.post('/api/action', async (req, res) => {
       state.vote = {
         active: true,
         title: body.title || '내전 투표',
-        items: (body.items || []).map((label, i) => ({ label, votes: [], color: COLORS[i % COLORS.length] })),
+        items: (body.items || []).map((label, i) => ({ label, votes: [], excluded: [], color: COLORS[i % COLORS.length] })),
         startedAt: Date.now(),
       };
       broadcast({ type: 'vote_update', vote: state.vote });
       return res.json({ ok: true });
+
+    case 'vote_exclude': {
+      const it = state.vote.items[body.voteIdx];
+      if (it && body.name) {
+        if (!Array.isArray(it.excluded)) it.excluded = [];
+        if (!it.excluded.includes(body.name)) it.excluded.push(body.name);
+        broadcast({ type: 'vote_update', vote: state.vote });
+      }
+      return res.json({ ok: true });
+    }
+
+    case 'vote_unexclude': {
+      const it = state.vote.items[body.voteIdx];
+      if (it && body.name) {
+        it.excluded = (it.excluded || []).filter(n => n !== body.name);
+        broadcast({ type: 'vote_update', vote: state.vote });
+      }
+      return res.json({ ok: true });
+    }
 
     case 'end_vote':
       state.vote.active = false;
