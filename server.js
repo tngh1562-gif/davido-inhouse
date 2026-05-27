@@ -467,6 +467,21 @@ function writeDiscordConfig(data) {
   return payload;
 }
 
+app.get('/api/livegame', (req, res) => {
+  let done = false;
+  const fail = (msg) => { if (done) return; done = true; res.status(503).json({ error: msg }); };
+  const req2 = http.get('http://127.0.0.1:2999/liveclientdata/allgamedata', { timeout: 2000 }, res2 => {
+    if (done) { res2.resume(); return; }
+    done = true;
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json');
+    res.status(res2.statusCode);
+    res2.pipe(res);
+  });
+  req2.on('error', () => fail('lcu_not_running'));
+  req2.on('timeout', () => { req2.destroy(); fail('lcu_timeout'); });
+});
+
 app.get('/api/inhouse-db', (req, res) => {
   res.json(readInhouseDB());
 });
