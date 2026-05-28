@@ -264,8 +264,8 @@ html,body{
   font-weight:900;
   letter-spacing:8px;
   text-transform:uppercase;
-  opacity:0;
-  pointer-events:none;
+  opacity:1;
+  pointer-events:auto;
   transition:opacity .55s;
   clip-path:polygon(0 26px,22px 0,calc(100% - 22px) 0,100% 26px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0 calc(100% - 16px));
 }
@@ -329,21 +329,15 @@ html,body{
   <div class="backplate"></div>
 
   <section class="side blue">
-    <div class="team-tag" id="bobj">
-      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_infernaldrake.png" width="17" height="17" style="object-fit:contain"/></div>
-      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_clouddrake.png" width="17" height="17" style="object-fit:contain"/></div>
-      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_mountaindrake.png" width="17" height="17" style="object-fit:contain"/></div>
-      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_oceandrake.png" width="17" height="17" style="object-fit:contain"/></div>
-      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_hextechdrake.png" width="17" height="17" style="object-fit:contain"/></div>
-    </div>
+    <div class="team-tag" id="bobj"></div>
     <div class="stat">
       <i class="icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/tower.png" width="26" height="26"/></i>
-      <span class="value" id="bt">3</span>
+      <span class="value" id="bt">0</span>
       <span class="label">타워</span>
     </div>
     <div class="stat gold">
       <i class="icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/floatingtext/goldicon.png" width="26" height="26"/></i>
-      <span class="value" id="bg">37.4K</span>
+      <span class="value" id="bg">0</span>
       <span class="label">골드</span>
     </div>
   </section>
@@ -351,17 +345,17 @@ html,body{
   <div class="core">
     <div class="core-shell"></div>
     <div class="score-row">
-      <span class="ks-b" id="bsc">20</span>
+      <span class="ks-b" id="bsc">0</span>
       <span class="slash"></span>
-      <span class="ks-r" id="rsc">15</span>
+      <span class="ks-r" id="rsc">0</span>
     </div>
-    <div class="timer-row"><span class="timer" id="tmr">21:19</span></div>
+    <div class="timer-row"><span class="timer" id="tmr">00:00</span></div>
   </div>
 
   <section class="side red">
     <div class="stat gold">
       <i class="icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/floatingtext/goldicon.png" width="26" height="26"/></i>
-      <span class="value" id="rg">42.3K</span>
+      <span class="value" id="rg">0</span>
       <span class="label">골드</span>
     </div>
     <div class="stat">
@@ -369,12 +363,7 @@ html,body{
       <span class="value" id="rt">0</span>
       <span class="label">타워</span>
     </div>
-    <div class="team-tag" id="robj">
-      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_chemtechdrake.png" width="17" height="17" style="object-fit:contain"/></div>
-      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_baronnashor.png" width="17" height="17" style="object-fit:contain"/></div>
-      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/grub.png" width="17" height="17" style="object-fit:contain"/></div>
-      <div class="obj-icon"><img src="https://raw.communitydragon.org/latest/game/assets/ux/scoreboard/_riftherald.png" width="17" height="17" style="object-fit:contain"/></div>
-    </div>
+    <div class="team-tag" id="robj"></div>
   </section>
 
   <svg id="deco" width="940" height="136" viewBox="0 0 940 136" xmlns="http://www.w3.org/2000/svg">
@@ -404,14 +393,26 @@ html,body{
 </div>
 
 <script>
-const API='http://127.0.0.1:2999/liveclientdata/allgamedata';
+const API='/api/livegame';
 const W=document.getElementById('waiting');
 let prevBK=-1,prevRK=-1;
+let prevGameId=-1,prevGameTime=-1;
 const BARON_DUR=180;
 const baronKill={blue:-1,red:-1};
 const ovBlue=document.getElementById('baron-ov-blue');
 const ovRed=document.getElementById('baron-ov-red');
 const HUD=document.getElementById('hud');
+
+function resetGameState(){
+  prevBK=-1;prevRK=-1;
+  baronKill.blue=-1;baronKill.red=-1;
+  ovBlue.className='baron-ov';ovRed.className='baron-ov';
+  HUD.classList.remove('baron-blue','baron-blue-blink','baron-red','baron-red-blink');
+  document.getElementById('bobj').innerHTML='';
+  document.getElementById('robj').innerHTML='';
+  ['bk','bsc','rk','rsc','bt','rt'].forEach(id=>set(id,'0'));
+  set('bg','0');set('rg','0');set('tmr','00:00');
+}
 
 function applyBaronFx(gameTime){
   for(const[team,ov] of [['blue',ovBlue],['red',ovRed]]){
@@ -480,8 +481,12 @@ async function poll(){
     const res=await fetch(API,{cache:'no-store'});
     if(!res.ok)throw 0;
     const d=await res.json();
+    const gameId=d.gameData?.gameId??-1;
+    const gameTime=d.gameData?.gameTime??0;
+    if(gameId!==prevGameId||(prevGameTime>30&&gameTime<prevGameTime-30)){resetGameState();}
+    prevGameId=gameId;prevGameTime=gameTime;
     W.style.opacity='0';W.style.pointerEvents='none';
-    set('tmr',fmtTime(d.gameData.gameTime));
+    set('tmr',fmtTime(gameTime));
     let bk=0,rk=0;
     for(const p of d.allPlayers){p.team==='ORDER'?bk+=p.scores.kills:rk+=p.scores.kills;}
     if(prevBK!==-1&&bk!==prevBK){flash('bk');flash('bsc');}
@@ -507,7 +512,7 @@ async function poll(){
         if(ev.EventTime>baronKill[team])baronKill[team]=ev.EventTime;
       }
     }
-    applyBaronFx(d.gameData.gameTime);
+    applyBaronFx(gameTime);
     renderObjs(evs, d.allPlayers);
   }catch{
     W.style.opacity='1';W.style.pointerEvents='auto';
