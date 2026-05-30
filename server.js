@@ -509,6 +509,38 @@ function validateDiscordBotSecret(req, res) {
   return false;
 }
 
+app.post('/api/start-inhouse', async (req, res) => {
+  try {
+    const db = readInhouseDB();
+    const cfg = readDiscordConfig();
+    const lobbyChannelId = String(cfg.voiceLobbyChannelId || '').replace(/\D/g, '');
+    const blueChannelId  = String(cfg.voiceBlueChannelId  || '').replace(/\D/g, '');
+    const redChannelId   = String(cfg.voiceRedChannelId   || '').replace(/\D/g, '');
+    if (!lobbyChannelId || !blueChannelId || !redChannelId)
+      return res.json({ ok: false, error: '음성채널 ID 미설정 (내전사이트 설정 탭에서 저장하세요)' });
+    if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET)
+      return res.json({ ok: false, error: 'DISCORD_BOT_API_URL / DISCORD_BOT_API_SECRET 환경변수 필요' });
+    const getIds = arr => (Array.isArray(arr) ? arr : [])
+      .map(p => {
+        const viewer = (db.viewers || []).find(v => Number(v.id) === Number(p.id || p.viewerId));
+        return String(viewer?.discordId || p.discordId || '').replace(/\D/g, '');
+      }).filter(Boolean);
+    const blueDiscordIds = getIds(db.curBlue);
+    const redDiscordIds  = getIds(db.curRed);
+    if (!blueDiscordIds.length && !redDiscordIds.length)
+      return res.json({ ok: false, error: '디스코드 연동된 팀원이 없습니다' });
+    const result = await postJson(`${DISCORD_BOT_API_URL}/api/move-voice-teams`, {
+      secret: DISCORD_BOT_API_SECRET,
+      lobbyChannelId, blueChannelId, redChannelId,
+      blueDiscordIds, redDiscordIds,
+    });
+    console.log('[START_INHOUSE] moved:', result);
+    res.json(result);
+  } catch (err) {
+    res.json({ ok: false, error: err.message || '실패' });
+  }
+});
+
 function handleDiscordInhouseRegister(req, res) {
   if (!validateDiscordBotSecret(req, res)) return;
   try {
