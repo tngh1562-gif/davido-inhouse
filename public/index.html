@@ -155,6 +155,25 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 .roulette-chip{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:12px}
 .roulette-chip .color-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 
+/* ── 투표 미니탭 ── */
+.vote-subtabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:18px;flex-shrink:0}
+.vote-subtab{background:none;border:none;border-bottom:2px solid transparent;color:var(--txt2);font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:600;cursor:pointer;padding:9px 16px;transition:all .15s;white-space:nowrap}
+.vote-subtab:hover{color:var(--txt)}
+.vote-subtab.active{color:var(--acc);border-bottom-color:var(--acc);font-weight:700}
+.vote-subpanel{display:none;flex:1;min-height:0;overflow-y:auto}
+.vote-subpanel.active{display:flex;flex-direction:column}
+
+/* ── 사다리타기 ── */
+.ladder-setup{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.ladder-setup textarea{resize:vertical;min-height:100px}
+.ladder-canvas-wrap{display:flex;justify-content:center;overflow-x:auto;margin-bottom:14px;min-height:120px;background:rgba(0,0,0,.2);border-radius:10px;padding:10px}
+#ladder-canvas{display:block;max-width:100%}
+.ladder-results{display:flex;flex-direction:column;gap:6px}
+.ladder-result-row{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px}
+.ladder-result-name{font-weight:700;min-width:80px}
+.ladder-result-arrow{color:var(--txt2)}
+.ladder-result-prize{color:var(--acc2);font-weight:700}
+
 /* ── ADMIN PANEL ── */
 #panel-admin{flex-direction:column;overflow:auto}
 .admin-sub-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--txt2);font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:600;cursor:pointer;padding:12px 20px;transition:all .15s}
@@ -338,32 +357,91 @@ select.console-inline-inp option{background:#2f3136;color:#dcddde}
 
       <!-- 오른쪽 결과 -->
       <div class="vote-right">
-        <div class="vote-top-bar">
-          <div class="vote-total-large">총 <span id="vote-total">0</span>표</div>
-          <div class="timer" id="vote-timer">00:00:00</div>
-        </div>
-        <div class="vote-notice-box" id="vote-notice-box" style="display:none">
-          <div class="vote-notice-title">채팅 투표가 진행중입니다</div>
-          <ul id="vote-notice-body">
-            <li>채팅 시 메시지 가장 앞에 <span style="color:#4fc3f7">'!투표1'</span> 혹은 <span style="color:#4fc3f7">'!투표 1'</span>과 같이 입력해주세요</li>
-            <li>투표 바를 클릭하면 상세 정보를 확인할 수 있습니다
-              <ul>
-                <li>투표자 리스트를 확인하고, 그 중에서 추첨을 진행할 수 있습니다</li>
-                <li>투표 진행 중에도 추첨이 가능합니다</li>
-              </ul>
-            </li>
-          </ul>
-          <div class="vote-notice-fold"><button onclick="toggleVoteNotice()" id="vote-notice-btn">안내사항 접기 ∧</button></div>
-        </div>
-        <div id="vote-items-list"><div class="empty-msg">투표를 시작하면 결과가 표시됩니다</div></div>
-        <div class="vote-bottom-bar" id="vote-bottom-bar" style="display:none">
-          <label class="vote-hide-label"><input type="checkbox" id="hide-vote-content" onchange="toggleHideVoteContent()"> 투표 내용 가리기</label>
-          <button class="btn danger" onclick="endVote()">투표 종료</button>
+        <!-- 미니탭 -->
+        <div class="vote-subtabs">
+          <button class="vote-subtab active" onclick="setVoteSubtab('vote',this)">📊 투표</button>
+          <button class="vote-subtab" onclick="setVoteSubtab('ladder',this)">🪜 사다리타기</button>
+          <button class="vote-subtab" onclick="setVoteSubtab('roulette',this)">🎡 룰렛</button>
         </div>
 
-        <!-- DEEPLOL 커스텀 코드 -->
-        <div style="margin-top:16px">
-          <button onclick="openDeeplolVoteModal()" style="width:100%;padding:14px;background:rgba(88,69,220,.18);border:1px solid rgba(88,69,220,.4);color:#a89fff;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:.3px;transition:background .15s" onmouseover="this.style.background='rgba(88,69,220,.3)'" onmouseout="this.style.background='rgba(88,69,220,.18)'">🎮 커스텀 게임 코드 생성</button>
+        <!-- 투표 패널 -->
+        <div id="vote-subpanel-vote" class="vote-subpanel active">
+          <div class="vote-top-bar">
+            <div class="vote-total-large">총 <span id="vote-total">0</span>표</div>
+            <div class="timer" id="vote-timer">00:00:00</div>
+          </div>
+          <div class="vote-notice-box" id="vote-notice-box" style="display:none">
+            <div class="vote-notice-title">채팅 투표가 진행중입니다</div>
+            <ul id="vote-notice-body">
+              <li>채팅 시 메시지 가장 앞에 <span style="color:#4fc3f7">'!투표1'</span> 혹은 <span style="color:#4fc3f7">'!투표 1'</span>과 같이 입력해주세요</li>
+              <li>투표 바를 클릭하면 상세 정보를 확인할 수 있습니다
+                <ul><li>투표자 리스트를 확인하고, 그 중에서 추첨을 진행할 수 있습니다</li>
+                <li>투표 진행 중에도 추첨이 가능합니다</li></ul>
+              </li>
+            </ul>
+            <div class="vote-notice-fold"><button onclick="toggleVoteNotice()" id="vote-notice-btn">안내사항 접기 ∧</button></div>
+          </div>
+          <div id="vote-items-list"><div class="empty-msg">투표를 시작하면 결과가 표시됩니다</div></div>
+          <div class="vote-bottom-bar" id="vote-bottom-bar" style="display:none">
+            <label class="vote-hide-label"><input type="checkbox" id="hide-vote-content" onchange="toggleHideVoteContent()"> 투표 내용 가리기</label>
+            <button class="btn danger" onclick="endVote()">투표 종료</button>
+          </div>
+          <div style="margin-top:16px">
+            <button onclick="openDeeplolVoteModal()" style="width:100%;padding:14px;background:rgba(88,69,220,.18);border:1px solid rgba(88,69,220,.4);color:#a89fff;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:.3px;transition:background .15s" onmouseover="this.style.background='rgba(88,69,220,.3)'" onmouseout="this.style.background='rgba(88,69,220,.18)'">🎮 커스텀 게임 코드 생성</button>
+          </div>
+        </div>
+
+        <!-- 사다리타기 패널 -->
+        <div id="vote-subpanel-ladder" class="vote-subpanel">
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <button class="btn" onclick="importVoteToLadder()" style="font-size:12px;padding:7px 12px">📊 투표 참가자 불러오기</button>
+          </div>
+          <div class="ladder-setup">
+            <div>
+              <label class="lbl">참가자 (한 줄에 하나)</label>
+              <textarea class="inp" id="ladder-participants" placeholder="참가자1&#10;참가자2&#10;참가자3"></textarea>
+            </div>
+            <div>
+              <label class="lbl">결과 항목 (한 줄에 하나)</label>
+              <textarea class="inp" id="ladder-prizes" placeholder="1등&#10;2등&#10;꼴등"></textarea>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <button class="btn success" onclick="generateLadder()" style="flex:1">🪜 사다리 생성</button>
+            <button class="btn" onclick="startLadder()" id="ladder-start-btn" style="flex:1" disabled>▶ 시작</button>
+          </div>
+          <div class="ladder-canvas-wrap"><canvas id="ladder-canvas" width="400" height="200"></canvas></div>
+          <div id="ladder-results" class="ladder-results"></div>
+        </div>
+
+        <!-- 룰렛 패널 -->
+        <div id="vote-subpanel-roulette" class="vote-subpanel">
+          <div id="roulette-wrap" style="display:none">
+            <div class="roulette-canvas-wrap">
+              <canvas id="roulette-canvas" width="280" height="280"></canvas>
+            </div>
+            <button class="spin-btn" id="spin-btn" onclick="spinRoulette()">🎡 룰렛 돌리기</button>
+            <div class="winner-banner" id="winner-banner" style="display:none">
+              🎉 당첨: <strong id="winner-name"></strong>
+            </div>
+            <div class="roulette-items-list" id="roulette-chips"></div>
+          </div>
+          <div style="margin-top:16px">
+            <div class="section-title" style="font-size:12px;margin-bottom:10px">수동 항목 추가</div>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <input class="inp" id="roulette-name-input" placeholder="항목 이름" style="flex:1">
+              <input class="inp" id="roulette-weight-input" type="number" value="1" min="1" style="width:60px">
+              <button class="btn" onclick="addManualRouletteItem()" style="padding:7px 12px">추가</button>
+            </div>
+            <div class="roulette-items-list" id="roulette-manual-list"></div>
+            <div style="display:flex;gap:6px;margin-top:10px">
+              <button class="btn success" onclick="applyManualRoulette()" style="flex:1">적용</button>
+              <button class="btn danger" onclick="clearManualRoulette()" style="flex:1">초기화</button>
+            </div>
+            <div style="margin-top:10px">
+              <button class="btn" onclick="voteToRoulette()" style="width:100%;font-size:12px">📊 투표 결과 → 룰렛 적용</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1640,6 +1718,162 @@ async function autoDeductVoteRewards() {
 }
 function resetVote() { if(confirm('초기화할까요?')) api('reset_vote'); }
 function voteToRoulette() { api('vote_to_roulette'); }
+
+// ── 투표 미니탭 전환 ──
+function setVoteSubtab(name, btn) {
+  document.querySelectorAll('.vote-subtab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.vote-subpanel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('vote-subpanel-' + name)?.classList.add('active');
+}
+
+// ── 사다리타기 ──
+let ladderData = null; // { participants, prizes, cols, rows, lines }
+let ladderAnimId = null;
+
+function importVoteToLadder() {
+  const items = state.vote?.items || [];
+  const names = [];
+  items.forEach(it => it.votes?.forEach(v => { const n = typeof v === 'object' ? v.name : v; if (!names.includes(n)) names.push(n); }));
+  if (!names.length) return toast('투표 참가자가 없습니다');
+  document.getElementById('ladder-participants').value = names.join('\n');
+  toast(`참가자 ${names.length}명 불러옴`);
+}
+
+function generateLadder() {
+  const pText = document.getElementById('ladder-participants').value;
+  const prText = document.getElementById('ladder-prizes').value;
+  const participants = pText.split('\n').map(s => s.trim()).filter(Boolean);
+  let prizes = prText.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!participants.length) return toast('참가자를 입력하세요');
+  while (prizes.length < participants.length) prizes.push(`${prizes.length + 1}번`);
+  prizes = prizes.slice(0, participants.length);
+
+  const n = participants.length;
+  const rows = Math.max(10, n * 4);
+  const lines = []; // { row, col } col → col+1 연결
+  for (let row = 1; row < rows; row++) {
+    let last = -2;
+    for (let col = 0; col < n - 1; col++) {
+      if (col > last + 1 && Math.random() < 0.38) { lines.push({ row, col }); last = col; }
+    }
+  }
+  ladderData = { participants, prizes, n, rows, lines, revealed: false };
+  document.getElementById('ladder-start-btn').disabled = false;
+  document.getElementById('ladder-results').innerHTML = '';
+  drawLadderStatic(ladderData);
+  toast('사다리 생성 완료! ▶ 시작을 눌러 진행하세요');
+}
+
+const LADDER_COLORS = ['#58b4ff','#ff4d6a','#4fc3f7','#81c784','#ffb74d','#ba68c8','#ff8a65','#a78bfa'];
+
+function ladderLayout(d) {
+  const canvas = document.getElementById('ladder-canvas');
+  const COL_W = Math.max(55, Math.min(90, (canvas.parentElement.clientWidth - 60) / d.n));
+  const ROW_H = 28;
+  canvas.width = (d.n - 1) * COL_W + 60;
+  canvas.height = d.rows * ROW_H + 80;
+  const xOf = c => 30 + c * COL_W;
+  const yOf = r => 44 + r * ROW_H;
+  return { canvas, COL_W, ROW_H, xOf, yOf };
+}
+
+function drawLadderStatic(d, paths, progress) {
+  if (!d) return;
+  const { canvas, xOf, yOf } = ladderLayout(d);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = 'bold 11px Noto Sans KR, sans-serif';
+  ctx.textAlign = 'center';
+
+  // 참가자 이름
+  d.participants.forEach((name, i) => {
+    ctx.fillStyle = LADDER_COLORS[i % LADDER_COLORS.length];
+    const label = name.length > 5 ? name.slice(0, 5) + '…' : name;
+    ctx.fillText(label, xOf(i), 18);
+  });
+  // 결과 이름
+  ctx.fillStyle = '#f5d97e';
+  d.prizes.forEach((prize, i) => {
+    const label = prize.length > 5 ? prize.slice(0, 5) + '…' : prize;
+    ctx.fillText(label, xOf(i), canvas.height - 8);
+  });
+
+  // 세로선
+  ctx.strokeStyle = 'rgba(255,255,255,.18)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < d.n; i++) {
+    ctx.beginPath(); ctx.moveTo(xOf(i), yOf(0)); ctx.lineTo(xOf(i), yOf(d.rows)); ctx.stroke();
+  }
+  // 가로선
+  ctx.strokeStyle = 'rgba(255,255,255,.35)';
+  d.lines.forEach(({ row, col }) => {
+    ctx.beginPath(); ctx.moveTo(xOf(col), yOf(row)); ctx.lineTo(xOf(col + 1), yOf(row)); ctx.stroke();
+  });
+
+  // 경로 그리기
+  if (paths && progress != null) {
+    paths.forEach((path, i) => {
+      const pLen = Math.floor(progress * path.length);
+      if (!pLen) return;
+      ctx.strokeStyle = LADDER_COLORS[i % LADDER_COLORS.length];
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      path.slice(0, pLen + 1).forEach(([x, y], j) => j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+      ctx.stroke();
+      const [bx, by] = path[Math.min(pLen, path.length - 1)];
+      ctx.beginPath(); ctx.arc(bx, by, 7, 0, Math.PI * 2);
+      ctx.fillStyle = LADDER_COLORS[i % LADDER_COLORS.length];
+      ctx.shadowColor = LADDER_COLORS[i % LADDER_COLORS.length];
+      ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0;
+    });
+  }
+}
+
+function traceLadderPath(d, startCol) {
+  const { xOf, yOf } = ladderLayout(d);
+  const lineSet = new Set(d.lines.map(l => `${l.row},${l.col}`));
+  const path = [[xOf(startCol), yOf(0)]];
+  let col = startCol;
+  for (let row = 0; row <= d.rows; row++) {
+    if (lineSet.has(`${row},${col}`)) { // 오른쪽 연결
+      path.push([xOf(col + 1), yOf(row)]);
+      col++;
+    } else if (col > 0 && lineSet.has(`${row},${col - 1}`)) { // 왼쪽 연결
+      path.push([xOf(col - 1), yOf(row)]);
+      col--;
+    }
+    if (row < d.rows) path.push([xOf(col), yOf(row + 1)]);
+  }
+  return { path, finalCol: col };
+}
+
+function startLadder() {
+  if (!ladderData || ladderAnimId) return;
+  document.getElementById('ladder-results').innerHTML = '';
+  const d = ladderData;
+  const traces = d.participants.map((_, i) => traceLadderPath(d, i));
+  const paths = traces.map(t => t.path);
+  const results = traces.map(t => ({ participant: d.participants[traces.indexOf(t)], prize: d.prizes[t.finalCol] }));
+
+  const duration = 2200;
+  const start = Date.now();
+  function frame() {
+    const progress = Math.min((Date.now() - start) / duration, 1);
+    drawLadderStatic(d, paths, progress);
+    if (progress < 1) { ladderAnimId = requestAnimationFrame(frame); return; }
+    ladderAnimId = null;
+    // 결과 표시
+    const el = document.getElementById('ladder-results');
+    el.innerHTML = results.map((r, i) => `
+      <div class="ladder-result-row">
+        <span class="ladder-result-name" style="color:${LADDER_COLORS[i % LADDER_COLORS.length]}">${esc(r.participant)}</span>
+        <span class="ladder-result-arrow">→</span>
+        <span class="ladder-result-prize">${esc(r.prize)}</span>
+      </div>`).join('');
+  }
+  ladderAnimId = requestAnimationFrame(frame);
+}
 
 // ── 채팅 렌더 ──
 function addChatItem(msg) {
