@@ -1887,25 +1887,24 @@ function generateLadder() {
   lines.sort((a, b) => (a.row||a.row1) - (b.row||b.row1));
 
   // 대각선 추가 (n당 1~2개)
-  const diagStarts = new Set(lines.map(l => `${l.row},${l.col}`));
-  const diagCount = Math.max(1, Math.round(n * 1.2));
-  for (let attempt = 0; attempt < diagCount * 30 && lines.filter(l=>l.type==='d').length < diagCount; attempt++) {
+  const diagStarts = new Set();
+  const diagCount = Math.max(1, n - 1);
+  for (let attempt = 0; attempt < 200 && lines.filter(l=>l.type==='d').length < diagCount; attempt++) {
     const col1 = Math.floor(Math.random() * (n - 1));
-    const dir   = (col1 === 0 || Math.random() < 0.5) ? 1 : -1;
-    const col2  = col1 + dir;
+    const dir  = (n === 2 || Math.random() < 0.5) ? 1 : -1;
+    const col2 = col1 + dir;
     if (col2 < 0 || col2 >= n) continue;
-    const row1  = 2 + Math.floor(Math.random() * (rows - 5));
+    const row1  = 1 + Math.floor(Math.random() * (rows - 4));
     const delta = 2 + Math.floor(Math.random() * 3);
     const row2  = row1 + delta;
     if (row2 >= rows - 1) continue;
     const sk = `${row1},${col1}`;
     if (diagStarts.has(sk)) continue;
-    // 가로선 충돌 체크
-    const conflict = lines.some(l => l.type !== 'd' && (
-      (l.row >= row1 - 1 && l.row <= row1 + 1 && (l.col === col1 || l.col === col1 - 1)) ||
-      (l.row >= row2 - 1 && l.row <= row2 + 1 && (l.col === col2 || l.col === col2 - 1))
-    ));
-    if (conflict) continue;
+    // 대각선 시작·끝 행에 가로선 없으면 OK
+    const hConflict = lines.some(l => l.type !== 'd' &&
+      (l.row === row1 || l.row === row2) &&
+      (l.col === Math.min(col1, col2) || l.col === Math.min(col1, col2) - 1));
+    if (hConflict) continue;
     diagStarts.add(sk);
     lines.push({ type: 'd', row1, col1, row2, col2 });
   }
