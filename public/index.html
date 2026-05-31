@@ -409,16 +409,15 @@ select.console-inline-inp option{background:#2f3136;color:#dcddde}
           <button class="btn success" onclick="generateLadder()" style="width:100%;margin-bottom:12px">🪜 사다리 생성</button>
           <!-- 사다리 렌더링 영역 -->
           <div id="ladder-area" style="display:none;overflow-x:auto">
-            <!-- 참가자 이름 버튼 행 -->
-            <div id="ladder-name-row" style="position:relative;height:36px;margin-bottom:4px"></div>
-            <!-- 세 캔버스 겹침 -->
-            <div style="position:relative;display:inline-block">
-              <canvas id="c-ladder" style="display:block"></canvas>
-              <canvas id="c-overlay" style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
-              <canvas id="c-ball"    style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
+            <div style="display:flex;flex-direction:column;align-items:center;min-width:min-content">
+              <div id="ladder-name-row" style="position:relative;height:38px;margin-bottom:6px;flex-shrink:0"></div>
+              <div style="position:relative;display:inline-block;flex-shrink:0">
+                <canvas id="c-ladder" style="display:block"></canvas>
+                <canvas id="c-overlay" style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
+                <canvas id="c-ball"    style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
+              </div>
+              <div id="ladder-result-row" style="position:relative;height:38px;margin-top:6px;flex-shrink:0"></div>
             </div>
-            <!-- 결과 항목 행 -->
-            <div id="ladder-result-row" style="position:relative;height:36px;margin-top:4px"></div>
           </div>
           <div id="ladder-results" class="ladder-results" style="margin-top:10px"></div>
         </div>
@@ -1811,7 +1810,7 @@ function eraseOverlayRange(pts, fromT, toT) {
   ctx.save();
   ctx.globalCompositeOperation = 'destination-out';
   ctx.strokeStyle = 'rgba(255,255,255,1)';
-  ctx.lineWidth = 24; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.lineWidth = 28; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.beginPath();
   let acc = 0, started = false;
   for (let i = 1; i < pts.length; i++) {
@@ -1839,12 +1838,28 @@ function generateLadder() {
   if (!participants.length) return toast('참가자를 입력하세요');
   while (prizes.length < participants.length) prizes.push(`${prizes.length+1}번`);
   prizes = prizes.slice(0, participants.length);
-  const n = participants.length, rows = Math.max(10, n * 4), lines = [];
+  const n = participants.length, rows = Math.max(16, n * 6), lines = [];
+  // 구간별 밀도 변화: 상단·하단 촘촘, 중간 적당
   for (let row = 1; row < rows; row++) {
+    const frac = row / rows;
+    // 상단 30%, 하단 20%는 더 촘촘; 중간은 느슨
+    const prob = frac < 0.3 ? 0.62 : frac > 0.8 ? 0.58 : 0.44;
     let last = -2;
     for (let col = 0; col < n - 1; col++)
-      if (col > last + 1 && Math.random() < 0.38) { lines.push({ row, col }); last = col; }
+      if (col > last + 1 && Math.random() < prob) { lines.push({ row, col }); last = col; }
   }
+  // 각 컬럼 쌍에 최소 2개 이상 가로선 보장 (너무 비어보이지 않게)
+  for (let col = 0; col < n - 1; col++) {
+    const existing = lines.filter(l => l.col === col).length;
+    let added = 0, tries = 0;
+    while (added < Math.max(0, 2 - existing) && tries < 40) {
+      tries++;
+      const row = 1 + Math.floor(Math.random() * (rows - 2));
+      const conflict = lines.some(l => l.row === row && Math.abs(l.col - col) <= 1);
+      if (!conflict) { lines.push({ row, col }); added++; }
+    }
+  }
+  lines.sort((a, b) => a.row - b.row || a.col - b.col);
   ladderData = { participants, prizes, n, rows, lines };
   document.getElementById('ladder-results').innerHTML = '';
   document.getElementById('ladder-area').style.display = '';
