@@ -1757,8 +1757,8 @@ function calcLL(d) {
   const area = document.getElementById('ladder-area');
   const avail = Math.max(240, (area?.clientWidth || 500) - 16);
   const COL_W = Math.max(70, Math.min(120, avail / d.n));
-  const MAX_H = 340;
-  const ROW_H = Math.max(14, Math.min(26, Math.floor((MAX_H - 10) / d.rows)));
+  const MAX_H = 430;
+  const ROW_H = Math.max(16, Math.min(30, Math.floor((MAX_H - 10) / d.rows)));
   const W = Math.round((d.n - 1) * COL_W + 60);
   const H = d.rows * ROW_H + 10;
   return { W, H, COL_W, ROW_H, xOf: c => Math.round(30 + c * COL_W), yOf: r => Math.round(r * ROW_H + 5) };
@@ -1929,25 +1929,6 @@ function generateLadder() {
       bgCtx.fillStyle = col2; bgCtx.fill();
     });
 
-    // 방향 화살표 (일부 가로선에만)
-    if (idx % 2 === 0) {
-      const dir = col2 === '#f5d97e' ? 1 : -1; // 황금선 → 오른쪽, 나머지 → 왼쪽
-      bgCtx.strokeStyle = col2 + 'aa'; bgCtx.lineWidth = 1.5;
-      bgCtx.beginPath();
-      bgCtx.moveTo(mid + dir*5, y - 4);
-      bgCtx.lineTo(mid + dir*10, y);
-      bgCtx.lineTo(mid + dir*5, y + 4);
-      bgCtx.stroke();
-    }
-
-    // 중앙 틱 마크 (짝수 인덱스 일부)
-    if (idx % 4 === 1) {
-      bgCtx.strokeStyle = 'rgba(255,255,255,.45)'; bgCtx.lineWidth = 1.5;
-      bgCtx.beginPath();
-      bgCtx.moveTo(mid - 4, y - 5); bgCtx.lineTo(mid + 4, y + 5); bgCtx.stroke();
-      bgCtx.beginPath();
-      bgCtx.moveTo(mid + 4, y - 5); bgCtx.lineTo(mid - 4, y + 5); bgCtx.stroke();
-    }
     bgCtx.restore();
   });
 
