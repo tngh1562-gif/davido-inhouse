@@ -424,6 +424,21 @@ select.console-inline-inp option{background:#2f3136;color:#dcddde}
 
         <!-- 룰렛 패널 -->
         <div id="vote-subpanel-roulette" class="vote-subpanel">
+          <!-- 항목 추가 입력 -->
+          <div style="display:flex;gap:6px;margin-bottom:10px">
+            <input class="inp" id="roulette-name-input" placeholder="항목 이름 입력" style="flex:1"
+              onkeydown="if(event.key==='Enter')addManualRouletteItem()">
+            <input class="inp" id="roulette-weight-input" type="number" value="1" min="1" style="width:58px" title="가중치">
+            <button class="btn success" onclick="addManualRouletteItem()" style="padding:7px 14px;font-size:14px;font-weight:700">+ 추가</button>
+          </div>
+          <!-- 현재 항목 목록 -->
+          <div id="roulette-manual-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:32px"></div>
+          <!-- 하단 버튼 -->
+          <div style="display:flex;gap:6px;margin-bottom:14px">
+            <button class="btn" onclick="voteToRoulette()" style="flex:1;font-size:12px">📊 투표 결과 불러오기</button>
+            <button class="btn danger" onclick="clearManualRoulette()" style="font-size:12px;padding:7px 12px">초기화</button>
+          </div>
+          <!-- 룰렛 휠 -->
           <div id="roulette-wrap" style="display:none">
             <div class="roulette-canvas-wrap">
               <canvas id="roulette-canvas" width="280" height="280"></canvas>
@@ -431,23 +446,6 @@ select.console-inline-inp option{background:#2f3136;color:#dcddde}
             <button class="spin-btn" id="spin-btn" onclick="spinRoulette()">🎡 룰렛 돌리기</button>
             <div class="winner-banner" id="winner-banner" style="display:none">
               🎉 당첨: <strong id="winner-name"></strong>
-            </div>
-            <div class="roulette-items-list" id="roulette-chips"></div>
-          </div>
-          <div style="margin-top:16px">
-            <div class="section-title" style="font-size:12px;margin-bottom:10px">수동 항목 추가</div>
-            <div style="display:flex;gap:6px;margin-bottom:8px">
-              <input class="inp" id="roulette-name-input" placeholder="항목 이름" style="flex:1">
-              <input class="inp" id="roulette-weight-input" type="number" value="1" min="1" style="width:60px">
-              <button class="btn" onclick="addManualRouletteItem()" style="padding:7px 12px">추가</button>
-            </div>
-            <div class="roulette-items-list" id="roulette-manual-list"></div>
-            <div style="display:flex;gap:6px;margin-top:10px">
-              <button class="btn success" onclick="applyManualRoulette()" style="flex:1">적용</button>
-              <button class="btn danger" onclick="clearManualRoulette()" style="flex:1">초기화</button>
-            </div>
-            <div style="margin-top:10px">
-              <button class="btn" onclick="voteToRoulette()" style="width:100%;font-size:12px">📊 투표 결과 → 룰렛 적용</button>
             </div>
           </div>
         </div>
@@ -2212,39 +2210,50 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 let manualRouletteItems = [];
 const RCOLORS = ['#4285f4','#ea4335','#34a853','#fbbc04','#9c27b0','#00bcd4','#ff5722','#e91e63'];
 
-function addRouletteItem() {
-  const name = document.getElementById('roulette-name-input').value.trim();
-  const weight = parseInt(document.getElementById('roulette-weight-input').value) || 1;
-  if (!name) return;
+// addManualRouletteItem: 추가 즉시 룰렛 반영
+function addManualRouletteItem() {
+  const inp = document.getElementById('roulette-name-input');
+  const name = (inp?.value || '').trim();
+  const weight = parseInt(document.getElementById('roulette-weight-input')?.value) || 1;
+  if (!name) { inp?.focus(); return; }
   manualRouletteItems.push({ label: name, weight, color: RCOLORS[manualRouletteItems.length % RCOLORS.length] });
-  document.getElementById('roulette-name-input').value = '';
+  inp.value = '';
   document.getElementById('roulette-weight-input').value = '1';
+  inp.focus();
   renderManualList();
+  if (manualRouletteItems.length >= 2) applyManualRoulette();
 }
 
 function renderManualList() {
   const el = document.getElementById('roulette-manual-list');
-  el.innerHTML = manualRouletteItems.map((it, i) => `
-    <div class="roulette-chip">
-      <div class="color-dot" style="background:${it.color}"></div>
-      ${esc(it.label)} (${it.weight})
-      <span onclick="removeManualItem(${i})" style="cursor:pointer;color:var(--red);margin-left:4px;font-size:11px">✕</span>
-    </div>`).join('');
+  if (!el) return;
+  el.innerHTML = manualRouletteItems.length
+    ? manualRouletteItems.map((it, i) => `
+        <div class="roulette-chip" style="display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px">
+          <div class="color-dot" style="background:${it.color};width:8px;height:8px;border-radius:50%;flex-shrink:0"></div>
+          <span>${esc(it.label)}</span>
+          <span style="color:var(--txt2);font-size:11px">(${it.weight})</span>
+          <span onclick="removeManualItem(${i})" style="cursor:pointer;color:var(--red);font-size:12px;margin-left:2px;line-height:1">✕</span>
+        </div>`).join('')
+    : '<span style="font-size:12px;color:var(--txt2)">항목을 추가하면 룰렛이 활성화됩니다</span>';
 }
 
 function removeManualItem(i) {
   manualRouletteItems.splice(i, 1);
+  // 색상 재정렬
+  manualRouletteItems.forEach((it, idx) => { it.color = RCOLORS[idx % RCOLORS.length]; });
   renderManualList();
+  applyManualRoulette();
 }
 
 function applyManualRoulette() {
-  if (!manualRouletteItems.length) return alert('항목을 추가하세요');
-  api('set_roulette', { items: manualRouletteItems });
+  api('set_roulette', { items: manualRouletteItems.length ? manualRouletteItems : [] });
 }
 
 function clearManualRoulette() {
   manualRouletteItems = [];
   renderManualList();
+  applyManualRoulette();
 }
 
 // ── 투표자 → 내전 팀박스 추가 (탭 전환 없이) ──
