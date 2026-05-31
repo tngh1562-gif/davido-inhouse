@@ -2047,18 +2047,22 @@ function addChatItem(msg) {
 function renderRoulette() {
   const items = state.roulette.items;
   const wrap = document.getElementById('roulette-wrap');
-  const chips = document.getElementById('roulette-chips');
+  if (!wrap) return;
   wrap.style.display = items.length ? '' : 'none';
   if (!items.length) return;
-  chips.innerHTML = items.map(it=>`<div class="roulette-chip"><div class="color-dot" style="background:${it.color}"></div>${esc(it.label)} (${it.weight})</div>`).join('');
-  drawWheel(rouletteAngle);
+  // 서버 state와 로컬 항목 동기화
+  if (items.length !== manualRouletteItems.length) {
+    manualRouletteItems = items.map(it => ({ ...it }));
+    renderManualList();
+  }
+  drawWheel(rouletteAngle, items);
 }
 
-function drawWheel(rot) {
+function drawWheel(rot, itemsOverride) {
   const canvas = document.getElementById('roulette-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const items = state.roulette.items;
+  const items = itemsOverride || state.roulette.items;
   if (!items.length) return;
   const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, r = Math.min(cx,cy)-10;
   ctx.clearRect(0,0,W,H);
@@ -2221,7 +2225,12 @@ function addManualRouletteItem() {
   document.getElementById('roulette-weight-input').value = '1';
   inp.focus();
   renderManualList();
-  if (manualRouletteItems.length >= 2) applyManualRoulette();
+  // 즉시 로컬 렌더 (서버 왕복 없이)
+  const wrap = document.getElementById('roulette-wrap');
+  if (wrap) wrap.style.display = '';
+  drawWheel(rouletteAngle, manualRouletteItems);
+  // 서버에도 전송 (2개 이상일 때만 룰렛 활성화)
+  applyManualRoulette();
 }
 
 function renderManualList() {
@@ -2240,9 +2249,11 @@ function renderManualList() {
 
 function removeManualItem(i) {
   manualRouletteItems.splice(i, 1);
-  // 색상 재정렬
   manualRouletteItems.forEach((it, idx) => { it.color = RCOLORS[idx % RCOLORS.length]; });
   renderManualList();
+  const wrap = document.getElementById('roulette-wrap');
+  if (wrap) wrap.style.display = manualRouletteItems.length ? '' : 'none';
+  if (manualRouletteItems.length) drawWheel(rouletteAngle, manualRouletteItems);
   applyManualRoulette();
 }
 
