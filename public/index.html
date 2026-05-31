@@ -1877,16 +1877,78 @@ function generateLadder() {
   // traces 계산 (_ll 사용, 캔버스 초기화 없음)
   ladderTraces = participants.map((_, i) => traceLadderPath(ladderData, i));
 
-  // 배경 캔버스: 사다리 그리기
+  // 배경 캔버스: 사다리 그리기 (컬러 + 장식)
   const bgCtx = document.getElementById('c-ladder').getContext('2d');
   bgCtx.clearRect(0, 0, W, H);
-  bgCtx.strokeStyle = '#ffffff'; bgCtx.lineWidth = 2.5;
-  for (let i = 0; i < n; i++) {
-    bgCtx.beginPath(); bgCtx.moveTo(xOf(i), yOf(0)); bgCtx.lineTo(xOf(i), yOf(rows)); bgCtx.stroke();
+
+  // 대각선 배경 패턴 (아주 희미하게)
+  bgCtx.save();
+  bgCtx.strokeStyle = 'rgba(255,255,255,.04)'; bgCtx.lineWidth = 1;
+  for (let x = -H; x < W + H; x += 22) {
+    bgCtx.beginPath(); bgCtx.moveTo(x, 0); bgCtx.lineTo(x + H, H); bgCtx.stroke();
   }
-  bgCtx.strokeStyle = '#dddddd'; bgCtx.lineWidth = 2;
-  lines.forEach(({ row, col }) => {
-    bgCtx.beginPath(); bgCtx.moveTo(xOf(col), yOf(row)); bgCtx.lineTo(xOf(col+1), yOf(row)); bgCtx.stroke();
+  bgCtx.restore();
+
+  // 컬러 세로선 (참가자별 색)
+  for (let i = 0; i < n; i++) {
+    const c = LADDER_COLORS[i % LADDER_COLORS.length];
+    bgCtx.save();
+    bgCtx.strokeStyle = c; bgCtx.lineWidth = 3;
+    bgCtx.shadowColor = c; bgCtx.shadowBlur = 10;
+    bgCtx.beginPath(); bgCtx.moveTo(xOf(i), yOf(0)); bgCtx.lineTo(xOf(i), yOf(rows)); bgCtx.stroke();
+    bgCtx.shadowBlur = 0;
+    // 상단 다이아몬드
+    bgCtx.fillStyle = c;
+    bgCtx.beginPath();
+    bgCtx.moveTo(xOf(i), yOf(0)-8); bgCtx.lineTo(xOf(i)+5, yOf(0));
+    bgCtx.lineTo(xOf(i), yOf(0)+8); bgCtx.lineTo(xOf(i)-5, yOf(0)); bgCtx.closePath(); bgCtx.fill();
+    // 하단 원
+    bgCtx.beginPath(); bgCtx.arc(xOf(i), yOf(rows), 5, 0, Math.PI*2); bgCtx.fill();
+    bgCtx.restore();
+  }
+
+  // 가로선 (굵기·색 변화 + 장식)
+  lines.forEach(({ row, col }, idx) => {
+    const x1 = xOf(col), x2 = xOf(col+1), y = yOf(row);
+    const mid = (x1 + x2) / 2;
+    // 3종류 스타일 순환
+    const style = idx % 3;
+    const lw   = style === 0 ? 3 : style === 1 ? 2 : 2.5;
+    const col2 = style === 0 ? '#ffffff' : style === 1 ? '#f5d97e' : '#a8d8ff';
+    const glow = style === 0 ? 6 : style === 1 ? 8 : 5;
+
+    bgCtx.save();
+    bgCtx.strokeStyle = col2; bgCtx.lineWidth = lw;
+    bgCtx.shadowColor = col2; bgCtx.shadowBlur = glow;
+    bgCtx.beginPath(); bgCtx.moveTo(x1, y); bgCtx.lineTo(x2, y); bgCtx.stroke();
+    bgCtx.shadowBlur = 0;
+
+    // 교차점 노드
+    [x1, x2].forEach(x => {
+      bgCtx.beginPath(); bgCtx.arc(x, y, 3.5, 0, Math.PI*2);
+      bgCtx.fillStyle = col2; bgCtx.fill();
+    });
+
+    // 방향 화살표 (일부 가로선에만)
+    if (idx % 2 === 0) {
+      const dir = col2 === '#f5d97e' ? 1 : -1; // 황금선 → 오른쪽, 나머지 → 왼쪽
+      bgCtx.strokeStyle = col2 + 'aa'; bgCtx.lineWidth = 1.5;
+      bgCtx.beginPath();
+      bgCtx.moveTo(mid + dir*5, y - 4);
+      bgCtx.lineTo(mid + dir*10, y);
+      bgCtx.lineTo(mid + dir*5, y + 4);
+      bgCtx.stroke();
+    }
+
+    // 중앙 틱 마크 (짝수 인덱스 일부)
+    if (idx % 4 === 1) {
+      bgCtx.strokeStyle = 'rgba(255,255,255,.45)'; bgCtx.lineWidth = 1.5;
+      bgCtx.beginPath();
+      bgCtx.moveTo(mid - 4, y - 5); bgCtx.lineTo(mid + 4, y + 5); bgCtx.stroke();
+      bgCtx.beginPath();
+      bgCtx.moveTo(mid + 4, y - 5); bgCtx.lineTo(mid - 4, y + 5); bgCtx.stroke();
+    }
+    bgCtx.restore();
   });
 
   // 오버레이: 검은색으로 채우기
