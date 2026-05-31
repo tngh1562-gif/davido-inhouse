@@ -408,7 +408,7 @@ select.console-inline-inp option{background:#2f3136;color:#dcddde}
           </div>
           <button class="btn success" onclick="generateLadder()" style="width:100%;margin-bottom:12px">🪜 사다리 생성</button>
           <!-- 사다리 렌더링 영역 -->
-          <div id="ladder-area" style="display:none;overflow-x:auto">
+          <div id="ladder-area" style="display:none;overflow:hidden">
             <div style="display:flex;flex-direction:column;align-items:center;min-width:min-content">
               <div id="ladder-name-row" style="position:relative;height:38px;margin-bottom:6px;flex-shrink:0"></div>
               <div style="position:relative;display:inline-block;flex-shrink:0">
@@ -1757,7 +1757,8 @@ function calcLL(d) {
   const area = document.getElementById('ladder-area');
   const avail = Math.max(240, (area?.clientWidth || 500) - 16);
   const COL_W = Math.max(70, Math.min(120, avail / d.n));
-  const ROW_H = 28;
+  const MAX_H = 340;
+  const ROW_H = Math.max(14, Math.min(26, Math.floor((MAX_H - 10) / d.rows)));
   const W = Math.round((d.n - 1) * COL_W + 60);
   const H = d.rows * ROW_H + 10;
   return { W, H, COL_W, ROW_H, xOf: c => Math.round(30 + c * COL_W), yOf: r => Math.round(r * ROW_H + 5) };
@@ -1838,7 +1839,7 @@ function generateLadder() {
   if (!participants.length) return toast('참가자를 입력하세요');
   while (prizes.length < participants.length) prizes.push(`${prizes.length+1}번`);
   prizes = prizes.slice(0, participants.length);
-  const n = participants.length, rows = Math.max(16, n * 6), lines = [];
+  const n = participants.length, rows = Math.max(12, n * 4), lines = [];
   // 구간별 밀도 변화: 상단·하단 촘촘, 중간 적당
   for (let row = 1; row < rows; row++) {
     const frac = row / rows;
