@@ -1766,41 +1766,17 @@ function calcLL(d) {
 
 function traceLadderPath(d, startCol) {
   const { xOf, yOf } = _ll;
-  const hSet = new Set(d.lines.filter(l => l.type !== 'd').map(l => `${l.row},${l.col}`));
-  const diagFrom = {};
-  d.lines.filter(l => l.type === 'd').forEach(l => {
-    diagFrom[`${l.row1},${l.col1}`] = l;
-  });
-
+  const ls = new Set(d.lines.map(l => `${l.row},${l.col}`));
   const pts = [[xOf(startCol), yOf(0)]];
-  let col = startCol, row = 0;
-  const visited = new Set();
-
-  while (row <= d.rows) {
-    const key = `${row},${col}`;
-    if (visited.has(key)) { row++; continue; }
-    visited.add(key);
-
-    // 대각선 연결
-    if (diagFrom[key]) {
-      const { row2, col2 } = diagFrom[key];
-      pts.push([xOf(col), yOf(row)]);
-      pts.push([xOf(col2), yOf(row2)]);
-      col = col2; row = row2;
-      continue;
+  let col = startCol;
+  for (let row = 0; row <= d.rows; row++) {
+    const cx = xOf(col), cy = yOf(row);
+    if (ls.has(`${row},${col}`)) {
+      pts.push([cx, cy]); col++; pts.push([xOf(col), cy]);
+    } else if (col > 0 && ls.has(`${row},${col - 1}`)) {
+      pts.push([cx, cy]); col--; pts.push([xOf(col), cy]);
     }
-
-    // 가로선 연결
-    if (hSet.has(`${row},${col}`)) {
-      pts.push([xOf(col), yOf(row)]); col++;
-      pts.push([xOf(col), yOf(row)]);
-    } else if (col > 0 && hSet.has(`${row},${col - 1}`)) {
-      pts.push([xOf(col), yOf(row)]); col--;
-      pts.push([xOf(col), yOf(row)]);
-    }
-
     if (row < d.rows) pts.push([xOf(col), yOf(row + 1)]);
-    row++;
   }
   return { pts, finalCol: col };
 }
@@ -1884,30 +1860,7 @@ function generateLadder() {
       if (!conflict) { lines.push({ row, col }); added++; }
     }
   }
-  lines.sort((a, b) => (a.row||a.row1) - (b.row||b.row1));
-
-  // 대각선 추가 (n당 1~2개)
-  const diagStarts = new Set();
-  const diagCount = Math.max(1, n - 1);
-  for (let attempt = 0; attempt < 200 && lines.filter(l=>l.type==='d').length < diagCount; attempt++) {
-    const col1 = Math.floor(Math.random() * (n - 1));
-    const dir  = (n === 2 || Math.random() < 0.5) ? 1 : -1;
-    const col2 = col1 + dir;
-    if (col2 < 0 || col2 >= n) continue;
-    const row1  = 1 + Math.floor(Math.random() * (rows - 4));
-    const delta = 2 + Math.floor(Math.random() * 3);
-    const row2  = row1 + delta;
-    if (row2 >= rows - 1) continue;
-    const sk = `${row1},${col1}`;
-    if (diagStarts.has(sk)) continue;
-    // 대각선 시작·끝 행에 가로선 없으면 OK
-    const hConflict = lines.some(l => l.type !== 'd' &&
-      (l.row === row1 || l.row === row2) &&
-      (l.col === Math.min(col1, col2) || l.col === Math.min(col1, col2) - 1));
-    if (hConflict) continue;
-    diagStarts.add(sk);
-    lines.push({ type: 'd', row1, col1, row2, col2 });
-  }
+  lines.sort((a, b) => a.row - b.row);
   ladderData = { participants, prizes, n, rows, lines };
   document.getElementById('ladder-results').innerHTML = '';
   document.getElementById('ladder-area').style.display = '';
@@ -1954,26 +1907,8 @@ function generateLadder() {
     bgCtx.restore();
   }
 
-  // 대각선
-  lines.filter(l => l.type === 'd').forEach(({ row1, col1, row2, col2 }) => {
-    const x1 = xOf(col1), y1 = yOf(row1), x2 = xOf(col2), y2 = yOf(row2);
-    bgCtx.save();
-    bgCtx.strokeStyle = '#ff9f43'; bgCtx.lineWidth = 2.5;
-    bgCtx.shadowColor = '#ff9f43'; bgCtx.shadowBlur = 12;
-    bgCtx.setLineDash([6, 4]);
-    bgCtx.beginPath(); bgCtx.moveTo(x1, y1); bgCtx.lineTo(x2, y2); bgCtx.stroke();
-    bgCtx.setLineDash([]);
-    bgCtx.shadowBlur = 0;
-    // 끝점 노드
-    bgCtx.fillStyle = '#ff9f43';
-    [{ x: x1, y: y1 }, { x: x2, y: y2 }].forEach(({ x, y }) => {
-      bgCtx.beginPath(); bgCtx.arc(x, y, 4, 0, Math.PI * 2); bgCtx.fill();
-    });
-    bgCtx.restore();
-  });
-
   // 가로선 (굵기·색 변화 + 장식)
-  lines.filter(l => l.type !== 'd').forEach(({ row, col }, idx) => {
+  lines.forEach(({ row, col }, idx) => {
     const x1 = xOf(col), x2 = xOf(col+1), y = yOf(row);
     const mid = (x1 + x2) / 2;
     // 3종류 스타일 순환
