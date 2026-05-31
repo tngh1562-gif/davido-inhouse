@@ -406,9 +406,21 @@ select.console-inline-inp option{background:#2f3136;color:#dcddde}
               <textarea class="inp" id="ladder-prizes" placeholder="1등&#10;2등&#10;꼴등"></textarea>
             </div>
           </div>
-          <button class="btn success" onclick="generateLadder()" style="width:100%;margin-bottom:10px">🪜 사다리 생성</button>
-          <div class="ladder-canvas-wrap"><canvas id="ladder-canvas" width="400" height="200" style="cursor:pointer"></canvas></div>
-          <div id="ladder-results" class="ladder-results"></div>
+          <button class="btn success" onclick="generateLadder()" style="width:100%;margin-bottom:12px">🪜 사다리 생성</button>
+          <!-- 사다리 렌더링 영역 -->
+          <div id="ladder-area" style="display:none;overflow-x:auto">
+            <!-- 참가자 이름 버튼 행 -->
+            <div id="ladder-name-row" style="position:relative;height:36px;margin-bottom:4px"></div>
+            <!-- 세 캔버스 겹침 -->
+            <div style="position:relative;display:inline-block">
+              <canvas id="c-ladder" style="display:block"></canvas>
+              <canvas id="c-overlay" style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
+              <canvas id="c-ball"    style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
+            </div>
+            <!-- 결과 항목 행 -->
+            <div id="ladder-result-row" style="position:relative;height:36px;margin-top:4px"></div>
+          </div>
+          <div id="ladder-results" class="ladder-results" style="margin-top:10px"></div>
         </div>
 
         <!-- 룰렛 패널 -->
@@ -1728,8 +1740,7 @@ function setVoteSubtab(name, btn) {
 let ladderData = null;
 let ladderAnimId = null;
 let ladderTraces = [];
-let ladderCurrentIdx = null;
-const LADDER_NAME_H = 44; // 이름 행 높이
+let ladderLastT = 0; // 마지막으로 지운 progress
 const LADDER_COLORS = ['#58b4ff','#ff4d6a','#4fc3f7','#81c784','#ffb74d','#ba68c8','#ff8a65','#a78bfa'];
 
 function importVoteToLadder() {
@@ -1741,14 +1752,19 @@ function importVoteToLadder() {
   toast(`참가자 ${names.length}명 불러옴`);
 }
 
+// 캔버스 레이아웃 계산 (세 캔버스 공통)
 function ladderLayout(d) {
-  const canvas = document.getElementById('ladder-canvas');
-  const wrap = canvas.parentElement;
-  const COL_W = Math.max(64, Math.min(110, (wrap.clientWidth - 40) / Math.max(d.n, 1)));
+  const bg = document.getElementById('c-ladder');
+  const wrap = bg.parentElement?.parentElement; // ladder-area
+  const avail = (wrap?.clientWidth || 500) - 20;
+  const COL_W = Math.max(64, Math.min(110, avail / Math.max(d.n, 1)));
   const ROW_H = 28;
-  canvas.width = (d.n - 1) * COL_W + 60;
-  canvas.height = LADDER_NAME_H + d.rows * ROW_H + 32;
-  return { canvas, COL_W, ROW_H, xOf: c => 30 + c * COL_W, yOf: r => LADDER_NAME_H + r * ROW_H };
+  const W = (d.n - 1) * COL_W + 60;
+  const H = d.rows * ROW_H + 10;
+  [bg, document.getElementById('c-overlay'), document.getElementById('c-ball')].forEach(c => {
+    if (c) { c.width = W; c.height = H; }
+  });
+  return { W, H, COL_W, ROW_H, xOf: c => 30 + c * COL_W, yOf: r => r * ROW_H + 5 };
 }
 
 function traceLadderPath(d, startCol) {
@@ -1788,99 +1804,35 @@ function ptAtT(pts, t) {
   return pts[pts.length - 1];
 }
 
-function drawLadderFrame(d, animIdx, e) {
-  const { canvas, COL_W, xOf, yOf } = ladderLayout(d);
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (animIdx === null) {
-    // 애니 없음 - 사다리 전체 표시
-    ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 2;
-    for (let i = 0; i < d.n; i++) {
-      ctx.beginPath(); ctx.moveTo(xOf(i), yOf(0)); ctx.lineTo(xOf(i), yOf(d.rows)); ctx.stroke();
-    }
-    ctx.strokeStyle = 'rgba(255,255,255,.3)';
-    d.lines.forEach(({ row, col }) => {
-      ctx.beginPath(); ctx.moveTo(xOf(col), yOf(row)); ctx.lineTo(xOf(col+1), yOf(row)); ctx.stroke();
-    });
-    ctx.textAlign = 'center'; ctx.font = 'bold 11px Noto Sans KR,sans-serif';
-    ctx.fillStyle = '#f5d97e';
-    d.prizes.forEach((p, i) => ctx.fillText(p.length>6?p.slice(0,6)+'…':p, xOf(i), canvas.height - 8));
-  } else {
-    // 애니 중 - 사다리 영역 검은색 덮기
-    ctx.fillStyle = '#080810';
-    ctx.fillRect(0, LADDER_NAME_H - 2, canvas.width, canvas.height - LADDER_NAME_H + 2);
-
-    const { pts, finalCol } = ladderTraces[animIdx];
-    const color = LADDER_COLORS[animIdx % LADDER_COLORS.length];
-    const total = pathLen(pts), traveled = e * total;
-
-    // 이동한 경로 그리기
-    ctx.save();
-    ctx.strokeStyle = color; ctx.lineWidth = 5;
-    ctx.shadowColor = color; ctx.shadowBlur = 14;
-    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
-    let acc = 0, done = false;
-    for (let i = 1; i < pts.length && !done; i++) {
-      const seg = Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]);
-      if (acc + seg >= traveled) {
-        const f = (traveled - acc) / (seg || 1);
-        ctx.lineTo(pts[i-1][0]+(pts[i][0]-pts[i-1][0])*f, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*f);
-        done = true;
-      } else ctx.lineTo(pts[i][0], pts[i][1]);
-      acc += seg;
-    }
-    ctx.stroke(); ctx.shadowBlur = 0;
-
-    // 공
-    const [bx, by] = ptAtT(pts, e);
-    ctx.beginPath(); ctx.arc(bx, by, 9, 0, Math.PI*2);
-    ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 22; ctx.fill();
-    ctx.shadowBlur = 0; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
-    ctx.restore();
-
-    // 완료 시 결과 표시
-    if (e >= 1) {
-      ctx.textAlign = 'center'; ctx.font = 'bold 13px Noto Sans KR,sans-serif';
-      ctx.fillStyle = '#f5d97e'; ctx.shadowColor = '#f5d97e'; ctx.shadowBlur = 14;
-      ctx.fillText(d.prizes[finalCol], xOf(finalCol), canvas.height - 8);
-      ctx.shadowBlur = 0;
-    }
+// destination-out으로 overlay 구간 지우기 (지워진 자리에 배경 사다리가 보임)
+function eraseOverlayRange(pts, fromT, toT) {
+  const ov = document.getElementById('c-overlay');
+  if (!ov) return;
+  const ctx = ov.getContext('2d');
+  const total = pathLen(pts);
+  const fromD = fromT * total, toD = toT * total;
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.strokeStyle = 'rgba(255,255,255,1)';
+  ctx.lineWidth = 24; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  let acc = 0, started = false;
+  for (let i = 1; i < pts.length; i++) {
+    const dx = pts[i][0]-pts[i-1][0], dy = pts[i][1]-pts[i-1][1];
+    const seg = Math.hypot(dx, dy);
+    const segEnd = acc + seg;
+    if (segEnd <= fromD) { acc = segEnd; continue; }
+    if (acc >= toD) break;
+    const t0s = Math.max(0, (fromD - acc) / (seg||1));
+    const t1s = Math.min(1, (toD  - acc) / (seg||1));
+    const sx = pts[i-1][0]+dx*t0s, sy = pts[i-1][1]+dy*t0s;
+    const ex = pts[i-1][0]+dx*t1s, ey = pts[i-1][1]+dy*t1s;
+    if (!started) { ctx.moveTo(sx, sy); started = true; } else ctx.lineTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    acc = segEnd;
   }
-
-  // 이름 행 (항상 위에 그리기)
-  d.participants.forEach((name, i) => {
-    const c = LADDER_COLORS[i % LADDER_COLORS.length];
-    const x = xOf(i), isActive = animIdx === null || animIdx === i;
-    const label = name.length > 6 ? name.slice(0,6)+'…' : name;
-    const pw = COL_W - 10, ph = 28, px = x - pw/2, py = 6;
-    ctx.fillStyle = isActive ? c+'28' : 'rgba(10,10,18,.8)';
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(px, py, pw, ph, 6); else ctx.rect(px, py, pw, ph);
-    ctx.fill();
-    if (isActive) { ctx.strokeStyle = c+'88'; ctx.lineWidth = 1.5; ctx.stroke(); }
-    ctx.fillStyle = isActive ? c : 'rgba(255,255,255,.18)';
-    ctx.font = 'bold 11px Noto Sans KR,sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(label, x, py + 19);
-  });
-}
-
-function setupLadderClick() {
-  const canvas = document.getElementById('ladder-canvas');
-  canvas.onclick = function(ev) {
-    if (!ladderData || ladderAnimId) return;
-    const rect = canvas.getBoundingClientRect();
-    const cx = (ev.clientX - rect.left) * (canvas.width / rect.width);
-    const cy = (ev.clientY - rect.top) * (canvas.height / rect.height);
-    if (cy > LADDER_NAME_H) return;
-    const { COL_W, xOf } = ladderLayout(ladderData);
-    let closest = 0, minDist = Infinity;
-    for (let i = 0; i < ladderData.n; i++) {
-      const d = Math.abs(cx - xOf(i));
-      if (d < minDist) { minDist = d; closest = i; }
-    }
-    if (minDist < COL_W / 2) clickLadderName(closest);
-  };
+  if (started) ctx.stroke();
+  ctx.restore();
 }
 
 function generateLadder() {
@@ -1897,37 +1849,134 @@ function generateLadder() {
       if (col > last + 1 && Math.random() < 0.38) { lines.push({ row, col }); last = col; }
   }
   ladderData = { participants, prizes, n, rows, lines };
-  ladderCurrentIdx = null;
   ladderTraces = participants.map((_, i) => traceLadderPath(ladderData, i));
   document.getElementById('ladder-results').innerHTML = '';
-  drawLadderFrame(ladderData, null, null);
-  setupLadderClick();
-  toast('이름을 클릭하면 해당 경로로 내려갑니다');
+  document.getElementById('ladder-area').style.display = '';
+
+  const { W, H, COL_W, xOf, yOf } = ladderLayout(ladderData);
+
+  // 배경 캔버스: 사다리 그리기
+  const bgCtx = document.getElementById('c-ladder').getContext('2d');
+  bgCtx.clearRect(0, 0, W, H);
+  bgCtx.strokeStyle = 'rgba(255,255,255,.55)'; bgCtx.lineWidth = 2;
+  for (let i = 0; i < n; i++) {
+    bgCtx.beginPath(); bgCtx.moveTo(xOf(i), yOf(0)); bgCtx.lineTo(xOf(i), yOf(rows)); bgCtx.stroke();
+  }
+  bgCtx.strokeStyle = 'rgba(255,255,255,.7)';
+  lines.forEach(({ row, col }) => {
+    bgCtx.beginPath(); bgCtx.moveTo(xOf(col), yOf(row)); bgCtx.lineTo(xOf(col+1), yOf(row)); bgCtx.stroke();
+  });
+
+  // 오버레이: 검은색으로 채우기
+  const ovCtx = document.getElementById('c-overlay').getContext('2d');
+  ovCtx.clearRect(0, 0, W, H);
+  ovCtx.fillStyle = '#0b0b14';
+  ovCtx.fillRect(0, 0, W, H);
+
+  // 볼 캔버스 초기화
+  document.getElementById('c-ball').getContext('2d').clearRect(0, 0, W, H);
+
+  // 이름 버튼 행
+  const nameRow = document.getElementById('ladder-name-row');
+  nameRow.style.width = W + 'px';
+  nameRow.innerHTML = '';
+  const btnW = Math.min(COL_W - 8, 90);
+  participants.forEach((name, i) => {
+    const c = LADDER_COLORS[i % LADDER_COLORS.length];
+    const btn = document.createElement('button');
+    btn.id = `lname-${i}`;
+    btn.style.cssText = `position:absolute;left:${xOf(i)-btnW/2}px;top:2px;width:${btnW}px;height:32px;
+      border:1.5px solid ${c}99;background:${c}22;color:${c};border-radius:7px;
+      font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;transition:all .15s`;
+    btn.textContent = name.length > 6 ? name.slice(0,6)+'…' : name;
+    btn.onmouseover = () => { if (!ladderAnimId) btn.style.background = c+'40'; };
+    btn.onmouseout = () => btn.style.background = c+'22';
+    btn.onclick = () => clickLadderName(i);
+    nameRow.appendChild(btn);
+  });
+
+  // 결과 박스 행
+  const resRow = document.getElementById('ladder-result-row');
+  resRow.style.width = W + 'px';
+  resRow.innerHTML = '';
+  prizes.forEach((prize, i) => {
+    const box = document.createElement('div');
+    box.id = `lprize-${i}`;
+    box.style.cssText = `position:absolute;left:${xOf(i)-btnW/2}px;top:2px;width:${btnW}px;height:30px;
+      border:1.5px solid rgba(245,217,126,.3);background:rgba(245,217,126,.07);
+      color:rgba(245,217,126,.45);border-radius:7px;font-size:12px;font-weight:700;
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Noto Sans KR',sans-serif;overflow:hidden;padding:0 4px;transition:all .4s`;
+    box.textContent = prize.length > 6 ? prize.slice(0,6)+'…' : prize;
+    resRow.appendChild(box);
+  });
+
+  toast('이름 박스를 클릭하면 해당 경로로 내려갑니다');
 }
 
 function clickLadderName(idx) {
-  if (!ladderData) return;
-  if (ladderAnimId) { cancelAnimationFrame(ladderAnimId); ladderAnimId = null; }
+  if (!ladderData || ladderAnimId) return;
   document.getElementById('ladder-results').innerHTML = '';
-  ladderCurrentIdx = idx;
+
+  // 다른 이름 흐리게
+  ladderData.participants.forEach((_, i) => {
+    const b = document.getElementById(`lname-${i}`);
+    if (b) b.style.opacity = i === idx ? '1' : '0.28';
+  });
 
   const d = ladderData;
   const { pts, finalCol } = ladderTraces[idx];
-  const duration = 3800; // 느리게
+  const color = LADDER_COLORS[idx % LADDER_COLORS.length];
+  const { W, H } = ladderLayout(d);
+  const ballCtx = document.getElementById('c-ball').getContext('2d');
+  const duration = 5000;
   const t0 = performance.now();
+  ladderLastT = 0;
 
   function frame(now) {
     const raw = Math.min((now - t0) / duration, 1);
-    const e = raw < 0.7 ? raw / 0.7 * 0.85 : 0.85 + (raw - 0.7) / 0.3 * 0.15; // 초반 빠르게 후반 천천히
-    drawLadderFrame(d, idx, e);
+    // ease-out quadratic (일정한 속도로 내려오다 끝에서 살짝 감속)
+    const e = raw < 0.85 ? raw * (1/0.85) * 0.9 : 0.9 + (raw-0.85)/0.15 * 0.1;
+
+    // 새로 지울 구간만 overlay에서 지우기 (영구 효과)
+    if (e > ladderLastT + 0.001) {
+      eraseOverlayRange(pts, ladderLastT, e);
+      ladderLastT = e;
+    }
+
+    // 볼 그리기
+    const [bx, by] = ptAtT(pts, e);
+    ballCtx.clearRect(0, 0, W, H);
+    ballCtx.beginPath(); ballCtx.arc(bx, by, 9, 0, Math.PI*2);
+    ballCtx.fillStyle = color; ballCtx.shadowColor = color; ballCtx.shadowBlur = 22;
+    ballCtx.fill(); ballCtx.shadowBlur = 0;
+    ballCtx.strokeStyle = '#fff'; ballCtx.lineWidth = 2.5; ballCtx.stroke();
+
     if (raw < 1) { ladderAnimId = requestAnimationFrame(frame); return; }
     ladderAnimId = null;
+    ballCtx.clearRect(0, 0, W, H);
+
+    // 결과 박스 하이라이트
+    const prizeEl = document.getElementById(`lprize-${finalCol}`);
+    if (prizeEl) {
+      prizeEl.style.color = color;
+      prizeEl.style.borderColor = color + 'aa';
+      prizeEl.style.background = color + '28';
+      prizeEl.style.boxShadow = `0 0 14px ${color}77`;
+    }
+
     document.getElementById('ladder-results').innerHTML = `
       <div class="ladder-result-row">
-        <span class="ladder-result-name" style="color:${LADDER_COLORS[idx%LADDER_COLORS.length]}">${esc(d.participants[idx])}</span>
+        <span class="ladder-result-name" style="color:${color}">${esc(d.participants[idx])}</span>
         <span class="ladder-result-arrow">→</span>
         <span class="ladder-result-prize">${esc(d.prizes[finalCol])}</span>
       </div>`;
+
+    // 이름 버튼 다시 활성화
+    d.participants.forEach((_, i) => {
+      const b = document.getElementById(`lname-${i}`); if (b) b.style.opacity = '1';
+    });
   }
   ladderAnimId = requestAnimationFrame(frame);
 }
