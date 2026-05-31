@@ -1740,7 +1740,8 @@ function setVoteSubtab(name, btn) {
 let ladderData = null;
 let ladderAnimId = null;
 let ladderTraces = [];
-let ladderLastT = 0; // 마지막으로 지운 progress
+let ladderLastT = 0;
+let _ll = null; // 캐시된 레이아웃 (캔버스 초기화 없이 재사용)
 const LADDER_COLORS = ['#58b4ff','#ff4d6a','#4fc3f7','#81c784','#ffb74d','#ba68c8','#ff8a65','#a78bfa'];
 
 function importVoteToLadder() {
@@ -1752,23 +1753,19 @@ function importVoteToLadder() {
   toast(`참가자 ${names.length}명 불러옴`);
 }
 
-// 캔버스 레이아웃 계산 (세 캔버스 공통)
-function ladderLayout(d) {
-  const bg = document.getElementById('c-ladder');
-  const wrap = bg.parentElement?.parentElement; // ladder-area
-  const avail = (wrap?.clientWidth || 500) - 20;
-  const COL_W = Math.max(64, Math.min(110, avail / Math.max(d.n, 1)));
+// 레이아웃 계산만 (캔버스 초기화 안 함)
+function calcLL(d) {
+  const area = document.getElementById('ladder-area');
+  const avail = Math.max(240, (area?.clientWidth || 500) - 16);
+  const COL_W = Math.max(70, Math.min(120, avail / d.n));
   const ROW_H = 28;
-  const W = (d.n - 1) * COL_W + 60;
+  const W = Math.round((d.n - 1) * COL_W + 60);
   const H = d.rows * ROW_H + 10;
-  [bg, document.getElementById('c-overlay'), document.getElementById('c-ball')].forEach(c => {
-    if (c) { c.width = W; c.height = H; }
-  });
-  return { W, H, COL_W, ROW_H, xOf: c => 30 + c * COL_W, yOf: r => r * ROW_H + 5 };
+  return { W, H, COL_W, ROW_H, xOf: c => Math.round(30 + c * COL_W), yOf: r => Math.round(r * ROW_H + 5) };
 }
 
 function traceLadderPath(d, startCol) {
-  const { xOf, yOf } = ladderLayout(d);
+  const { xOf, yOf } = _ll;
   const ls = new Set(d.lines.map(l => `${l.row},${l.col}`));
   const pts = [[xOf(startCol), yOf(0)]];
   let col = startCol;
@@ -1849,20 +1846,29 @@ function generateLadder() {
       if (col > last + 1 && Math.random() < 0.38) { lines.push({ row, col }); last = col; }
   }
   ladderData = { participants, prizes, n, rows, lines };
-  ladderTraces = participants.map((_, i) => traceLadderPath(ladderData, i));
   document.getElementById('ladder-results').innerHTML = '';
   document.getElementById('ladder-area').style.display = '';
 
-  const { W, H, COL_W, xOf, yOf } = ladderLayout(ladderData);
+  // 레이아웃 계산 1회 후 캐시 → 이후 재계산/캔버스 리셋 없음
+  _ll = calcLL(ladderData);
+  const { W, H, COL_W, xOf, yOf } = _ll;
+
+  // 캔버스 크기 설정 (딱 한 번)
+  ['c-ladder','c-overlay','c-ball'].forEach(id => {
+    const c = document.getElementById(id); if (c) { c.width = W; c.height = H; }
+  });
+
+  // traces 계산 (_ll 사용, 캔버스 초기화 없음)
+  ladderTraces = participants.map((_, i) => traceLadderPath(ladderData, i));
 
   // 배경 캔버스: 사다리 그리기
   const bgCtx = document.getElementById('c-ladder').getContext('2d');
   bgCtx.clearRect(0, 0, W, H);
-  bgCtx.strokeStyle = 'rgba(255,255,255,.55)'; bgCtx.lineWidth = 2;
+  bgCtx.strokeStyle = '#ffffff'; bgCtx.lineWidth = 2.5;
   for (let i = 0; i < n; i++) {
     bgCtx.beginPath(); bgCtx.moveTo(xOf(i), yOf(0)); bgCtx.lineTo(xOf(i), yOf(rows)); bgCtx.stroke();
   }
-  bgCtx.strokeStyle = 'rgba(255,255,255,.7)';
+  bgCtx.strokeStyle = '#dddddd'; bgCtx.lineWidth = 2;
   lines.forEach(({ row, col }) => {
     bgCtx.beginPath(); bgCtx.moveTo(xOf(col), yOf(row)); bgCtx.lineTo(xOf(col+1), yOf(row)); bgCtx.stroke();
   });
@@ -1870,56 +1876,49 @@ function generateLadder() {
   // 오버레이: 검은색으로 채우기
   const ovCtx = document.getElementById('c-overlay').getContext('2d');
   ovCtx.clearRect(0, 0, W, H);
-  ovCtx.fillStyle = '#0b0b14';
+  ovCtx.fillStyle = '#0d0d18';
   ovCtx.fillRect(0, 0, W, H);
 
   // 볼 캔버스 초기화
   document.getElementById('c-ball').getContext('2d').clearRect(0, 0, W, H);
 
-  // 이름 버튼 행
+  // 이름·결과 버튼 (xOf 기준 정렬)
+  const btnW = Math.max(50, Math.min(COL_W - 10, 96));
   const nameRow = document.getElementById('ladder-name-row');
-  nameRow.style.width = W + 'px';
-  nameRow.innerHTML = '';
-  const btnW = Math.min(COL_W - 8, 90);
+  nameRow.style.width = W + 'px'; nameRow.innerHTML = '';
   participants.forEach((name, i) => {
     const c = LADDER_COLORS[i % LADDER_COLORS.length];
     const btn = document.createElement('button');
     btn.id = `lname-${i}`;
     btn.style.cssText = `position:absolute;left:${xOf(i)-btnW/2}px;top:2px;width:${btnW}px;height:32px;
-      border:1.5px solid ${c}99;background:${c}22;color:${c};border-radius:7px;
+      border:2px solid ${c}bb;background:${c}1e;color:${c};border-radius:8px;
       font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;transition:all .15s`;
-    btn.textContent = name.length > 6 ? name.slice(0,6)+'…' : name;
-    btn.onmouseover = () => { if (!ladderAnimId) btn.style.background = c+'40'; };
-    btn.onmouseout = () => btn.style.background = c+'22';
+    btn.textContent = name.length > 7 ? name.slice(0,7)+'…' : name;
+    btn.onmouseover = () => { if (!ladderAnimId) btn.style.background = c+'44'; };
+    btn.onmouseout = () => btn.style.background = c+'1e';
     btn.onclick = () => clickLadderName(i);
     nameRow.appendChild(btn);
   });
-
-  // 결과 박스 행
   const resRow = document.getElementById('ladder-result-row');
-  resRow.style.width = W + 'px';
-  resRow.innerHTML = '';
+  resRow.style.width = W + 'px'; resRow.innerHTML = '';
   prizes.forEach((prize, i) => {
     const box = document.createElement('div');
     box.id = `lprize-${i}`;
     box.style.cssText = `position:absolute;left:${xOf(i)-btnW/2}px;top:2px;width:${btnW}px;height:30px;
-      border:1.5px solid rgba(245,217,126,.3);background:rgba(245,217,126,.07);
-      color:rgba(245,217,126,.45);border-radius:7px;font-size:12px;font-weight:700;
+      border:2px solid rgba(245,217,126,.28);background:rgba(245,217,126,.06);
+      color:rgba(245,217,126,.4);border-radius:8px;font-size:12px;font-weight:700;
       display:flex;align-items:center;justify-content:center;
-      font-family:'Noto Sans KR',sans-serif;overflow:hidden;padding:0 4px;transition:all .4s`;
-    box.textContent = prize.length > 6 ? prize.slice(0,6)+'…' : prize;
+      font-family:'Noto Sans KR',sans-serif;overflow:hidden;padding:0 4px;transition:all .45s`;
+    box.textContent = prize.length > 7 ? prize.slice(0,7)+'…' : prize;
     resRow.appendChild(box);
   });
-
   toast('이름 박스를 클릭하면 해당 경로로 내려갑니다');
 }
 
 function clickLadderName(idx) {
-  if (!ladderData || ladderAnimId) return;
+  if (!ladderData || !_ll || ladderAnimId) return;
   document.getElementById('ladder-results').innerHTML = '';
-
-  // 다른 이름 흐리게
   ladderData.participants.forEach((_, i) => {
     const b = document.getElementById(`lname-${i}`);
     if (b) b.style.opacity = i === idx ? '1' : '0.28';
@@ -1928,7 +1927,7 @@ function clickLadderName(idx) {
   const d = ladderData;
   const { pts, finalCol } = ladderTraces[idx];
   const color = LADDER_COLORS[idx % LADDER_COLORS.length];
-  const { W, H } = ladderLayout(d);
+  const { W, H } = _ll; // 캐시 사용 (캔버스 초기화 없음!)
   const ballCtx = document.getElementById('c-ball').getContext('2d');
   const duration = 5000;
   const t0 = performance.now();
@@ -1936,16 +1935,13 @@ function clickLadderName(idx) {
 
   function frame(now) {
     const raw = Math.min((now - t0) / duration, 1);
-    // ease-out quadratic (일정한 속도로 내려오다 끝에서 살짝 감속)
-    const e = raw < 0.85 ? raw * (1/0.85) * 0.9 : 0.9 + (raw-0.85)/0.15 * 0.1;
+    const e = 1 - Math.pow(1 - raw, 1.6); // ease-out
 
-    // 새로 지울 구간만 overlay에서 지우기 (영구 효과)
-    if (e > ladderLastT + 0.001) {
+    if (e > ladderLastT + 0.0005) {
       eraseOverlayRange(pts, ladderLastT, e);
       ladderLastT = e;
     }
 
-    // 볼 그리기
     const [bx, by] = ptAtT(pts, e);
     ballCtx.clearRect(0, 0, W, H);
     ballCtx.beginPath(); ballCtx.arc(bx, by, 9, 0, Math.PI*2);
@@ -1957,23 +1953,17 @@ function clickLadderName(idx) {
     ladderAnimId = null;
     ballCtx.clearRect(0, 0, W, H);
 
-    // 결과 박스 하이라이트
     const prizeEl = document.getElementById(`lprize-${finalCol}`);
     if (prizeEl) {
-      prizeEl.style.color = color;
-      prizeEl.style.borderColor = color + 'aa';
-      prizeEl.style.background = color + '28';
-      prizeEl.style.boxShadow = `0 0 14px ${color}77`;
+      prizeEl.style.color = color; prizeEl.style.borderColor = color+'cc';
+      prizeEl.style.background = color+'28'; prizeEl.style.boxShadow = `0 0 14px ${color}88`;
     }
-
     document.getElementById('ladder-results').innerHTML = `
       <div class="ladder-result-row">
         <span class="ladder-result-name" style="color:${color}">${esc(d.participants[idx])}</span>
         <span class="ladder-result-arrow">→</span>
         <span class="ladder-result-prize">${esc(d.prizes[finalCol])}</span>
       </div>`;
-
-    // 이름 버튼 다시 활성화
     d.participants.forEach((_, i) => {
       const b = document.getElementById(`lname-${i}`); if (b) b.style.opacity = '1';
     });
