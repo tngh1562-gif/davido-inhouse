@@ -3094,6 +3094,14 @@ function clearViewerStats(){
   markViewersDirty();
   save(); renderViewers(); toast('승률 초기화 완료');
 }
+function resetViewerStats(vid){
+  const v=viewers.find(x=>x.id===vid); if(!v) return;
+  const name=v.chzzk||v.name||vid;
+  if(!confirm(`${name} 의 승률을 초기화할까요?`)) return;
+  v.stats={w:0,l:0,d:0};
+  markViewersDirty();
+  save(); renderViewers(); toast(`${name} 승률 초기화 완료`);
+}
 
 // 인라인 수정 중 포지션 셀렉트 동기화
 function syncEditPos(vid){ /* 동기화 불필요 - 자유 선택 허용 */ }
@@ -3269,6 +3277,7 @@ function renderViewers(){
         <td style="font-size:.7rem;color:var(--txt2)">${new Date(v.added).toLocaleDateString('ko-KR')}</td>
         <td style="white-space:nowrap">
           <button class="tbl-edit" onclick="editViewer(${v.id})" title="수정">✏</button>
+          <button class="tbl-del" onclick="resetViewerStats(${v.id})" title="승률 초기화" style="background:rgba(255,160,0,.1);border-color:rgba(255,160,0,.35);color:#ffb020;font-size:.7rem;padding:3px 7px">↺</button>
           <button class="tbl-del"  onclick="deleteViewer(${v.id})" title="삭제">🗑</button>
         </td>
       </tr>`;
