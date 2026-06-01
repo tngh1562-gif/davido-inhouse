@@ -1314,8 +1314,8 @@ const TIER_GROUPS = [
   ['EM','에메랄드',   'div4',  400, 'EM'],  // ← 기준점
   ['DI','다이아',     'div4',  520, 'DI'],
   ['MS','마스터',     'ms',    680, 'MS'],
-  ['GM','그랜드마스터','single',1550,'GM'],
-  ['CH','챌린저',     'single',1750,'CH'],
+  ['GM','그랜드마스터','single',1700,'GM'],
+  ['CH','챌린저',     'single',1920,'CH'],
 ];
 const DIVS = ['4','3','2','1'];
 // 4단 나눔: 4→1 순, 아이언/브론즈 +12, 실버/골드/플래 +15, 에메 +20, 다이아 +35
@@ -1379,11 +1379,19 @@ function viewerGames(v){
   const st=v?.stats||{};
   return (Number(st.w)||0)+(Number(st.l)||0)+(Number(st.d)||0);
 }
+function tierOrderFloor(key){
+  // GM은 항상 MS800 기준 이상, CH는 항상 GM 기준 이상
+  if(key==='GM') return tierBaseMmr('MS800') + 80;
+  if(key==='CH') return tierBaseMmr('GM')    + 80;
+  return 0;
+}
 function viewerMmr(v){
   if(!v) return tierBaseMmr('GO4');
+  const key=compatTierKey(v.tier);
+  const floor=tierOrderFloor(key);
   const raw=Number(v.mmr);
-  if(Number.isFinite(raw) && raw>0) return clampMmr(raw);
-  return tierBaseMmr(v.tier);
+  if(Number.isFinite(raw) && raw>0) return clampMmr(Math.max(raw, floor));
+  return Math.max(tierBaseMmr(v.tier), floor);
 }
 function ensureViewerMmr(v){
   if(!v) return tierBaseMmr('GO4');
