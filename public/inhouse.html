@@ -2443,14 +2443,12 @@ function renderCustomCmds(){
       <span style="font-size:.82rem;color:${isBuiltin?'var(--txt2)':'var(--txt)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
         title="${esc(c.text)}">${esc(c.text)}</span>
       <div style="display:flex;gap:5px">
-        ${!isBuiltin?`
         <button onclick="editCustomCmd('${esc(c.cmd)}','${esc(c.text.replace(/'/g,"\\'"))}')"
           style="background:rgba(88,180,255,.1);border:1px solid rgba(88,180,255,.3);color:var(--c-di);
                  border-radius:5px;padding:3px 8px;cursor:pointer;font-size:.72rem;white-space:nowrap">수정</button>
-        <button onclick="deleteCustomCmd('${esc(c.cmd)}')"
+        ${!isBuiltin?`<button onclick="deleteCustomCmd('${esc(c.cmd)}')"
           style="background:rgba(224,48,32,.1);border:1px solid rgba(224,48,32,.25);color:var(--rl2);
-                 border-radius:5px;padding:3px 8px;cursor:pointer;font-size:.72rem;white-space:nowrap">삭제</button>
-        `:`<span style="font-size:.68rem;color:var(--txt2)">읽기전용</span>`}
+                 border-radius:5px;padding:3px 8px;cursor:pointer;font-size:.72rem;white-space:nowrap">삭제</button>`:''}
       </div>
     </div>`;
   }).join('');
