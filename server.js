@@ -1668,15 +1668,13 @@ function handleChat(msg) {
       broadcast({ type: 'inhouse_join', nickname, text, ts: Date.now() });
     }
 
-    if (/^!디코(?:\s|$)/.test(text)) {
+    // 커스텀 명령어 우선 체크 (내장 명령어 오버라이드 가능)
+    const _cmdKey = text.trim().toLowerCase().split(/\s/)[0];
+    const _custom = readCustomCmds().find(c => c.cmd === _cmdKey);
+    if (_custom) {
+      sendBotNotice(nickname, _custom.text);
+    } else if (/^!디코(?:\s|$)/.test(text)) {
       sendBotNotice(nickname, '다비도 디스코드 👉 https://discord.gg/2fxXMQH7');
-    }
-
-    // 커스텀 명령어
-    {
-      const cmdKey = text.trim().toLowerCase().split(/\s/)[0];
-      const custom = readCustomCmds().find(c => c.cmd === cmdKey);
-      if (custom) sendBotNotice(nickname, custom.text);
     }
 
     // 투표
