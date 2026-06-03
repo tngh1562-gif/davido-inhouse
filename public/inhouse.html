@@ -3648,6 +3648,8 @@ function memberHTML(p, pos, side){
   const chzzk=p.chzzk||(viewers.find(v=>v.name.toLowerCase()===(p.name||'').toLowerCase())||{}).chzzk||'';
   const ps=Array.isArray(p.positions)?p.positions:normPositions(p);
   const filled=ps.filter(x=>x&&x!=='무관');
+  const viewer=findViewerForPlayer(p);
+  const mic=p.mic||viewer?.mic||'';
 
   // 슬롯 뱃지
   let slotBadge='';
@@ -3672,7 +3674,12 @@ function memberHTML(p, pos, side){
       <div style="flex:1;min-width:0">
         <div style="font-size:.88rem;font-weight:700;color:#c9d1d9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name||'?')}</div>
         ${chzzk?`<div style="font-size:.68rem;color:#22c55e;margin-top:1px">▶ ${esc(chzzk)}</div>`:''}
-        ${filled.length?`<div style="font-size:.65rem;color:#8aa8c4;margin-top:1px">${filled.join(' · ')}</div>`:''}
+        <div style="display:flex;align-items:center;gap:5px;margin-top:2px;flex-wrap:wrap">
+          ${filled.length?`<span style="font-size:.65rem;color:#8aa8c4">${filled.join(' · ')}</span>`:''}
+          ${mic==='가능'?`<span style="font-size:.62rem;padding:1px 5px;border-radius:3px;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3);font-weight:700">🎤 가능</span>`:
+            mic==='부분가능'?`<span style="font-size:.62rem;padding:1px 5px;border-radius:3px;background:rgba(251,188,4,.1);color:#c08010;border:1px solid rgba(251,188,4,.3);font-weight:700">🎤 부분</span>`:
+            mic==='불가'?`<span style="font-size:.62rem;padding:1px 5px;border-radius:3px;background:rgba(244,67,54,.08);color:#888;border:1px solid rgba(244,67,54,.2);font-weight:700">🔇 불가</span>`:''}
+        </div>
       </div>
       ${tierBadge(p.tier)}
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
