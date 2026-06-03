@@ -580,9 +580,22 @@ app.get('/api/discord-config', (req, res) => {
   res.json(readDiscordConfig());
 });
 
+// 내장(하드코딩) 명령어 목록
+const BUILTIN_CMDS = [
+  { cmd: '!디코',   text: '다비도 디스코드 링크 안내', builtin: true },
+  { cmd: '!포인트', text: '내전 포인트 조회',           builtin: true },
+  { cmd: '!승률',   text: '내전 승률 조회',             builtin: true },
+  { cmd: '!참가',   text: '내전 참가 신청',              builtin: true },
+  { cmd: '!투표N',  text: '채팅 투표 (N = 번호)',        builtin: true },
+];
+
 // 커스텀 명령어 CRUD
 app.get('/api/custom-commands', (req, res) => {
-  res.json(readCustomCmds());
+  const custom = readCustomCmds();
+  // 내장 명령어 중 커스텀으로 덮어쓴 것은 제외
+  const customKeys = new Set(custom.map(c => c.cmd));
+  const builtins = BUILTIN_CMDS.filter(b => !customKeys.has(b.cmd));
+  res.json([...builtins, ...custom]);
 });
 app.post('/api/custom-commands', (req, res) => {
   const { cmd, text } = req.body || {};

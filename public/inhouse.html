@@ -1292,12 +1292,13 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
 
     <div class="card" style="grid-column:1/-1">
       <div class="card-title">💬 채팅 커스텀 명령어</div>
-      <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:8px;align-items:center;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 2fr auto auto;gap:8px;align-items:center;margin-bottom:14px">
         <input id="newCmdKey" type="text" placeholder="!명령어" style="font-family:monospace"
-          onkeydown="if(event.key==='Enter')addCustomCmd()">
+          onkeydown="if(event.key==='Enter')addCustomCmd();if(event.key==='Escape')cancelEditCmd()">
         <input id="newCmdText" type="text" placeholder="응답 내용"
-          onkeydown="if(event.key==='Enter')addCustomCmd()">
-        <button class="btn btn-g" onclick="addCustomCmd()" style="white-space:nowrap">추가</button>
+          onkeydown="if(event.key==='Enter')addCustomCmd();if(event.key==='Escape')cancelEditCmd()">
+        <button id="cmdAddBtn" class="btn btn-g" onclick="addCustomCmd()" style="white-space:nowrap">추가</button>
+        <button class="btn btn-o" onclick="cancelEditCmd()" style="white-space:nowrap;font-size:.75rem;padding:7px 8px">취소</button>
       </div>
       <div id="customCmdList" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto"></div>
     </div>
@@ -2411,6 +2412,7 @@ async function toggleBotChatSend(){
 }
 // ── 커스텀 명령어 ──────────────────────────────
 let _customCmds = [];
+let _editingCmd = null; // 수정 중인 명령어 키
 
 async function loadCustomCmds(){
   try{
@@ -2427,16 +2429,55 @@ function renderCustomCmds(){
     el.innerHTML='<div style="font-size:.75rem;color:var(--txt2);padding:6px 0">등록된 명령어가 없습니다.</div>';
     return;
   }
-  el.innerHTML = _customCmds.map((c,i)=>`
-    <div style="display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;
-      padding:8px 10px;background:var(--s1);border:1px solid var(--line);border-radius:8px">
-      <span style="font-family:monospace;font-weight:700;color:var(--a);font-size:.85rem">${esc(c.cmd)}</span>
-      <span style="font-size:.82rem;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+  el.innerHTML = _customCmds.map(c=>{
+    const isBuiltin = !!c.builtin;
+    const isEditing = _editingCmd === c.cmd;
+    const cmdColor = isBuiltin ? 'var(--txt2)' : 'var(--a)';
+    const bg = isEditing ? 'var(--s2)' : 'var(--s1)';
+    const border = isEditing ? '1px solid var(--a)' : '1px solid var(--line)';
+    return `<div style="display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;
+      padding:8px 10px;background:${bg};border:${border};border-radius:8px">
+      <span style="font-family:monospace;font-weight:700;color:${cmdColor};font-size:.85rem">
+        ${esc(c.cmd)}${isBuiltin?` <span style="font-size:.62rem;color:var(--txt2);font-weight:400">(내장)</span>`:''}
+      </span>
+      <span style="font-size:.82rem;color:${isBuiltin?'var(--txt2)':'var(--txt)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
         title="${esc(c.text)}">${esc(c.text)}</span>
-      <button onclick="deleteCustomCmd('${esc(c.cmd)}')"
-        style="background:rgba(224,48,32,.1);border:1px solid rgba(224,48,32,.25);color:var(--rl2);
-               border-radius:5px;padding:3px 8px;cursor:pointer;font-size:.72rem;white-space:nowrap">삭제</button>
-    </div>`).join('');
+      <div style="display:flex;gap:5px">
+        ${!isBuiltin?`
+        <button onclick="editCustomCmd('${esc(c.cmd)}','${esc(c.text.replace(/'/g,"\\'"))}')"
+          style="background:rgba(88,180,255,.1);border:1px solid rgba(88,180,255,.3);color:var(--c-di);
+                 border-radius:5px;padding:3px 8px;cursor:pointer;font-size:.72rem;white-space:nowrap">수정</button>
+        <button onclick="deleteCustomCmd('${esc(c.cmd)}')"
+          style="background:rgba(224,48,32,.1);border:1px solid rgba(224,48,32,.25);color:var(--rl2);
+                 border-radius:5px;padding:3px 8px;cursor:pointer;font-size:.72rem;white-space:nowrap">삭제</button>
+        `:`<span style="font-size:.68rem;color:var(--txt2)">읽기전용</span>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editCustomCmd(cmd, text){
+  const keyEl = document.getElementById('newCmdKey');
+  const textEl = document.getElementById('newCmdText');
+  const addBtn = document.getElementById('cmdAddBtn');
+  if(!keyEl||!textEl) return;
+  keyEl.value = cmd;
+  textEl.value = text;
+  _editingCmd = cmd;
+  if(addBtn){ addBtn.textContent = '저장'; addBtn.style.background = 'var(--c-di)'; }
+  textEl.focus();
+  renderCustomCmds();
+}
+
+function cancelEditCmd(){
+  const keyEl = document.getElementById('newCmdKey');
+  const textEl = document.getElementById('newCmdText');
+  const addBtn = document.getElementById('cmdAddBtn');
+  if(keyEl) keyEl.value='';
+  if(textEl) textEl.value='';
+  _editingCmd = null;
+  if(addBtn){ addBtn.textContent = '추가'; addBtn.style.background = ''; }
+  renderCustomCmds();
 }
 
 async function addCustomCmd(){
@@ -2452,12 +2493,12 @@ async function addCustomCmd(){
       body: JSON.stringify({cmd, text})
     });
     const data = await r.json();
-    if(!data.ok){ toast(data.error||'추가 실패'); return; }
-    _customCmds = data.commands;
-    keyEl.value=''; textEl.value=''; keyEl.focus();
+    if(!data.ok){ toast(data.error||'저장 실패'); return; }
+    _customCmds = await fetch('/api/custom-commands').then(r=>r.json());
+    cancelEditCmd();
     renderCustomCmds();
-    toast(`${cmd.startsWith('!')?cmd:'!'+cmd} 명령어 추가됨`);
-  }catch{ toast('추가 실패'); }
+    toast(`${cmd.startsWith('!')?cmd:'!'+cmd} ${_editingCmd?'수정':'추가'}됨`);
+  }catch{ toast('저장 실패'); }
 }
 
 async function deleteCustomCmd(cmd){
@@ -2465,7 +2506,8 @@ async function deleteCustomCmd(cmd){
   try{
     const r = await fetch(`/api/custom-commands/${encodeURIComponent(cmd)}`, {method:'DELETE'});
     const data = await r.json();
-    _customCmds = data.commands;
+    _customCmds = await fetch('/api/custom-commands').then(r=>r.json());
+    if(_editingCmd === cmd) cancelEditCmd();
     renderCustomCmds();
     toast(`${cmd} 삭제됨`);
   }catch{ toast('삭제 실패'); }
