@@ -1290,6 +1290,18 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
       <div id="botSendError" style="font-size:.72rem;color:var(--rl2);margin-top:8px;min-height:18px"></div>
     </div>
 
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-title">💬 채팅 커스텀 명령어</div>
+      <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:8px;align-items:center;margin-bottom:14px">
+        <input id="newCmdKey" type="text" placeholder="!명령어" style="font-family:monospace"
+          onkeydown="if(event.key==='Enter')addCustomCmd()">
+        <input id="newCmdText" type="text" placeholder="응답 내용"
+          onkeydown="if(event.key==='Enter')addCustomCmd()">
+        <button class="btn btn-g" onclick="addCustomCmd()" style="white-space:nowrap">추가</button>
+      </div>
+      <div id="customCmdList" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto"></div>
+    </div>
+
   </div>
 </div>
 
@@ -1885,8 +1897,9 @@ function goTab(name,btn){
     if(name==='shop')    renderShop();
     if(name==='overlay') renderOverlayTab();
     if(name==='discord') renderDiscordTab();
-    if(name==='bot')     renderBotTab();
+    if(name==='bot')      renderBotTab();
     if(name==='roulette') initRoulette();
+    if(name==='settings') loadCustomCmds();
   }, 10);
 }
 
@@ -2396,6 +2409,68 @@ async function toggleBotChatSend(){
   toast(next?'치지직 채팅 직접답장 ON':'치지직 채팅 직접답장 OFF');
   setTimeout(refreshBotState,800);
 }
+// ── 커스텀 명령어 ──────────────────────────────
+let _customCmds = [];
+
+async function loadCustomCmds(){
+  try{
+    const r = await fetch('/api/custom-commands');
+    if(r.ok) _customCmds = await r.json();
+  }catch{}
+  renderCustomCmds();
+}
+
+function renderCustomCmds(){
+  const el = document.getElementById('customCmdList');
+  if(!el) return;
+  if(!_customCmds.length){
+    el.innerHTML='<div style="font-size:.75rem;color:var(--txt2);padding:6px 0">등록된 명령어가 없습니다.</div>';
+    return;
+  }
+  el.innerHTML = _customCmds.map((c,i)=>`
+    <div style="display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;
+      padding:8px 10px;background:var(--s1);border:1px solid var(--line);border-radius:8px">
+      <span style="font-family:monospace;font-weight:700;color:var(--a);font-size:.85rem">${esc(c.cmd)}</span>
+      <span style="font-size:.82rem;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+        title="${esc(c.text)}">${esc(c.text)}</span>
+      <button onclick="deleteCustomCmd('${esc(c.cmd)}')"
+        style="background:rgba(224,48,32,.1);border:1px solid rgba(224,48,32,.25);color:var(--rl2);
+               border-radius:5px;padding:3px 8px;cursor:pointer;font-size:.72rem;white-space:nowrap">삭제</button>
+    </div>`).join('');
+}
+
+async function addCustomCmd(){
+  const keyEl = document.getElementById('newCmdKey');
+  const textEl = document.getElementById('newCmdText');
+  const cmd = (keyEl?.value||'').trim();
+  const text = (textEl?.value||'').trim();
+  if(!cmd){ toast('명령어를 입력하세요'); keyEl?.focus(); return; }
+  if(!text){ toast('응답 내용을 입력하세요'); textEl?.focus(); return; }
+  try{
+    const r = await fetch('/api/custom-commands',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({cmd, text})
+    });
+    const data = await r.json();
+    if(!data.ok){ toast(data.error||'추가 실패'); return; }
+    _customCmds = data.commands;
+    keyEl.value=''; textEl.value=''; keyEl.focus();
+    renderCustomCmds();
+    toast(`${cmd.startsWith('!')?cmd:'!'+cmd} 명령어 추가됨`);
+  }catch{ toast('추가 실패'); }
+}
+
+async function deleteCustomCmd(cmd){
+  if(!confirm(`${cmd} 명령어를 삭제할까요?`)) return;
+  try{
+    const r = await fetch(`/api/custom-commands/${encodeURIComponent(cmd)}`, {method:'DELETE'});
+    const data = await r.json();
+    _customCmds = data.commands;
+    renderCustomCmds();
+    toast(`${cmd} 삭제됨`);
+  }catch{ toast('삭제 실패'); }
+}
+
 async function saveBotAuth(){
   const nidAut=(document.getElementById('botNidAut')?.value||'').trim();
   const nidSes=(document.getElementById('botNidSes')?.value||'').trim();
@@ -4408,6 +4483,7 @@ function connectInhouseChatCommands(){
       const msg=JSON.parse(e.data);
       if(msg.type==='inhouse_join') addChatParticipantByNickname(msg.nickname);
       if(msg.type==='bot_reply') toast(msg.text);
+      if(msg.type==='custom_cmds_update'){ _customCmds=msg.commands||[]; renderCustomCmds(); }
       if(msg.type==='state') setBotState(msg.data);
     }catch{}
   };

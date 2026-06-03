@@ -60,6 +60,7 @@ const MAX_MANUAL_BACKUPS = 5;
 const BOT_AUTH_FILE = path.join(DATA_DIR, 'bot-auth.json');
 const BOT_STATE_FILE = path.join(DATA_DIR, 'bot-state.json');
 const DISCORD_CONFIG_FILE = path.join(DATA_DIR, 'discord-config.json');
+const CUSTOM_CMDS_FILE = path.join(DATA_DIR, 'custom-commands.json');
 // Optional: lets the inhouse site ask the separate Discord bot service to send button messages.
 function normalizeDiscordBotApiUrl(value) {
   return String(value || '')
@@ -458,6 +459,17 @@ function readDiscordConfig() {
   return defaultDiscordConfig();
 }
 
+function readCustomCmds() {
+  try {
+    if (fs.existsSync(CUSTOM_CMDS_FILE)) return JSON.parse(fs.readFileSync(CUSTOM_CMDS_FILE, 'utf8'));
+  } catch {}
+  return [];
+}
+function writeCustomCmds(list) {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.writeFileSync(CUSTOM_CMDS_FILE, JSON.stringify(list, null, 2), 'utf8');
+}
+
 function writeDiscordConfig(data) {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   const payload = normalizeDiscordConfig({ ...readDiscordConfig(), ...(data || {}), updatedAt: new Date().toISOString() });
@@ -566,6 +578,30 @@ app.post('/api/link-discord', handleDiscordInhouseRegister);
 
 app.get('/api/discord-config', (req, res) => {
   res.json(readDiscordConfig());
+});
+
+// 커스텀 명령어 CRUD
+app.get('/api/custom-commands', (req, res) => {
+  res.json(readCustomCmds());
+});
+app.post('/api/custom-commands', (req, res) => {
+  const { cmd, text } = req.body || {};
+  const command = String(cmd || '').trim();
+  const response = String(text || '').trim();
+  if (!command || !response) return res.status(400).json({ ok: false, error: '명령어와 응답 내용이 필요합니다.' });
+  const normalized = command.startsWith('!') ? command.toLowerCase() : ('!' + command).toLowerCase();
+  const list = readCustomCmds().filter(c => c.cmd !== normalized);
+  list.push({ cmd: normalized, text: response });
+  writeCustomCmds(list);
+  broadcast({ type: 'custom_cmds_update', commands: list });
+  res.json({ ok: true, commands: list });
+});
+app.delete('/api/custom-commands/:cmd', (req, res) => {
+  const target = decodeURIComponent(req.params.cmd).toLowerCase();
+  const list = readCustomCmds().filter(c => c.cmd !== target);
+  writeCustomCmds(list);
+  broadcast({ type: 'custom_cmds_update', commands: list });
+  res.json({ ok: true, commands: list });
 });
 
 app.get('/api/version', (req, res) => {
@@ -1624,6 +1660,13 @@ function handleChat(msg) {
 
     if (/^!디코(?:\s|$)/.test(text)) {
       sendBotNotice(nickname, '다비도 디스코드 👉 https://discord.gg/2fxXMQH7');
+    }
+
+    // 커스텀 명령어
+    {
+      const cmdKey = text.trim().toLowerCase().split(/\s/)[0];
+      const custom = readCustomCmds().find(c => c.cmd === cmdKey);
+      if (custom) sendBotNotice(nickname, custom.text);
     }
 
     // 투표
