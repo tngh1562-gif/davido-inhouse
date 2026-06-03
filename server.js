@@ -349,6 +349,13 @@ function upsertViewerFromDiscordRegistration(body) {
   const tier = normalizeRegisterTier(body.tier || body.rank || body.lolTier || body['티어']);
   const memo = normalizeRegisterText(body.memo || body.note, 500);
   const positions = normalizeRegisterPositions(body);
+  const mic = (() => {
+    const raw = String(body.mic || body.microphone || body['마이크'] || '').trim().toLowerCase();
+    if (!raw) return undefined;
+    if (['가능','yes','y','o','ㅇ','1','true','ok','됨'].includes(raw)) return '가능';
+    if (['부분','부분가능','partial','가끔'].includes(raw)) return '부분가능';
+    return '불가';
+  })();
   const now = Date.now();
 
   if (!discordId && !name && !chzzk) {
@@ -382,6 +389,7 @@ function upsertViewerFromDiscordRegistration(body) {
       tier,
       positions: positions.length ? positions : ['무관', '무관', '무관'],
       memo,
+      mic: mic || '불가',
       discordId,
       added: now,
       registeredFrom: 'discord',
@@ -393,6 +401,7 @@ function upsertViewerFromDiscordRegistration(body) {
     if (tier) viewer.tier = tier;
     if (positions.length) viewer.positions = positions;
     if (memo) viewer.memo = memo;
+    if (mic !== undefined) viewer.mic = mic;
     if (discordId) viewer.discordId = discordId;
     viewer.updatedAt = now;
     viewer.registeredFrom = viewer.registeredFrom || 'discord';
