@@ -580,13 +580,10 @@ app.get('/api/discord-config', (req, res) => {
   res.json(readDiscordConfig());
 });
 
-// 내장(하드코딩) 명령어 목록
+// 내장(하드코딩) 명령어 — 실제 봇 응답 텍스트 표시
+// 동적 응답 명령어(!포인트, !승률, !참가, !투표N)는 응답 수정 불가 → 목록에서 제외
 const BUILTIN_CMDS = [
-  { cmd: '!디코',   text: '다비도 디스코드 링크 안내', builtin: true },
-  { cmd: '!포인트', text: '내전 포인트 조회',           builtin: true },
-  { cmd: '!승률',   text: '내전 승률 조회',             builtin: true },
-  { cmd: '!참가',   text: '내전 참가 신청',              builtin: true },
-  { cmd: '!투표N',  text: '채팅 투표 (N = 번호)',        builtin: true },
+  { cmd: '!디코', text: '다비도 디스코드 👉 https://discord.gg/2fxXMQH7', builtin: true },
 ];
 
 // 커스텀 명령어 CRUD
