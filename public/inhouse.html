@@ -1838,7 +1838,10 @@ function renderShopProducts(){
     </div>`;
   }).join('');
 }
-function buyShopItem(itemId){
+// 보관함 자동 추가 대상 아이템 (봇 config.json rewards에 등록된 이름과 일치해야 함)
+const SHOP_STORAGE_ITEMS = new Set(['선참권','종일권','연장권']);
+
+async function buyShopItem(itemId){
   const v=viewers.find(v=>v.id===shopSelectedViewerId);
   const item=SHOP_ITEMS.find(x=>x.id===itemId);
   if(!v||!item) return;
@@ -1854,6 +1857,27 @@ function buyShopItem(itemId){
   renderShop();
   renderViewers();
   toast(`${v.name} · ${item.name} 구매 완료`);
+
+  // 보관함 자동 추가 (선참권·종일권·연장권)
+  if(SHOP_STORAGE_ITEMS.has(item.name)){
+    const botName=(v.chzzk||v.name||'').replace(/#.*$/,'').trim();
+    if(!botName){ toast('⚠️ 봇 이름을 확인할 수 없어 보관함 자동 추가 실패'); return; }
+    try{
+      const r=await fetch('/api/proxy-bot-command',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({command:'추가',options:{닉네임:botName,보상이름:item.name,개수:1}})
+      });
+      const data=await r.json();
+      if(data.ok){
+        toast(`📦 ${botName} 보관함에 ${item.name} 자동 추가됨`);
+      } else {
+        toast(`⚠️ 보관함 추가 실패: ${data.error||'봇 오류'}\n(구매는 완료됨)`);
+      }
+    }catch(e){
+      toast(`⚠️ 보관함 추가 실패: 봇 연결 오류\n(구매는 완료됨)`);
+    }
+  }
 }
 function adjustShopPoints(delta){
   const v=viewers.find(v=>v.id===shopSelectedViewerId);
