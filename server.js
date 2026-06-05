@@ -60,6 +60,7 @@ const MAX_MANUAL_BACKUPS = 5;
 const BOT_AUTH_FILE = path.join(DATA_DIR, 'bot-auth.json');
 const BOT_STATE_FILE = path.join(DATA_DIR, 'bot-state.json');
 const DISCORD_CONFIG_FILE = path.join(DATA_DIR, 'discord-config.json');
+const ROULETTE_CONFIG_FILE = path.join(DATA_DIR, 'roulette-config.json');
 const CUSTOM_CMDS_FILE = path.join(DATA_DIR, 'custom-commands.json');
 // Optional: lets the inhouse site ask the separate Discord bot service to send button messages.
 function normalizeDiscordBotApiUrl(value) {
@@ -488,6 +489,125 @@ function writeDiscordConfig(data) {
   return payload;
 }
 
+function defaultRouletteConfig() {
+  return {
+    enabled: true,
+    triggerAmount: 1500,
+    exactAmountOnly: true,
+    autoSpin: true,
+    saveToStorage: true,
+    overlayTitle: '1500치즈 룰렛',
+    items: [
+      { id: 'reward-1', label: '벌칙 면제권', weight: 25, storageReward: '벌칙 면제권', color: '#00c8a0', enabled: true },
+      { id: 'reward-2', label: '다시 돌리기', weight: 25, storageReward: '', color: '#4d9fff', enabled: true },
+      { id: 'reward-3', label: '꽝', weight: 50, storageReward: '', color: '#64748b', enabled: true },
+    ],
+    history: [],
+    updatedAt: null,
+  };
+}
+
+function normalizeRouletteItem(item, index = 0) {
+  const colors = ['#00c8a0', '#4d9fff', '#ffc94d', '#a78bfa', '#dc2626', '#22c55e', '#f97316', '#e879f9'];
+  return {
+    id: String(item?.id || `reward-${Date.now()}-${index}`).slice(0, 80),
+    label: String(item?.label || item?.name || '새 룰렛').trim().slice(0, 80),
+    weight: Math.max(0.1, Math.min(100, Number(item?.probability ?? item?.chance ?? item?.weight) || 1)),
+    storageReward: String(item?.storageReward || '').trim().slice(0, 80),
+    color: /^#[0-9a-f]{6}$/i.test(String(item?.color || '')) ? String(item.color) : colors[index % colors.length],
+    enabled: item?.enabled !== false,
+  };
+}
+
+function normalizeRouletteConfig(data) {
+  const base = defaultRouletteConfig();
+  const items = Array.isArray(data?.items)
+    ? data.items.map(normalizeRouletteItem).filter(item => item.label)
+    : base.items;
+  const history = Array.isArray(data?.history)
+    ? data.history.slice(-80).map(entry => ({
+        id: String(entry?.id || '').slice(0, 80),
+        nickname: String(entry?.nickname || '').slice(0, 80),
+        amount: Number(entry?.amount) || 0,
+        result: String(entry?.result || '').slice(0, 80),
+        storageReward: String(entry?.storageReward || '').slice(0, 80),
+        source: String(entry?.source || 'manual').slice(0, 30),
+        createdAt: entry?.createdAt || new Date().toISOString(),
+      }))
+    : [];
+  return {
+    enabled: data?.enabled !== false,
+    triggerAmount: Math.max(1, Math.min(1000000, Math.round(Number(data?.triggerAmount) || base.triggerAmount))),
+    exactAmountOnly: data?.exactAmountOnly !== false,
+    autoSpin: data?.autoSpin !== false,
+    saveToStorage: data?.saveToStorage !== false,
+    overlayTitle: String(data?.overlayTitle || base.overlayTitle).trim().slice(0, 80),
+    items,
+    history,
+    updatedAt: data?.updatedAt || null,
+  };
+}
+
+function readRouletteConfig() {
+  try {
+    if (fs.existsSync(ROULETTE_CONFIG_FILE)) return normalizeRouletteConfig(readJsonFile(ROULETTE_CONFIG_FILE));
+  } catch (err) {
+    console.error('[ROULETTE_CONFIG] read failed:', err.message);
+  }
+  return defaultRouletteConfig();
+}
+
+function writeRouletteConfig(data) {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const payload = normalizeRouletteConfig({ ...readRouletteConfig(), ...(data || {}), updatedAt: new Date().toISOString() });
+  const tmp = ROULETTE_CONFIG_FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(payload, null, 2), 'utf8');
+  fs.renameSync(tmp, ROULETTE_CONFIG_FILE);
+  return payload;
+}
+
+function pickRouletteItem(items) {
+  const pool = (Array.isArray(items) ? items : []).filter(item => item.enabled !== false && item.weight > 0);
+  if (!pool.length) return null;
+  const total = pool.reduce((sum, item) => sum + item.weight, 0);
+  let roll = Math.random() * total;
+  for (const item of pool) {
+    roll -= item.weight;
+    if (roll < 0) return item;
+  }
+  return pool[pool.length - 1];
+}
+
+async function runRouletteSpin({ nickname = '테스트', amount, source = 'manual' } = {}) {
+  const cfg = readRouletteConfig();
+  const paid = Number(amount) || cfg.triggerAmount;
+  const allowed = cfg.exactAmountOnly ? paid === cfg.triggerAmount : paid >= cfg.triggerAmount;
+  if (!allowed) {
+    const err = new Error(`trigger_amount_mismatch:${paid}`);
+    err.statusCode = 400;
+    throw err;
+  }
+  const item = pickRouletteItem(cfg.items);
+  if (!item) {
+    const err = new Error('roulette_items_empty');
+    err.statusCode = 400;
+    throw err;
+  }
+  const entry = {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+    nickname: String(nickname || '테스트').slice(0, 80),
+    amount: paid,
+    result: item.label,
+    storageReward: cfg.saveToStorage ? item.storageReward : '',
+    source,
+    createdAt: new Date().toISOString(),
+  };
+  const nextHistory = [...(cfg.history || []), entry].slice(-80);
+  const saved = writeRouletteConfig({ history: nextHistory });
+  broadcast({ type: 'roulette_admin_result', result: entry, config: saved });
+  return { entry, config: saved };
+}
+
 app.get('/api/livegame', (req, res) => {
   let done = false;
   const fail = (msg) => { if (done) return; done = true; res.status(503).json({ error: msg }); };
@@ -589,6 +709,32 @@ app.get('/api/discord-config', (req, res) => {
   res.json(readDiscordConfig());
 });
 
+app.get('/api/roulette-config', (req, res) => {
+  res.json(readRouletteConfig());
+});
+
+app.post('/api/roulette-config', (req, res) => {
+  try {
+    res.json({ ok: true, data: writeRouletteConfig(req.body || {}) });
+  } catch (err) {
+    console.error('[ROULETTE_CONFIG] write failed:', err.message);
+    res.status(500).json({ ok: false, error: 'write_failed' });
+  }
+});
+
+app.post('/api/roulette-test', async (req, res) => {
+  try {
+    const result = await runRouletteSpin({
+      nickname: req.body?.nickname || '테스트시청자',
+      amount: req.body?.amount,
+      source: 'manual_test',
+    });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ ok: false, error: err.message || 'roulette_test_failed' });
+  }
+});
+
 // 내장(하드코딩) 명령어 — 실제 봇 응답 텍스트 표시
 // 동적 응답 명령어(!포인트, !승률, !참가, !투표N)는 응답 수정 불가 → 목록에서 제외
 const BUILTIN_CMDS = [
@@ -673,10 +819,11 @@ app.post('/api/save-backup', (req, res) => {
   try {
     const inhouseDb = readInhouseDB();
     const discordConfig = readDiscordConfig();
+    const rouletteConfig = readRouletteConfig();
     if (!fs.existsSync(MANUAL_BACKUP_DIR)) fs.mkdirSync(MANUAL_BACKUP_DIR, { recursive: true });
     const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const filename = `backup-${stamp}.json`;
-    const data = { savedAt: new Date().toISOString(), version: 1, inhouseDb, discordConfig };
+    const data = { savedAt: new Date().toISOString(), version: 2, inhouseDb, discordConfig, rouletteConfig };
     fs.writeFileSync(path.join(MANUAL_BACKUP_DIR, filename), JSON.stringify(data), 'utf8');
     // 5개 초과 시 오래된 파일 삭제
     const all = fs.readdirSync(MANUAL_BACKUP_DIR)
@@ -827,12 +974,13 @@ app.get('/api/backups/:filename', (req, res) => {
 // 백업에서 복원
 app.post('/api/import-backup', (req, res) => {
   try {
-    const { inhouseDb, discordConfig, version } = req.body || {};
+    const { inhouseDb, discordConfig, rouletteConfig, version } = req.body || {};
     if (!inhouseDb || !Array.isArray(inhouseDb.viewers)) {
       return res.status(400).json({ ok: false, error: '유효하지 않은 백업 파일입니다. (viewers 배열 없음)' });
     }
     writeInhouseDB(inhouseDb);
     if (discordConfig && typeof discordConfig === 'object') writeDiscordConfig(discordConfig);
+    if (rouletteConfig && typeof rouletteConfig === 'object') writeRouletteConfig(rouletteConfig);
     console.log(`[IMPORT_BACKUP] restored: viewers=${inhouseDb.viewers.length}, version=${version}`);
     res.json({ ok: true, restored: { viewers: inhouseDb.viewers.length } });
   } catch (err) {

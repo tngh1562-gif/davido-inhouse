@@ -191,6 +191,51 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 .storage-count-num{font-size:14px;font-weight:800;color:#fff;min-width:24px;text-align:center}
 .storage-count-btn{width:22px;height:22px;border:none;border-radius:4px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;transition:background .1s}
 .storage-count-btn:hover{background:rgba(255,255,255,.22)}
+.admin-roulette-layout{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);gap:16px;min-height:100%;align-items:start}
+.admin-roulette-stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+.admin-roulette-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;box-shadow:0 10px 28px rgba(0,0,0,.18)}
+.admin-roulette-card-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;font-size:13px;font-weight:800;color:var(--txt)}
+.admin-roulette-help{font-size:11px;color:var(--txt2);line-height:1.5}
+.admin-roulette-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.admin-roulette-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.admin-roulette-field.full{grid-column:1/-1}
+.admin-roulette-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.06)}
+.admin-roulette-toggle:first-child{border-top:none;padding-top:0}
+.admin-roulette-item{display:grid;grid-template-columns:36px minmax(120px,1fr) 82px minmax(120px,1fr) 32px 34px;gap:8px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.025)}
+.admin-roulette-item+.admin-roulette-item{margin-top:8px}
+.admin-roulette-color{width:100%;height:32px;border:none;border-radius:6px;background:transparent;padding:0;cursor:pointer}
+.admin-roulette-empty{border:1px dashed var(--border2);border-radius:8px;padding:24px;text-align:center;color:var(--txt2);font-size:13px}
+.admin-roulette-probability-summary{margin-top:10px;font-size:12px;color:var(--txt2);display:flex;justify-content:space-between;gap:10px}
+.admin-overlay-url-box{display:flex;gap:8px;align-items:center}
+.admin-overlay-url-box input{font-family:Consolas,monospace;font-size:12px}
+.admin-roulette-preview{min-height:300px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,201,77,.28);background:radial-gradient(circle at 50% 44%,rgba(255,201,77,.16),transparent 34%),radial-gradient(circle at 62% 58%,rgba(77,159,255,.14),transparent 40%),linear-gradient(180deg,#091221,#050913);border-radius:8px;padding:22px;position:relative;overflow:hidden}
+.admin-roulette-preview::before{content:'';position:absolute;inset:16px;border:1px solid rgba(255,255,255,.08);border-radius:8px;pointer-events:none;box-shadow:inset 0 0 40px rgba(0,200,160,.08)}
+.admin-roulette-stage{position:relative;width:260px;height:260px;display:grid;place-items:center}
+.admin-roulette-ticker{position:absolute;top:2px;left:50%;transform:translateX(-50%);z-index:6;width:190px;height:34px;border-radius:9px;border:2px solid #4d9fff;background:linear-gradient(180deg,#3b16a4,#1b0b58);box-shadow:0 0 0 3px rgba(255,201,77,.75) inset,0 0 18px rgba(77,159,255,.58),0 8px 18px rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.admin-roulette-ticker::before,.admin-roulette-ticker::after{content:'✦';position:absolute;top:50%;transform:translateY(-50%);color:#ffc94d;text-shadow:0 0 10px #ffc94d;font-size:16px}
+.admin-roulette-ticker::before{left:10px}.admin-roulette-ticker::after{right:10px}
+.admin-roulette-ticker-text{max-width:130px;color:#fff44f;font-size:13px;font-weight:900;text-shadow:0 0 9px #ff2bd6,0 0 14px #ffc94d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-roulette-wheel{position:relative;width:238px;height:238px;border-radius:50%;display:grid;place-items:center;transition:transform 2s cubic-bezier(.08,.82,.12,1);filter:drop-shadow(0 26px 38px rgba(0,0,0,.62)) drop-shadow(0 0 18px rgba(255,201,77,.22));--spin:0deg}
+.admin-roulette-wheel::before{content:'';position:absolute;inset:-16px;border-radius:50%;background:conic-gradient(from 0deg,#fff7cc,#f7b733,#8aa1bd,#ffffff,#34d399,#f7b733,#fff7cc);z-index:-3;box-shadow:0 0 26px rgba(255,201,77,.22)}
+.admin-roulette-wheel::after{content:'';position:absolute;inset:-8px;border-radius:50%;background:repeating-conic-gradient(from 0deg,#111827 0 4deg,#f8fafc 4deg 6deg,#111827 6deg 12deg);z-index:-2;box-shadow:inset 0 0 0 4px rgba(2,6,23,.9),0 0 0 1px rgba(255,255,255,.16)}
+.admin-roulette-wheel-face{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 90deg,#00c8a0 0 25%,#4d9fff 0 50%,#ffc94d 0 75%,#a78bfa 0 100%);overflow:hidden}
+.admin-roulette-wheel-face::before{content:'';position:absolute;inset:9px;border-radius:50%;border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 0 0 18px rgba(255,255,255,.025),inset 0 0 22px rgba(255,255,255,.08)}
+.admin-roulette-wheel-face::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at center,transparent 0 28%,rgba(0,0,0,.22) 29%,transparent 31%),radial-gradient(circle at 34% 24%,rgba(255,255,255,.36),transparent 24%),linear-gradient(135deg,rgba(255,255,255,.28),transparent 30%,rgba(0,0,0,.27) 76%,rgba(255,255,255,.14));box-shadow:inset 0 0 0 3px rgba(255,255,255,.22),inset 0 0 40px rgba(0,0,0,.46)}
+.admin-roulette-labels{position:absolute;inset:0;border-radius:50%;pointer-events:none}
+.admin-roulette-label{position:absolute;width:106px;text-align:center;color:#fff;font-size:11px;font-weight:900;line-height:1.15;text-shadow:0 2px 3px rgba(0,0,0,.95),0 0 9px rgba(0,0,0,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translate(-50%,-50%) rotate(calc(-1 * var(--spin)))}
+.admin-roulette-pointer{position:absolute;right:-8px;top:50%;transform:translateY(-50%);z-index:4;width:54px;height:42px;background:linear-gradient(90deg,#f59e0b 0%,#fff7cc 58%,#ffffff 100%);clip-path:polygon(0 50%,100% 0,100% 100%);filter:drop-shadow(0 5px 10px rgba(0,0,0,.58)) drop-shadow(0 0 10px rgba(255,201,77,.35))}
+.admin-roulette-ticker{top:-2px;z-index:7;width:218px;height:38px;border-radius:10px;background:linear-gradient(180deg,#4b1bd3 0%,#26107d 48%,#13073a 100%);box-shadow:0 0 0 3px rgba(255,201,77,.78) inset,0 0 22px rgba(77,159,255,.66),0 10px 20px rgba(0,0,0,.54)}
+.admin-roulette-ticker::before,.admin-roulette-ticker::after{content:'◆';font-size:14px}
+.admin-roulette-ticker-reel{position:relative;width:150px;height:20px;overflow:visible;color:#fff44f;font-size:14px;font-weight:900;text-align:center;text-shadow:0 0 9px #ff2bd6,0 0 14px #ffc94d}
+.admin-roulette-ticker-reel span{display:block;height:20px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-roulette-result{margin-top:10px;background:rgba(255,201,77,.11);border:1px solid rgba(255,201,77,.3);border-radius:8px;padding:12px;display:none}
+.admin-roulette-history{display:flex;flex-direction:column;gap:8px;max-height:310px;overflow-y:auto}
+.admin-roulette-history-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.025);font-size:12px}
+.admin-roulette-history-main{min-width:0}
+.admin-roulette-history-name{font-weight:800;color:var(--txt)}
+.admin-roulette-history-meta{color:var(--txt2);margin-top:3px}
+.admin-roulette-badge{display:inline-flex;align-items:center;height:22px;border-radius:999px;border:1px solid rgba(0,200,160,.35);background:rgba(0,200,160,.08);color:var(--acc);font-size:11px;font-weight:800;padding:0 8px}
+@media (max-width:1100px){.admin-roulette-layout{grid-template-columns:1fr}.admin-roulette-item{grid-template-columns:32px 1fr 64px}.admin-roulette-item .storage-name-field{grid-column:1/-2}}
 /* 봇 콘솔 */
 .bot-console{background:#2c2f33;border-radius:12px;display:flex;flex-direction:column;height:100%;min-height:500px;overflow:hidden;border:1px solid #1e2124}
 .console-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
@@ -459,7 +504,7 @@ select.console-inline-inp option{background:#2f3136;color:#dcddde}
         <div style="display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0">
           <button class="admin-sub-btn active" onclick="setAdminTab('inhouse')">내전관리</button>
           <button class="admin-sub-btn" onclick="setAdminTab('storage')">보관함</button>
-          <button class="admin-sub-btn" onclick="setAdminTab('discord')">디스코드</button>
+          <button class="admin-sub-btn" onclick="setAdminTab('roulette')">룰렛</button>
         </div>
         <div id="admin-panel-inhouse" class="admin-sub-panel" style="flex:1;display:grid;grid-template-columns:180px 1fr;overflow:hidden;min-height:0">
           <!-- 왼쪽: 컨트롤 -->
@@ -546,7 +591,108 @@ select.console-inline-inp option{background:#2f3136;color:#dcddde}
             </div>
           </div>
         </div>
-        <div id="admin-panel-discord" class="admin-sub-panel" style="flex:1;padding:24px;overflow-y:auto;display:none"></div>
+        <div id="admin-panel-roulette" class="admin-sub-panel" style="flex:1;padding:18px;overflow-y:auto;display:none">
+          <div class="admin-roulette-layout">
+            <div class="admin-roulette-stack">
+              <div class="admin-roulette-card">
+                <div class="admin-roulette-card-title">
+                  <span>룰렛 실행 조건</span>
+                  <span class="admin-roulette-badge" id="roulette-enabled-badge">ON</span>
+                </div>
+                <div class="admin-roulette-grid">
+                  <div class="admin-roulette-field">
+                    <label class="lbl">작동 금액</label>
+                    <input id="roulette-trigger-amount" class="inp" type="number" min="1" step="100" value="1500">
+                  </div>
+                  <div class="admin-roulette-field">
+                    <label class="lbl">테스트 닉네임</label>
+                    <input id="roulette-test-nickname" class="inp" value="테스트시청자">
+                  </div>
+                  <div class="admin-roulette-field full">
+                    <label class="lbl">오버레이 제목</label>
+                    <input id="roulette-overlay-title" class="inp" placeholder="1500치즈 룰렛">
+                  </div>
+                  <div class="admin-roulette-field full">
+                    <label class="lbl">오버레이 브라우저 URL</label>
+                    <div class="admin-overlay-url-box">
+                      <input id="roulette-overlay-url" class="inp" readonly>
+                      <button class="btn" onclick="copyRouletteOverlayUrl()" style="padding:8px 12px;font-size:12px">복사</button>
+                    </div>
+                    <div class="admin-roulette-help">OBS 브라우저 소스에 이 URL을 넣으면 룰렛 결과가 방송 화면에 뜹니다.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="admin-roulette-card">
+                <div class="admin-roulette-card-title"><span>동작 옵션</span></div>
+                <label class="admin-roulette-toggle">
+                  <span>
+                    <b>룰렛 활성화</b>
+                    <div class="admin-roulette-help">꺼두면 후원 감지 로직이 붙어도 실행하지 않습니다.</div>
+                  </span>
+                  <input id="roulette-enabled" type="checkbox" style="accent-color:var(--acc)">
+                </label>
+                <label class="admin-roulette-toggle">
+                  <span>
+                    <b>정확한 금액만 실행</b>
+                    <div class="admin-roulette-help">ON: 1500치즈만, OFF: 1500치즈 이상이면 실행</div>
+                  </span>
+                  <input id="roulette-exact-amount" type="checkbox" style="accent-color:var(--acc)">
+                </label>
+                <label class="admin-roulette-toggle">
+                  <span>
+                    <b>자동으로 돌리기</b>
+                    <div class="admin-roulette-help">후원 감지 후 대기 없이 바로 결과를 뽑습니다.</div>
+                  </span>
+                  <input id="roulette-auto-spin" type="checkbox" style="accent-color:var(--acc)">
+                </label>
+                <label class="admin-roulette-toggle">
+                  <span>
+                    <b>보관함 저장</b>
+                    <div class="admin-roulette-help">항목의 보관함 이름이 있으면 결과에 함께 기록합니다.</div>
+                  </span>
+                  <input id="roulette-save-storage" type="checkbox" style="accent-color:var(--acc)">
+                </label>
+              </div>
+            </div>
+            <div class="admin-roulette-stack">
+              <div class="admin-roulette-card">
+                <div class="admin-roulette-card-title">
+                  <span>룰렛 항목</span>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn" onclick="addAdminRouletteItem()" style="font-size:12px;padding:6px 12px">항목 추가</button>
+                    <button class="btn primary" onclick="saveAdminRouletteConfig()" style="font-size:12px;padding:6px 12px">저장</button>
+                  </div>
+                </div>
+                <div id="admin-roulette-items"></div>
+                <div id="admin-roulette-probability-summary" class="admin-roulette-probability-summary"></div>
+              </div>
+              <div class="admin-roulette-card">
+                <div class="admin-roulette-card-title">
+                  <span>룰렛 테스트</span>
+                  <button class="btn success" onclick="testAdminRoulette()" style="font-size:12px;padding:6px 12px">테스트 돌리기</button>
+                </div>
+                <div class="admin-roulette-preview">
+                  <div class="admin-roulette-stage">
+                    <div class="admin-roulette-ticker"><div id="admin-roulette-ticker-reel" class="admin-roulette-ticker-reel"><span>READY</span></div></div>
+                    <div class="admin-roulette-pointer"></div>
+                    <div id="admin-roulette-wheel" class="admin-roulette-wheel">
+                      <div id="admin-roulette-wheel-face" class="admin-roulette-wheel-face"></div>
+                      <div id="admin-roulette-labels" class="admin-roulette-labels"></div>
+                    </div>
+                  </div>
+                </div>
+                <div id="admin-roulette-result" class="admin-roulette-result"></div>
+              </div>
+              <div class="admin-roulette-card">
+                <div class="admin-roulette-card-title">
+                  <span>최근 결과</span>
+                  <button class="btn danger" onclick="clearAdminRouletteHistory()" style="font-size:12px;padding:6px 12px">이력 비우기</button>
+                </div>
+                <div id="admin-roulette-history" class="admin-roulette-history"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <!-- 오른쪽: 봇 명령어 콘솔 (항상 고정) -->
       <div style="width:340px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden">
@@ -929,18 +1075,19 @@ function toggleVoteNotice() {
 function toggleHideVoteContent() { renderVote(); }
 
 function setAdminTab(tab) {
-  ['inhouse','storage','discord'].forEach(t => {
+  ['inhouse','storage','roulette'].forEach(t => {
     const el = document.getElementById('admin-panel-'+t);
     if (t === tab) {
-      el.style.display = t === 'discord' ? 'block' : 'grid';
+      el.style.display = t === 'roulette' ? 'block' : 'grid';
     } else {
       el.style.display = 'none';
     }
   });
   document.querySelectorAll('.admin-sub-btn').forEach((btn,i) => {
-    btn.classList.toggle('active', ['inhouse','storage','discord'][i] === tab);
+    btn.classList.toggle('active', ['inhouse','storage','roulette'][i] === tab);
   });
   if (tab === 'storage') loadStorageData();
+  if (tab === 'roulette') loadAdminRouletteConfig();
 }
 
 // ── 봇 명령어 콘솔 ──
@@ -1426,6 +1573,283 @@ async function toggleRegisterButton() {
     _registerBtnEnabled = !_registerBtnEnabled;
     applyRegisterToggleUI(_registerBtnEnabled);
   }
+}
+
+let _adminRouletteConfig = null;
+let _adminRouletteSpinDeg = 0;
+let _adminRouletteTickerTimer = null;
+const ADMIN_ROULETTE_COLORS = ['#00c8a0','#4d9fff','#ffc94d','#a78bfa','#dc2626','#22c55e','#f97316','#e879f9'];
+
+async function loadAdminRouletteConfig() {
+  try {
+    const res = await fetch('/api/roulette-config', { cache: 'no-store' });
+    _adminRouletteConfig = await res.json();
+    renderAdminRouletteConfig();
+  } catch (e) {
+    const list = document.getElementById('admin-roulette-items');
+    if (list) list.innerHTML = `<div class="admin-roulette-empty" style="color:#f04747">룰렛 설정 로드 실패: ${esc(e.message)}</div>`;
+  }
+}
+
+function adminRouletteItems() {
+  if (!_adminRouletteConfig) _adminRouletteConfig = {};
+  if (!Array.isArray(_adminRouletteConfig.items)) _adminRouletteConfig.items = [];
+  return _adminRouletteConfig.items;
+}
+
+function renderAdminRouletteConfig() {
+  const cfg = _adminRouletteConfig || {};
+  const setVal = (id, value) => { const el = document.getElementById(id); if (el) el.value = value ?? ''; };
+  const setChecked = (id, value) => { const el = document.getElementById(id); if (el) el.checked = value !== false; };
+  setVal('roulette-trigger-amount', cfg.triggerAmount || 1500);
+  setVal('roulette-overlay-title', cfg.overlayTitle || '1500치즈 룰렛');
+  setVal('roulette-overlay-url', `${location.origin}/roulette-overlay.html`);
+  setChecked('roulette-enabled', cfg.enabled);
+  setChecked('roulette-exact-amount', cfg.exactAmountOnly);
+  setChecked('roulette-auto-spin', cfg.autoSpin);
+  setChecked('roulette-save-storage', cfg.saveToStorage);
+  const badge = document.getElementById('roulette-enabled-badge');
+  if (badge) {
+    const on = cfg.enabled !== false;
+    badge.textContent = on ? 'ON' : 'OFF';
+    badge.style.color = on ? 'var(--acc)' : 'var(--red)';
+    badge.style.borderColor = on ? 'rgba(0,200,160,.35)' : 'rgba(220,38,38,.35)';
+    badge.style.background = on ? 'rgba(0,200,160,.08)' : 'rgba(220,38,38,.08)';
+  }
+  renderAdminRouletteItems();
+  renderAdminRouletteHistory();
+  updateAdminRoulettePreview();
+}
+
+function renderAdminRouletteItems() {
+  const el = document.getElementById('admin-roulette-items');
+  if (!el) return;
+  const items = adminRouletteItems();
+  if (!items.length) {
+    el.innerHTML = '<div class="admin-roulette-empty">아직 룰렛 항목이 없습니다. 항목 추가를 눌러 보상을 넣어주세요.</div>';
+    return;
+  }
+  el.innerHTML = items.map((item, i) => `
+    <div class="admin-roulette-item">
+      <input class="admin-roulette-color" type="color" value="${esc(item.color || ADMIN_ROULETTE_COLORS[i % ADMIN_ROULETTE_COLORS.length])}" onchange="updateAdminRouletteItem(${i},'color',this.value)">
+      <input class="inp" value="${esc(item.label)}" placeholder="룰렛 결과 이름" oninput="updateAdminRouletteItem(${i},'label',this.value)">
+      <input class="inp" type="number" min="0.1" max="100" step="0.1" value="${Number(item.weight)||1}" title="확률(%)" oninput="updateAdminRouletteItem(${i},'weight',this.value)">
+      <input class="inp storage-name-field" value="${esc(item.storageReward || '')}" placeholder="보관함 이름(선택)" oninput="updateAdminRouletteItem(${i},'storageReward',this.value)">
+      <input type="checkbox" ${item.enabled === false ? '' : 'checked'} title="사용 여부" style="accent-color:var(--acc)" onchange="updateAdminRouletteItem(${i},'enabled',this.checked)">
+      <button class="btn danger" onclick="removeAdminRouletteItem(${i})" style="padding:6px 0">×</button>
+    </div>`).join('');
+}
+
+function updateAdminRouletteItem(index, key, value) {
+  const item = adminRouletteItems()[index];
+  if (!item) return;
+  item[key] = key === 'weight' ? Math.max(0.1, Math.min(100, Number(value) || 0.1)) : value;
+  updateAdminRoulettePreview();
+}
+
+function addAdminRouletteItem() {
+  const items = adminRouletteItems();
+  items.push({
+    id: `reward-${Date.now()}`,
+    label: `새 보상 ${items.length + 1}`,
+    weight: 10,
+    storageReward: '',
+    color: ADMIN_ROULETTE_COLORS[items.length % ADMIN_ROULETTE_COLORS.length],
+    enabled: true,
+  });
+  renderAdminRouletteItems();
+  updateAdminRoulettePreview();
+}
+
+function removeAdminRouletteItem(index) {
+  adminRouletteItems().splice(index, 1);
+  renderAdminRouletteItems();
+  updateAdminRoulettePreview();
+}
+
+function collectAdminRouletteConfig() {
+  const bool = id => document.getElementById(id)?.checked !== false;
+  const value = id => document.getElementById(id)?.value || '';
+  return {
+    ...(_adminRouletteConfig || {}),
+    enabled: bool('roulette-enabled'),
+    triggerAmount: Math.max(1, Number(value('roulette-trigger-amount')) || 1500),
+    exactAmountOnly: bool('roulette-exact-amount'),
+    autoSpin: bool('roulette-auto-spin'),
+    saveToStorage: bool('roulette-save-storage'),
+    overlayTitle: value('roulette-overlay-title').trim() || '1500치즈 룰렛',
+    items: adminRouletteItems().map((item, i) => ({
+      id: item.id || `reward-${i}`,
+      label: String(item.label || '').trim(),
+      weight: Math.max(0.1, Math.min(100, Number(item.weight) || 0.1)),
+      storageReward: String(item.storageReward || '').trim(),
+      color: item.color || ADMIN_ROULETTE_COLORS[i % ADMIN_ROULETTE_COLORS.length],
+      enabled: item.enabled !== false,
+    })).filter(item => item.label),
+  };
+}
+
+async function saveAdminRouletteConfig(silent = false) {
+  const payload = collectAdminRouletteConfig();
+  const res = await fetch('/api/roulette-config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok || data.ok === false) throw new Error(data.error || '룰렛 설정 저장 실패');
+  _adminRouletteConfig = data.data;
+  renderAdminRouletteConfig();
+  if (!silent) alert('룰렛 설정을 저장했습니다.');
+  return data.data;
+}
+
+function updateAdminRoulettePreview() {
+  const face = document.getElementById('admin-roulette-wheel-face');
+  const labels = document.getElementById('admin-roulette-labels');
+  const summary = document.getElementById('admin-roulette-probability-summary');
+  if (!face || !labels) return;
+  const items = adminRouletteItems().filter(item => item.enabled !== false && item.label);
+  if (!items.length) {
+    face.style.background = 'conic-gradient(from 90deg,#2a3a50 0 100%)';
+    labels.innerHTML = '';
+    if (summary) summary.innerHTML = '<span>확률 합계</span><b>0%</b>';
+    return;
+  }
+  const total = items.reduce((sum, item) => sum + (Number(item.weight) || 1), 0);
+  if (summary) {
+    const color = Math.abs(total - 100) < 0.01 ? 'var(--acc)' : 'var(--gold)';
+    summary.innerHTML = `<span>확률 합계</span><b style="color:${color}">${total.toFixed(total % 1 ? 1 : 0)}%</b>`;
+  }
+  let pct = 0;
+  const labelNodes = [];
+  const stops = items.map((item, i) => {
+    const start = pct;
+    const size = ((Number(item.weight) || 1) / total) * 100;
+    pct += size;
+    const midDeg = ((start + pct) / 2) * 3.6;
+    const labelDeg = midDeg;
+    const cleanLabel = String(item.label || '').length > 9 ? String(item.label).slice(0, 9) + '...' : item.label;
+    const rad = labelDeg * Math.PI / 180;
+    const x = 119 + Math.cos(rad) * 66;
+    const y = 119 + Math.sin(rad) * 66;
+    labelNodes.push(`<div class="admin-roulette-label" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px">${esc(cleanLabel)}</div>`);
+    return `${item.color || ADMIN_ROULETTE_COLORS[i % ADMIN_ROULETTE_COLORS.length]} ${start.toFixed(2)}% ${pct.toFixed(2)}%`;
+  });
+  face.style.background = `conic-gradient(from 90deg,${stops.join(',')})`;
+  labels.innerHTML = labelNodes.join('');
+  updateAdminRouletteTicker(items[0]?.label || 'READY');
+}
+
+function updateAdminRouletteTicker(text) {
+  const reel = document.getElementById('admin-roulette-ticker-reel');
+  if (!reel) return;
+  const nextText = text || 'READY';
+  const current = reel.querySelector('span:last-child')?.textContent || '';
+  if (!current || current === nextText) {
+    reel.style.transition = 'none';
+    reel.style.transform = 'translateY(0)';
+    reel.innerHTML = `<span>${esc(nextText)}</span>`;
+    return;
+  }
+  reel.style.transition = 'none';
+  reel.style.transform = 'translateY(0)';
+  reel.innerHTML = `<span>${esc(current)}</span><span>${esc(nextText)}</span>`;
+  requestAnimationFrame(() => {
+    reel.style.transition = 'transform .22s cubic-bezier(.2,.78,.22,1)';
+    reel.style.transform = 'translateY(-20px)';
+  });
+  setTimeout(() => {
+    reel.style.transition = 'none';
+    reel.style.transform = 'translateY(0)';
+    reel.innerHTML = `<span>${esc(nextText)}</span>`;
+  }, 240);
+}
+
+function animateAdminRouletteTicker(finalText) {
+  clearInterval(_adminRouletteTickerTimer);
+  const pool = adminRouletteItems().filter(item => item.enabled !== false && item.label);
+  if (!pool.length) { updateAdminRouletteTicker(finalText || 'READY'); return; }
+  let i = 0;
+  _adminRouletteTickerTimer = setInterval(() => {
+    updateAdminRouletteTicker(pool[i % pool.length].label);
+    i++;
+  }, 120);
+  setTimeout(() => {
+    clearInterval(_adminRouletteTickerTimer);
+    updateAdminRouletteTicker(finalText);
+  }, 2050);
+}
+
+function copyRouletteOverlayUrl() {
+  const input = document.getElementById('roulette-overlay-url');
+  if (!input) return;
+  const text = input.value || `${location.origin}/roulette-overlay.html`;
+  navigator.clipboard?.writeText(text).then(() => alert('오버레이 URL을 복사했습니다.')).catch(() => {
+    input.select();
+    document.execCommand('copy');
+    alert('오버레이 URL을 복사했습니다.');
+  });
+}
+
+function renderAdminRouletteHistory() {
+  const el = document.getElementById('admin-roulette-history');
+  if (!el) return;
+  const history = Array.isArray(_adminRouletteConfig?.history) ? [..._adminRouletteConfig.history].reverse() : [];
+  if (!history.length) {
+    el.innerHTML = '<div class="admin-roulette-empty">아직 테스트나 당첨 이력이 없습니다.</div>';
+    return;
+  }
+  el.innerHTML = history.slice(0, 30).map(row => {
+    const time = row.createdAt ? new Date(row.createdAt).toLocaleString('ko-KR') : '';
+    return `
+      <div class="admin-roulette-history-row">
+        <div class="admin-roulette-history-main">
+          <div class="admin-roulette-history-name">${esc(row.nickname)} · ${esc(row.result)}</div>
+          <div class="admin-roulette-history-meta">${esc(time)} · ${Number(row.amount)||0}치즈${row.storageReward ? ` · 보관함: ${esc(row.storageReward)}` : ''}</div>
+        </div>
+        <span class="admin-roulette-badge">${esc(row.source || 'manual')}</span>
+      </div>`;
+  }).join('');
+}
+
+async function testAdminRoulette() {
+  try {
+    await saveAdminRouletteConfig(true);
+    const amount = Number(document.getElementById('roulette-trigger-amount')?.value) || 1500;
+    const nickname = document.getElementById('roulette-test-nickname')?.value.trim() || '테스트시청자';
+    const res = await fetch('/api/roulette-test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nickname, amount }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.ok === false) throw new Error(data.error || '룰렛 테스트 실패');
+    _adminRouletteConfig = data.config;
+    animateAdminRouletteTicker(data.entry.result);
+    _adminRouletteSpinDeg += 1080 + Math.floor(Math.random() * 360);
+    const wheel = document.getElementById('admin-roulette-wheel');
+    if (wheel) {
+      wheel.style.transform = `rotate(${_adminRouletteSpinDeg}deg)`;
+      wheel.style.setProperty('--spin', `${_adminRouletteSpinDeg}deg`);
+    }
+    const result = document.getElementById('admin-roulette-result');
+    if (result) {
+      result.style.display = 'block';
+      result.innerHTML = `<div style="font-size:12px;color:var(--txt2);margin-bottom:4px">테스트 결과</div><div style="font-size:20px;font-weight:900;color:var(--gold)">${esc(data.entry.result)}</div><div style="font-size:12px;color:var(--txt3);margin-top:4px">${esc(data.entry.nickname)} · ${Number(data.entry.amount)||0}치즈${data.entry.discordError ? ` · 디스코드 전송 실패: ${esc(data.entry.discordError)}` : ''}</div>`;
+    }
+    renderAdminRouletteHistory();
+  } catch (e) {
+    alert(e.message || '룰렛 테스트 실패');
+  }
+}
+
+async function clearAdminRouletteHistory() {
+  if (!_adminRouletteConfig) await loadAdminRouletteConfig();
+  if (!confirm('룰렛 결과 이력을 비울까요? 설정 항목은 유지됩니다.')) return;
+  _adminRouletteConfig.history = [];
+  await saveAdminRouletteConfig(true);
+  renderAdminRouletteHistory();
 }
 
 function toggleVoteLeft() {
@@ -2204,7 +2628,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`panel-${tab}`).classList.add('active');
-    if (tab === 'admin') { loadRegisterBtnState(); loadAdminVoiceIds(); resetConsole(); }
+    if (tab === 'admin') { loadRegisterBtnState(); loadAdminVoiceIds(); loadAdminRouletteConfig(); resetConsole(); }
   });
 });
 
