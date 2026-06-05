@@ -1866,16 +1866,16 @@ async function buyShopItem(itemId){
       const r=await fetch('/api/proxy-bot-command',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({command:'추가',options:{닉네임:botName,보상이름:item.name,개수:1}})
+        body:JSON.stringify({command:'shop_grant',options:{닉네임:botName,보상이름:item.name,개수:1}})
       });
       const data=await r.json();
       if(data.ok){
-        toast(`📦 ${botName} 보관함에 ${item.name} 자동 추가됨`);
+        alert(`📦 보관함 자동 추가 완료!\n${botName} → ${item.name} 1개 지급`);
       } else {
-        toast(`⚠️ 보관함 추가 실패: ${data.error||'봇 오류'}\n(구매는 완료됨)`);
+        alert(`⚠️ 보관함 자동 추가 실패\n오류: ${data.error||'봇 오류'}\n\n구매(포인트 차감)는 완료됐습니다.\n봇에 등록된 닉네임: ${botName}`);
       }
     }catch(e){
-      toast(`⚠️ 보관함 추가 실패: 봇 연결 오류\n(구매는 완료됨)`);
+      alert(`⚠️ 보관함 자동 추가 실패\n봇 연결 오류: ${e.message}\n\n구매(포인트 차감)는 완료됐습니다.`);
     }
   }
 }
