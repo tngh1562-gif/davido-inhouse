@@ -6,3 +6,6 @@ node_modules/
 data/backups/
 data/inhouse-db.json
 data/inhouse-db.backup-*.json
+data/roulette-config.json
+data/bot-auth.json
+data/bot-state.json

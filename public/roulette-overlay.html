@@ -4,163 +4,494 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Roulette Overlay</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;900&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700;900&family=Rajdhani:wght@700;900&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:'Noto Sans KR',sans-serif;color:#fff}
-#overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at center,rgba(255,201,77,.16),transparent 24%),radial-gradient(circle at center,rgba(0,0,0,.38),rgba(0,0,0,.08) 56%,transparent 74%)}
-#overlay.show{display:flex}
-.stage{position:relative;width:min(640px,82vmin);height:min(640px,82vmin);display:grid;place-items:center;animation:popIn .28s ease-out}
-.title{position:absolute;top:0;left:50%;transform:translate(-50%,-92%);font-size:clamp(22px,4vmin,42px);font-weight:900;text-shadow:0 8px 24px rgba(0,0,0,.7);white-space:nowrap}
-.ticker{position:absolute;top:4%;left:50%;transform:translateX(-50%);z-index:8;width:min(470px,64vmin);height:clamp(48px,7.4vmin,68px);border-radius:14px;border:3px solid #4d9fff;background:linear-gradient(180deg,#4b1bd3 0%,#26107d 48%,#13073a 100%);box-shadow:0 0 0 5px rgba(255,201,77,.78) inset,0 0 32px rgba(77,159,255,.72),0 12px 24px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;overflow:hidden}
-.ticker::before,.ticker::after{content:'✦';position:absolute;top:50%;transform:translateY(-50%);color:#ffc94d;text-shadow:0 0 14px #ffc94d;font-size:clamp(20px,3.3vmin,30px)}
-.ticker::before{left:18px}.ticker::after{right:18px}
-.ticker-reel{position:relative;width:70%;height:clamp(24px,4vmin,36px);overflow:visible;color:#fff44f;font-size:clamp(18px,3.1vmin,30px);font-weight:900;text-align:center;text-shadow:0 0 10px #ff2bd6,0 0 18px #ffc94d}
-.ticker-reel span{display:block;height:clamp(24px,4vmin,36px);line-height:clamp(24px,4vmin,36px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wheel{position:relative;width:78%;height:78%;border-radius:50%;display:grid;place-items:center;filter:drop-shadow(0 34px 44px rgba(0,0,0,.66)) drop-shadow(0 0 30px rgba(255,201,77,.24));transition:transform 2s cubic-bezier(.08,.82,.12,1);--spin:0deg}
-.wheel::before{content:'';position:absolute;inset:-24px;border-radius:50%;background:conic-gradient(from 0deg,#fff7cc,#f7b733,#8aa1bd,#ffffff,#34d399,#f7b733,#fff7cc);z-index:-3;box-shadow:0 0 44px rgba(255,201,77,.24)}
-.wheel::after{content:'';position:absolute;inset:-11px;border-radius:50%;background:repeating-conic-gradient(from 0deg,#111827 0 4deg,#f8fafc 4deg 6deg,#111827 6deg 12deg);z-index:-2;box-shadow:inset 0 0 0 6px rgba(2,6,23,.9),0 0 0 1px rgba(255,255,255,.16)}
-.face{position:absolute;inset:0;border-radius:50%;overflow:hidden;background:conic-gradient(from 90deg,#00c8a0 0 25%,#4d9fff 0 50%,#ffc94d 0 75%,#a78bfa 0 100%)}
-.face::before{content:'';position:absolute;inset:16px;border-radius:50%;border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 0 0 28px rgba(255,255,255,.025),inset 0 0 32px rgba(255,255,255,.08)}
-.face::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at center,transparent 0 28%,rgba(0,0,0,.24) 29%,transparent 31%),radial-gradient(circle at 34% 24%,rgba(255,255,255,.38),transparent 24%),linear-gradient(135deg,rgba(255,255,255,.3),transparent 30%,rgba(0,0,0,.3) 76%,rgba(255,255,255,.14));box-shadow:inset 0 0 0 4px rgba(255,255,255,.24),inset 0 0 56px rgba(0,0,0,.46)}
-.labels{position:absolute;inset:0;border-radius:50%;pointer-events:none}
-.label{position:absolute;width:170px;text-align:center;font-size:clamp(13px,2vmin,19px);font-weight:900;line-height:1.12;text-shadow:0 3px 4px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.78);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translate(-50%,-50%) rotate(calc(-1 * var(--spin)))}
-.pointer{position:absolute;right:7.5%;top:50%;transform:translateY(-50%);z-index:6;width:76px;height:58px;background:linear-gradient(90deg,#f59e0b 0%,#fff7cc 58%,#ffffff 100%);clip-path:polygon(0 50%,100% 0,100% 100%);filter:drop-shadow(0 7px 12px rgba(0,0,0,.6)) drop-shadow(0 0 16px rgba(255,201,77,.38))}
-.result{position:absolute;bottom:0;left:50%;transform:translate(-50%,82%);min-width:min(560px,86vw);padding:20px 28px;border-radius:14px;background:rgba(8,13,22,.88);border:1px solid rgba(255,255,255,.16);box-shadow:0 20px 48px rgba(0,0,0,.55);text-align:center;opacity:0;transition:opacity .25s,transform .25s}
-.result.show{opacity:1;transform:translate(-50%,74%)}
-.result .nick{font-size:clamp(15px,2.2vmin,22px);font-weight:800;color:#94a3b8}
-.result .prize{margin-top:4px;font-size:clamp(30px,5.6vmin,56px);font-weight:900;color:#ffc94d;line-height:1.05;text-shadow:0 0 28px rgba(255,201,77,.35)}
-@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:'Noto Sans KR',sans-serif}
+body.test-mode{background:#03050e}
+
+/* ── 파티클 ── */
+#burst{position:fixed;inset:0;pointer-events:none;z-index:200}
+
+/* ── 플래시 ── */
+#flash{position:fixed;inset:0;pointer-events:none;z-index:185;opacity:0;background:#fff}
+@keyframes do-flash{0%{opacity:.75}100%{opacity:0}}
+
+/* ══════════════════════════════
+   오버레이 배경 + 스캔라인
+══════════════════════════════ */
+#overlay{display:none;position:fixed;inset:0;align-items:center;justify-content:center;z-index:10}
+#overlay.active{display:flex}
+#overlay.active::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse at 50% 38%,rgba(0,18,48,.92) 0%,rgba(0,0,0,.97) 100%);
+}
+#overlay.active::after{
+  content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(
+    to bottom,
+    transparent 0px,transparent 3px,
+    rgba(0,0,0,.14) 3px,rgba(0,0,0,.14) 4px
+  );
+}
+
+/* ── 스테이지 ── */
+.stage{
+  position:relative;z-index:10;
+  display:flex;flex-direction:column;align-items:center;
+  width:min(840px,96vw);
+  animation:stageIn .45s cubic-bezier(.18,.9,.18,1.1) both;
+}
+@keyframes stageIn{
+  from{opacity:0;transform:scale(.62) translateY(80px);filter:blur(28px)}
+  to  {opacity:1;transform:scale(1)   translateY(0);  filter:blur(0)}
+}
+
+/* ══════════════════════════════
+   배너
+══════════════════════════════ */
+.banner{
+  width:100%;height:64px;
+  display:flex;align-items:center;justify-content:center;gap:14px;
+  background:linear-gradient(180deg,#0d1f48 0%,#070f27 100%);
+  border-radius:20px 20px 0 0;
+  position:relative;overflow:hidden;
+  box-shadow:
+    0 -3px 0 0 #00d4ff,
+    3px 0 0 0 #00d4ff,
+    -3px 0 0 0 #00d4ff,
+    0 0 55px rgba(0,212,255,.6),
+    inset 0 0 90px rgba(0,212,255,.06);
+}
+.banner::before{
+  content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(to right,rgba(0,212,255,.22) 0%,transparent 45%),
+    linear-gradient(to left, rgba(255,45,135,.22) 0%,transparent 45%);
+  animation:banner-breathe 2.4s ease-in-out infinite alternate;
+}
+@keyframes banner-breathe{from{opacity:.32}to{opacity:1}}
+.banner::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#00d4ff 15%,#ff2d87 50%,#ffc94d 85%,transparent);
+  background-size:280% 100%;
+  animation:scanbar 1.5s linear infinite;
+}
+@keyframes scanbar{0%{background-position:0%}100%{background-position:280%}}
+
+.banner-icon{
+  font-size:26px;position:relative;z-index:2;
+  filter:drop-shadow(0 0 16px rgba(255,201,77,1));
+  animation:icon-rock 3.2s ease-in-out infinite;
+}
+@keyframes icon-rock{0%,80%,100%{transform:rotate(0) scale(1)}86%{transform:rotate(-20deg) scale(1.25)}93%{transform:rotate(9deg) scale(1.1)}}
+
+.banner-title{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(17px,2.8vmin,25px);font-weight:900;
+  color:#fff;letter-spacing:6px;text-transform:uppercase;
+  text-shadow:0 0 8px #fff,0 0 22px #00d4ff,0 0 50px rgba(0,212,255,.75);
+  animation:title-flicker 9s ease-in-out infinite;
+  position:relative;z-index:2;
+}
+@keyframes title-flicker{0%,87%,89%,91%,100%{opacity:1}88%,90%{opacity:.45}}
+
+.banner-dot{width:10px;height:10px;border-radius:50%;background:#ff2d87;box-shadow:0 0 14px #ff2d87,0 0 34px rgba(255,45,135,.9);animation:dot-pulse 1s ease-in-out infinite alternate;position:relative;z-index:2}
+@keyframes dot-pulse{from{transform:scale(.68);opacity:.38}to{transform:scale(1.38);opacity:1}}
+.banner-live{font-size:10px;font-weight:900;letter-spacing:3px;color:rgba(255,255,255,.38);text-transform:uppercase;position:relative;z-index:2}
+
+/* ══════════════════════════════
+   슬롯
+══════════════════════════════ */
+.slot-outer{position:relative;width:100%}
+
+/* 외곽 블러 글로우 */
+.slot-glow{
+  position:absolute;inset:-14px;z-index:-1;border-radius:6px;
+  background:linear-gradient(90deg,#00d4ff,#ff2d87,#ffc94d,#a855f7,#00d4ff);
+  background-size:400% 100%;
+  animation:frame-flow 1.5s linear infinite;
+  filter:blur(24px);opacity:.5;
+}
+@keyframes frame-flow{0%{background-position:0% 50%}100%{background-position:400% 50%}}
+
+.slot-frame{
+  width:100%;padding:4px;
+  background:linear-gradient(90deg,#00d4ff,#ff2d87,#ffc94d,#a855f7,#00d4ff);
+  background-size:400% 100%;
+  animation:frame-flow 1.5s linear infinite;
+}
+
+.slot-inner{
+  position:relative;width:100%;height:140px;
+  background:linear-gradient(180deg,#010308 0%,#06091a 40%,#06091a 60%,#010308 100%);
+  overflow:hidden;isolation:isolate;
+}
+/* 격자 */
+.slot-inner::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,212,255,.038) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,212,255,.038) 1px,transparent 1px);
+  background-size:38px 38px;
+}
+/* 광택 스윕 */
+.slot-inner::after{
+  content:'';position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:linear-gradient(112deg,transparent 20%,rgba(255,255,255,.11) 50%,transparent 80%);
+  animation:sweep 2.8s ease-in-out infinite;
+}
+@keyframes sweep{0%{transform:translateX(-160%)}65%,100%{transform:translateX(160%)}}
+
+/* 상하 페이드 - 가운데만 선명하게 */
+.slot-fade-t,.slot-fade-b{position:absolute;left:0;right:0;z-index:4;pointer-events:none}
+.slot-fade-t{top:0;height:36%;background:linear-gradient(to bottom,rgba(1,3,8,1),transparent)}
+.slot-fade-b{bottom:0;height:36%;background:linear-gradient(to top, rgba(1,3,8,1),transparent)}
+
+/* 중앙 선택 라인 */
+.slot-center{
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+  height:140px;z-index:3;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,rgba(0,212,255,.07),transparent 65%);
+  box-shadow:inset 0 2px 0 rgba(0,212,255,.28),inset 0 -2px 0 rgba(255,45,135,.28);
+}
+
+.drum-list{position:absolute;top:0;left:0;right:0;z-index:2}
+.drum-row{
+  height:140px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(34px,5.8vmin,62px);font-weight:900;
+  color:#fff;letter-spacing:1px;user-select:none;
+  text-shadow:0 0 12px rgba(255,255,255,.9),0 0 30px rgba(255,255,255,.4),0 5px 20px rgba(0,0,0,.98);
+}
+
+/* 크로마틱 어베레이션 — 스핀 중 RGB 분리 */
+.drum-list.spinning .drum-row{
+  filter:blur(.6px);
+  text-shadow:
+    -5px 0 10px rgba(255,0,80,.9),
+    5px 0 10px rgba(0,200,255,.9),
+    0 0 20px rgba(255,255,255,.35),
+    0 5px 20px rgba(0,0,0,.98);
+}
+
+/* 화살표 */
+.arr-wrap{position:absolute;top:50%;transform:translateY(-50%);z-index:30}
+.arr-wrap.l{left:-42px}
+.arr-wrap.r{right:-42px}
+.arr{width:0;height:0;animation:arr-pulse .72s ease-in-out infinite alternate}
+.arr.l{border-top:22px solid transparent;border-bottom:22px solid transparent;border-left:30px solid #00d4ff;filter:drop-shadow(0 0 12px #00d4ff) drop-shadow(0 0 32px rgba(0,212,255,1))}
+.arr.r{border-top:22px solid transparent;border-bottom:22px solid transparent;border-right:30px solid #ff2d87;filter:drop-shadow(0 0 12px #ff2d87) drop-shadow(0 0 32px rgba(255,45,135,1))}
+@keyframes arr-pulse{from{opacity:.38;transform:scale(.78)}to{opacity:1;transform:scale(1.14)}}
+
+/* ══════════════════════════════
+   하단 글로우 바
+══════════════════════════════ */
+.bottom-glow{
+  width:100%;height:6px;
+  background:linear-gradient(90deg,#00d4ff,#ff2d87,#ffc94d,#a855f7,#00d4ff);
+  background-size:400%;
+  animation:frame-flow 1.5s linear infinite;
+  box-shadow:0 0 26px rgba(0,212,255,.85),0 0 55px rgba(255,45,135,.5),0 2px 0 rgba(255,201,77,.4);
+}
+
+/* ══════════════════════════════
+   결과 박스
+══════════════════════════════ */
+.result-box{
+  width:100%;margin-top:22px;
+  padding:26px 40px 30px;
+  border-radius:20px;
+  background:linear-gradient(150deg,rgba(3,5,18,.99),rgba(7,12,32,.99));
+  border:1px solid rgba(168,85,247,.5);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.04),
+    0 0 45px rgba(168,85,247,.28),
+    0 0 110px rgba(168,85,247,.1),
+    0 55px 110px rgba(0,0,0,.98),
+    inset 0 0 70px rgba(168,85,247,.05);
+  text-align:center;
+  overflow:hidden;
+  opacity:0;transform:scale(.7);
+}
+.result-box::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent 2%,#a855f7 20%,#ffc94d 50%,#ff2d87 80%,transparent 98%);
+  box-shadow:0 0 22px rgba(168,85,247,.9),0 0 44px rgba(255,201,77,.5);
+}
+.result-box::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(168,85,247,.14),transparent 50%);
+  pointer-events:none;
+}
+.result-box.visible{
+  animation:result-slam .38s ease-out both;
+}
+@keyframes result-slam{
+  0%  {opacity:0;transform:scale(.72)}
+  60% {opacity:1;transform:scale(1.07)}
+  80% {transform:scale(.96)}
+  100%{opacity:1;transform:scale(1)}
+}
+
+.result-label{font-size:clamp(10px,1.4vmin,13px);font-weight:700;color:rgba(148,163,184,.45);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px}
+.result-who{font-size:clamp(13px,1.8vmin,17px);font-weight:700;color:rgba(148,163,184,.55);margin-bottom:14px}
+.result-what{
+  font-size:clamp(40px,7.5vmin,84px);font-weight:900;
+  color:#fff;line-height:1;
+  animation:winner-cycle 2.2s ease-in-out infinite;
+}
+@keyframes winner-cycle{
+  0%  {text-shadow:0 0 14px #fff,0 0 36px #ffc94d,0 0 72px rgba(255,201,77,.8),0 6px 22px rgba(0,0,0,.98)}
+  30% {text-shadow:0 0 18px #fff,0 0 46px #ff2d87,0 0 95px rgba(255,45,135,.9),0 6px 22px rgba(0,0,0,.98)}
+  60% {text-shadow:0 0 16px #fff,0 0 42px #00d4ff,0 0 88px rgba(0,212,255,.85),0 6px 22px rgba(0,0,0,.98)}
+  100%{text-shadow:0 0 24px #fff,0 0 62px #ffc94d,0 0 125px rgba(255,201,77,1),0 0 210px rgba(255,201,77,.4),0 6px 22px rgba(0,0,0,.98)}
+}
 </style>
 </head>
 <body>
+
+<canvas id="burst"></canvas>
+<div id="flash"></div>
+
 <div id="overlay">
   <div class="stage">
-    <div class="title" id="title">1500치즈 룰렛</div>
-    <div class="ticker"><div id="tickerReel" class="ticker-reel"><span>READY</span></div></div>
-    <div class="pointer"></div>
-    <div class="wheel" id="wheel">
-      <div class="face" id="face"></div>
-      <div class="labels" id="labels"></div>
+
+    <div class="banner">
+      <span class="banner-icon">🎰</span>
+      <span class="banner-title" id="titleText">1500치즈 룰렛</span>
+      <span class="banner-dot"></span>
+      <span class="banner-live">LIVE</span>
     </div>
-    <div class="result" id="result">
-      <div class="nick" id="nick"></div>
-      <div class="prize" id="prize"></div>
+
+    <div class="slot-outer">
+      <div class="slot-glow"></div>
+      <div class="arr-wrap l"><div class="arr l"></div></div>
+      <div class="slot-frame">
+        <div class="slot-inner">
+          <div class="drum-list" id="drumList"></div>
+          <div class="slot-fade-t"></div>
+          <div class="slot-fade-b"></div>
+          <div class="slot-center"></div>
+        </div>
+      </div>
+      <div class="arr-wrap r"><div class="arr r"></div></div>
     </div>
+
+    <div class="bottom-glow"></div>
+
+    <div class="result-box" id="resultBox">
+      <div class="result-label">🏆 당첨</div>
+      <div class="result-who" id="resultWho"></div>
+      <div class="result-what" id="resultWhat"></div>
+    </div>
+
   </div>
 </div>
+
 <script>
-let cfg={items:[],overlayTitle:'1500치즈 룰렛'};
-let spinDeg=0;
-const overlay=document.getElementById('overlay');
-const wheel=document.getElementById('wheel');
-const face=document.getElementById('face');
-const labels=document.getElementById('labels');
-const title=document.getElementById('title');
-const tickerReel=document.getElementById('tickerReel');
-const resultBox=document.getElementById('result');
-const nickEl=document.getElementById('nick');
-const prizeEl=document.getElementById('prize');
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-async function loadConfig(){
-  try{cfg=await (await fetch('/api/roulette-config',{cache:'no-store'})).json();renderWheel()}
-  catch{}
-}
-function renderWheel(){
-  title.textContent=cfg.overlayTitle||'1500치즈 룰렛';
-  const items=(cfg.items||[]).filter(item=>item.enabled!==false&&item.label);
-  if(!items.length){face.style.background='conic-gradient(from 90deg,#334155 0 100%)';labels.innerHTML='';return}
-  const total=items.reduce((sum,item)=>sum+(Number(item.weight)||1),0);
-  let pct=0;
-  const nodes=[];
-  const stops=items.map((item,i)=>{
-    const start=pct;
-    pct+=((Number(item.weight)||1)/total)*100;
-    const mid=((start+pct)/2)*3.6;
-    const labelDeg=mid;
-    const label=String(item.label||'').length>12?String(item.label).slice(0,12)+'...':item.label;
-    const rad=labelDeg*Math.PI/180;
-    const wheelSize=wheel.clientWidth||420;
-    const radius=Math.max(116,Math.min(wheelSize*0.29,168));
-    const center=wheelSize/2;
-    const x=center+Math.cos(rad)*radius;
-    const y=center+Math.sin(rad)*radius;
-    nodes.push(`<div class="label" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px">${esc(label)}</div>`);
-    return `${item.color||'#00c8a0'} ${start.toFixed(2)}% ${pct.toFixed(2)}%`;
-  });
-  face.style.background=`conic-gradient(from 90deg,${stops.join(',')})`;
-  labels.innerHTML=nodes.join('');
-  updateTicker(items[0]?.label||'READY');
-}
-let tickerTimer=null;
-function updateTicker(text){
-  if(!tickerReel) return;
-  const nextText=text||'READY';
-  const current=tickerReel.querySelector('span:last-child')?.textContent||'';
-  if(!current||current===nextText){
-    tickerReel.style.transition='none';
-    tickerReel.style.transform='translateY(0)';
-    tickerReel.innerHTML=`<span>${esc(nextText)}</span>`;
-    return;
+const ITEM_H  = 140;
+const REPEATS = 50;
+
+let cfg       = { items:[], overlayTitle:'1500치즈 룰렛' };
+let drumItems = [];
+let curY      = 0;
+let animRef   = null;
+
+const overlay   = document.getElementById('overlay');
+const stage     = overlay.querySelector('.stage');
+const drumList  = document.getElementById('drumList');
+const titleText = document.getElementById('titleText');
+const resultBox = document.getElementById('resultBox');
+const resultWho = document.getElementById('resultWho');
+const resultWhat= document.getElementById('resultWhat');
+const flashEl   = document.getElementById('flash');
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+/* ── 파티클 버스트 ── */
+function burstParticles(){
+  const cv  = document.getElementById('burst');
+  const ctx = cv.getContext('2d');
+  cv.width  = window.innerWidth;
+  cv.height = window.innerHeight;
+  const cx = cv.width/2, cy = cv.height * 0.4;
+  const colors = ['#ffc94d','#00d4ff','#ff2d87','#a855f7','#ffffff','#34d399','#fb923c','#f0abfc'];
+  const pts = [];
+  for(let i=0;i<160;i++){
+    const a = Math.random()*Math.PI*2;
+    const spd = 4 + Math.random()*14;
+    pts.push({
+      x:cx, y:cy,
+      vx:Math.cos(a)*spd, vy:Math.sin(a)*spd - 5,
+      life:1,
+      decay:.007 + Math.random()*.015,
+      r:2 + Math.random()*9,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      star:Math.random()>.42,
+    });
   }
-  tickerReel.style.transition='none';
-  tickerReel.style.transform='translateY(0)';
-  tickerReel.innerHTML=`<span>${esc(current)}</span><span>${esc(nextText)}</span>`;
-  requestAnimationFrame(()=>{
-    const lineHeight=tickerReel.querySelector('span')?.offsetHeight||32;
-    tickerReel.style.transition='transform .22s cubic-bezier(.2,.78,.22,1)';
-    tickerReel.style.transform=`translateY(-${lineHeight}px)`;
-  });
-  setTimeout(()=>{
-    tickerReel.style.transition='none';
-    tickerReel.style.transform='translateY(0)';
-    tickerReel.innerHTML=`<span>${esc(nextText)}</span>`;
-  },240);
+  let prev=null;
+  function draw(ts){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    let alive=false;
+    const dt=prev?Math.min((ts-prev)/16,3):1;
+    prev=ts;
+    for(const p of pts){
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=.28*dt; p.life-=p.decay*dt;
+      if(p.life<=0)continue;
+      alive=true;
+      ctx.globalAlpha=p.life;
+      ctx.fillStyle=p.color;
+      ctx.shadowColor=p.color;
+      ctx.shadowBlur=16;
+      ctx.beginPath();
+      if(p.star){
+        const r=p.r*p.life, ir=r*.42, n=5;
+        for(let j=0;j<n*2;j++){
+          const angle=(j*Math.PI/n)-Math.PI/2;
+          const rad=j%2===0?r:ir;
+          j===0?ctx.moveTo(p.x+Math.cos(angle)*rad,p.y+Math.sin(angle)*rad)
+               :ctx.lineTo(p.x+Math.cos(angle)*rad,p.y+Math.sin(angle)*rad);
+        }
+        ctx.closePath();
+      } else {
+        ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);
+      }
+      ctx.fill();
+    }
+    ctx.globalAlpha=1;ctx.shadowBlur=0;
+    if(alive)requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  requestAnimationFrame(draw);
 }
-function animateTicker(finalText){
+
+/* ── 드럼 ── */
+function buildDrum(){
+  drumItems=(cfg.items||[]).filter(it=>it.enabled!==false&&it.label);
+  if(!drumItems.length){drumList.innerHTML='';return}
+  const tape=Array.from({length:REPEATS},()=>drumItems).flat();
+  drumList.innerHTML=tape.map(it=>
+    `<div class="drum-row" style="background:${it.color||'#1e293b'}cc">${esc(it.label)}</div>`
+  ).join('');
+  const mid=Math.floor(REPEATS/2)*drumItems.length;
+  curY=-mid*ITEM_H;
+  drumList.style.transform=`translateY(${curY}px)`;
+}
+
+function spin(winLabel,onDone){
+  if(!drumItems.length){if(onDone)onDone();return}
+  const n=drumItems.length;
+  const winIdx=Math.max(0,drumItems.findIndex(it=>it.label===winLabel));
+  const startY=curY;
+  const targetY=startY-(8*n+winIdx)*ITEM_H;
+  const t0=performance.now();
+  if(animRef)cancelAnimationFrame(animRef);
+  drumList.classList.add('spinning');
+  function step(now){
+    const p=Math.min((now-t0)/2000,1);
+    if(p>.78)drumList.classList.remove('spinning');
+    const y=startY+(targetY-startY)*(1-Math.pow(1-p,4));
+    curY=y;drumList.style.transform=`translateY(${y}px)`;
+    if(p<1){animRef=requestAnimationFrame(step)}
+    else{
+      const mid=Math.floor(REPEATS/2)*n;
+      curY=-(mid+winIdx)*ITEM_H;
+      drumList.style.transform=`translateY(${curY}px)`;
+      if(onDone)onDone();
+    }
+  }
+  animRef=requestAnimationFrame(step);
+}
+
+/* ── 타이틀 순환 ── */
+let tickerTimer=null;
+function spinTitle(final){
   clearInterval(tickerTimer);
-  const pool=(cfg.items||[]).filter(item=>item.enabled!==false&&item.label);
-  if(!pool.length){updateTicker(finalText||'READY');return}
+  if(!drumItems.length){titleText.textContent=final||'READY';return}
   let i=0;
-  tickerTimer=setInterval(()=>{
-    updateTicker(pool[i%pool.length].label);
-    i++;
-  },120);
-  setTimeout(()=>{
-    clearInterval(tickerTimer);
-    updateTicker(finalText||'');
-  },2050);
+  tickerTimer=setInterval(()=>{titleText.textContent=drumItems[i++%drumItems.length].label},75);
+  setTimeout(()=>{clearInterval(tickerTimer);titleText.textContent=final||''},1900);
 }
-function showResult(entry){
-  renderWheel();
-  overlay.classList.add('show');
-  resultBox.classList.remove('show');
-  animateTicker(entry.result);
-  nickEl.textContent=`${entry.nickname||'시청자'} · ${Number(entry.amount)||0}치즈`;
-  prizeEl.textContent=entry.result||'';
-  spinDeg+=1080+Math.floor(Math.random()*360);
-  wheel.style.transform=`rotate(${spinDeg}deg)`;
-  wheel.style.setProperty('--spin',`${spinDeg}deg`);
-  setTimeout(()=>resultBox.classList.add('show'),2050);
-  clearTimeout(showResult.timer);
-  showResult.timer=setTimeout(()=>overlay.classList.remove('show'),7200);
+
+/* ── 플래시 + 쉐이크 ── */
+function doFlashShake(){
+  flashEl.style.animation='none';
+  void flashEl.offsetHeight;
+  flashEl.style.animation='do-flash .38s ease-out both';
+  // CSS 클래스 대신 Web Animations API — stageIn 애니메이션과 충돌 없음
+  stage.animate([
+    {transform:'translate(0,0)'},
+    {transform:'translate(-8px,-5px)'},
+    {transform:'translate(8px,6px)'},
+    {transform:'translate(-6px,7px)'},
+    {transform:'translate(6px,-6px)'},
+    {transform:'translate(-4px,4px)'},
+    {transform:'translate(0,0)'},
+  ],{duration:500,easing:'ease-out',composite:'add'});
+}
+
+/* ── 결과 표시 ── */
+function showEntry(entry){
+  buildDrum();
+  overlay.classList.add('active');
+  resultBox.classList.remove('visible');
+  titleText.textContent=cfg.overlayTitle||'룰렛';
+  resultWho.textContent=`${entry.nickname||'시청자'}  ·  ${Number(entry.amount)||0}치즈`;
+  resultWhat.textContent=entry.result||'';
+  spinTitle(entry.result);
+  spin(entry.result,()=>{
+    doFlashShake();
+    setTimeout(()=>{
+      resultBox.classList.add('visible');
+      burstParticles();
+    },160);
+    clearTimeout(showEntry._t);
+    showEntry._t=setTimeout(()=>{
+      overlay.classList.remove('active');
+      resultBox.classList.remove('visible');
+    },1000);
+  });
+  clearTimeout(showEntry._t);
+}
+
+/* ── 서버 연동 ── */
+async function loadConfig(){
+  try{const r=await fetch('/api/roulette-config',{cache:'no-store'});if(r.ok){cfg=await r.json();buildDrum()}}catch{}
 }
 function connectWS(){
-  const proto=location.protocol==='https:'?'wss:':'ws:';
-  const ws=new WebSocket(`${proto}//${location.host}`);
+  const ws=new WebSocket(`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}`);
   ws.onmessage=e=>{
-    const msg=JSON.parse(e.data);
-    if(msg.type==='state'&&msg.data?.rouletteAdmin) cfg=msg.data.rouletteAdmin;
-    if(msg.type==='roulette_admin_result'){
-      if(msg.config) cfg=msg.config;
-      showResult(msg.result||{});
-    }
+    try{
+      const msg=JSON.parse(e.data);
+      if(msg.type==='state'&&msg.data?.rouletteAdmin){cfg=msg.data.rouletteAdmin;buildDrum()}
+      if(msg.type==='roulette_admin_result'){if(msg.config)cfg=msg.config;showEntry(msg.result||{})}
+    }catch{}
   };
   ws.onclose=()=>setTimeout(connectWS,2500);
 }
-loadConfig();
-connectWS();
-addEventListener('resize',renderWheel);
+
+const IS_TEST=new URLSearchParams(location.search).has('test');
+if(IS_TEST){
+  document.body.classList.add('test-mode');
+  cfg={
+    overlayTitle:'1500치즈 룰렛',
+    items:[
+      {label:'벌칙 면제권',color:'#2563eb',enabled:true},
+      {label:'다시 돌리기',color:'#059669',enabled:true},
+      {label:'팡팡!',      color:'#d97706',enabled:true},
+      {label:'5분 쉬기',  color:'#7c3aed',enabled:true},
+      {label:'벌칙 2배',  color:'#dc2626',enabled:true},
+    ],
+  };
+  buildDrum();
+  overlay.classList.add('active');
+  setTimeout(()=>showEntry({nickname:'테스트유저',amount:1500,result:'벌칙 면제권'}),1000);
+}else{
+  loadConfig();
+  connectWS();
+}
 </script>
 </body>
 </html>

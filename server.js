@@ -581,31 +581,54 @@ function pickRouletteItem(items) {
 async function runRouletteSpin({ nickname = '테스트', amount, source = 'manual' } = {}) {
   const cfg = readRouletteConfig();
   const paid = Number(amount) || cfg.triggerAmount;
-  const allowed = cfg.exactAmountOnly ? paid === cfg.triggerAmount : paid >= cfg.triggerAmount;
-  if (!allowed) {
+  const spinCount = Math.floor(paid / cfg.triggerAmount);
+
+  // exactAmountOnly: must be exact multiple; otherwise any amount >= trigger is 1 spin
+  const allowed = cfg.exactAmountOnly
+    ? paid % cfg.triggerAmount === 0 && spinCount >= 1
+    : paid >= cfg.triggerAmount;
+  if (!allowed || spinCount < 1) {
     const err = new Error(`trigger_amount_mismatch:${paid}`);
     err.statusCode = 400;
     throw err;
   }
-  const item = pickRouletteItem(cfg.items);
-  if (!item) {
+
+  if (!(cfg.items || []).some(it => it.enabled !== false && it.label)) {
     const err = new Error('roulette_items_empty');
     err.statusCode = 400;
     throw err;
   }
-  const entry = {
-    id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
-    nickname: String(nickname || '테스트').slice(0, 80),
-    amount: paid,
-    result: item.label,
-    storageReward: cfg.saveToStorage ? item.storageReward : '',
-    source,
-    createdAt: new Date().toISOString(),
-  };
-  const nextHistory = [...(cfg.history || []), entry].slice(-80);
-  const saved = writeRouletteConfig({ history: nextHistory });
-  broadcast({ type: 'roulette_admin_result', result: entry, config: saved });
-  return { entry, config: saved };
+
+  // Pick all winners upfront and save all to history at once
+  const entries = [];
+  let currentCfg = cfg;
+  for (let i = 0; i < spinCount; i++) {
+    const item = pickRouletteItem(currentCfg.items);
+    if (!item) break;
+    const entry = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      nickname: String(nickname || '테스트').slice(0, 80),
+      amount: paid,
+      result: item.label,
+      storageReward: currentCfg.saveToStorage ? item.storageReward : '',
+      source,
+      createdAt: new Date().toISOString(),
+      ...(spinCount > 1 ? { spinIndex: i + 1, spinTotal: spinCount } : {}),
+    };
+    const nextHistory = [...(currentCfg.history || []), entry].slice(-80);
+    currentCfg = writeRouletteConfig({ history: nextHistory });
+    entries.push(entry);
+  }
+
+  // Broadcast spin 1 immediately; schedule subsequent spins every 10s
+  const SPIN_GAP_MS = 2000; // 스핀 1회 = 2초
+  broadcast({ type: 'roulette_admin_result', result: entries[0], config: currentCfg });
+  for (let i = 1; i < entries.length; i++) {
+    const entry = entries[i];
+    setTimeout(() => broadcast({ type: 'roulette_admin_result', result: entry, config: currentCfg }), i * SPIN_GAP_MS);
+  }
+
+  return { entry: entries[0], entries, config: currentCfg };
 }
 
 app.get('/api/livegame', (req, res) => {
@@ -1051,6 +1074,7 @@ const CHZZK_CMD = {
   REQUEST_RECENT_CHAT: 5101,
   RECENT_CHAT: 15101,
   CHAT: 93101,
+  DONATION: 93102,
 };
 function loadBotAuth() {
   try {
@@ -1738,6 +1762,7 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
       }
       if (msg.cmd === 100) return;
       if (msg.cmd === 93101) { handleChat(msg); }
+      if (msg.cmd === 93102) { handleDonation(msg); }
     } catch (e) { console.log('[CHZZK] parse error:', e.message); }
   });
 
@@ -1854,6 +1879,69 @@ function handleChat(msg) {
 
     broadcast({ type: 'chat', nickname, text, ts: Date.now() });
     broadcast({ type: 'vote_update', vote: state.vote });
+  });
+}
+
+function handleDonation(msg) {
+  const chats = Array.isArray(msg.bdy) ? msg.bdy : (msg.bdy?.messageList || []);
+  chats.forEach(chat => {
+    const rawProfile = chat.profile;
+    const profile = typeof rawProfile === 'string' ? JSON.parse(rawProfile || '{}') : (rawProfile || {});
+    const nickname = profile.nickname || chat.nickname || 'unknown';
+
+    let payAmount = 0;
+    let payType = '';
+    try {
+      const extras = typeof chat.extras === 'string' ? JSON.parse(chat.extras) : (chat.extras || {});
+      payAmount = Number(extras.payAmount || extras.amount || 0);
+      payType = String(extras.payType || extras.pay_type || '').toUpperCase();
+    } catch (e) {}
+
+    console.log('[DONATION]', nickname, payType || '(타입없음)', payAmount, '치즈 | keys:', Object.keys(chat).join(','));
+
+    if (payAmount <= 0) return;
+    if (payType && payType !== 'CHEESE') return;
+
+    // 1500치즈 배수만 룰렛 실행 (1500=1회, 3000=2회, 4500=3회, ...)
+    const cfg = readRouletteConfig();
+    const base = cfg.triggerAmount || 1500;
+    if (payAmount % base !== 0) {
+      console.log(`[DONATION] 스킵: ${payAmount}치즈는 ${base}의 배수 아님`);
+      return;
+    }
+    const spinCount = Math.floor(payAmount / base);
+
+    const items = (cfg.items || []).filter(it => it.enabled !== false && it.label);
+    if (!items.length) { console.log('[DONATION] 룰렛 항목 없음'); return; }
+
+    // 당첨 항목 미리 뽑고 히스토리에 전부 저장
+    const entries = [];
+    let currentCfg = cfg;
+    for (let i = 0; i < spinCount; i++) {
+      const item = pickRouletteItem(currentCfg.items);
+      if (!item) break;
+      const entry = {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        nickname: String(nickname).slice(0, 80),
+        amount: payAmount,
+        result: item.label,
+        storageReward: currentCfg.saveToStorage ? item.storageReward : '',
+        source: 'chzzk_donation',
+        createdAt: new Date().toISOString(),
+        ...(spinCount > 1 ? { spinIndex: i + 1, spinTotal: spinCount } : {}),
+      };
+      const nextHistory = [...(currentCfg.history || []), entry].slice(-80);
+      currentCfg = writeRouletteConfig({ history: nextHistory });
+      entries.push(entry);
+    }
+
+    // 1번차 즉시 방송, 이후 10초 간격으로 순차 방송
+    broadcast({ type: 'roulette_admin_result', result: entries[0], config: currentCfg });
+    for (let i = 1; i < entries.length; i++) {
+      const e = entries[i];
+      setTimeout(() => broadcast({ type: 'roulette_admin_result', result: e, config: currentCfg }), i * 2000);
+    }
+    console.log(`[DONATION] 룰렛 ${spinCount}연차: ${nickname} ${payAmount}치즈 → ${entries.map(e=>e.result).join(', ')}`);
   });
 }
 

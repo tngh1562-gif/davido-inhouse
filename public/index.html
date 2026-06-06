@@ -208,27 +208,106 @@ canvas#roulette-canvas{border-radius:50%;box-shadow:0 0 32px rgba(77,159,255,.15
 .admin-roulette-probability-summary{margin-top:10px;font-size:12px;color:var(--txt2);display:flex;justify-content:space-between;gap:10px}
 .admin-overlay-url-box{display:flex;gap:8px;align-items:center}
 .admin-overlay-url-box input{font-family:Consolas,monospace;font-size:12px}
-.admin-roulette-preview{min-height:300px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,201,77,.28);background:radial-gradient(circle at 50% 44%,rgba(255,201,77,.16),transparent 34%),radial-gradient(circle at 62% 58%,rgba(77,159,255,.14),transparent 40%),linear-gradient(180deg,#091221,#050913);border-radius:8px;padding:22px;position:relative;overflow:hidden}
-.admin-roulette-preview::before{content:'';position:absolute;inset:16px;border:1px solid rgba(255,255,255,.08);border-radius:8px;pointer-events:none;box-shadow:inset 0 0 40px rgba(0,200,160,.08)}
-.admin-roulette-stage{position:relative;width:260px;height:260px;display:grid;place-items:center}
-.admin-roulette-ticker{position:absolute;top:2px;left:50%;transform:translateX(-50%);z-index:6;width:190px;height:34px;border-radius:9px;border:2px solid #4d9fff;background:linear-gradient(180deg,#3b16a4,#1b0b58);box-shadow:0 0 0 3px rgba(255,201,77,.75) inset,0 0 18px rgba(77,159,255,.58),0 8px 18px rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;overflow:hidden}
-.admin-roulette-ticker::before,.admin-roulette-ticker::after{content:'✦';position:absolute;top:50%;transform:translateY(-50%);color:#ffc94d;text-shadow:0 0 10px #ffc94d;font-size:16px}
-.admin-roulette-ticker::before{left:10px}.admin-roulette-ticker::after{right:10px}
-.admin-roulette-ticker-text{max-width:130px;color:#fff44f;font-size:13px;font-weight:900;text-shadow:0 0 9px #ff2bd6,0 0 14px #ffc94d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.admin-roulette-wheel{position:relative;width:238px;height:238px;border-radius:50%;display:grid;place-items:center;transition:transform 2s cubic-bezier(.08,.82,.12,1);filter:drop-shadow(0 26px 38px rgba(0,0,0,.62)) drop-shadow(0 0 18px rgba(255,201,77,.22));--spin:0deg}
-.admin-roulette-wheel::before{content:'';position:absolute;inset:-16px;border-radius:50%;background:conic-gradient(from 0deg,#fff7cc,#f7b733,#8aa1bd,#ffffff,#34d399,#f7b733,#fff7cc);z-index:-3;box-shadow:0 0 26px rgba(255,201,77,.22)}
-.admin-roulette-wheel::after{content:'';position:absolute;inset:-8px;border-radius:50%;background:repeating-conic-gradient(from 0deg,#111827 0 4deg,#f8fafc 4deg 6deg,#111827 6deg 12deg);z-index:-2;box-shadow:inset 0 0 0 4px rgba(2,6,23,.9),0 0 0 1px rgba(255,255,255,.16)}
-.admin-roulette-wheel-face{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 90deg,#00c8a0 0 25%,#4d9fff 0 50%,#ffc94d 0 75%,#a78bfa 0 100%);overflow:hidden}
-.admin-roulette-wheel-face::before{content:'';position:absolute;inset:9px;border-radius:50%;border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 0 0 18px rgba(255,255,255,.025),inset 0 0 22px rgba(255,255,255,.08)}
-.admin-roulette-wheel-face::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at center,transparent 0 28%,rgba(0,0,0,.22) 29%,transparent 31%),radial-gradient(circle at 34% 24%,rgba(255,255,255,.36),transparent 24%),linear-gradient(135deg,rgba(255,255,255,.28),transparent 30%,rgba(0,0,0,.27) 76%,rgba(255,255,255,.14));box-shadow:inset 0 0 0 3px rgba(255,255,255,.22),inset 0 0 40px rgba(0,0,0,.46)}
-.admin-roulette-labels{position:absolute;inset:0;border-radius:50%;pointer-events:none}
-.admin-roulette-label{position:absolute;width:106px;text-align:center;color:#fff;font-size:11px;font-weight:900;line-height:1.15;text-shadow:0 2px 3px rgba(0,0,0,.95),0 0 9px rgba(0,0,0,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translate(-50%,-50%) rotate(calc(-1 * var(--spin)))}
-.admin-roulette-pointer{position:absolute;right:-8px;top:50%;transform:translateY(-50%);z-index:4;width:54px;height:42px;background:linear-gradient(90deg,#f59e0b 0%,#fff7cc 58%,#ffffff 100%);clip-path:polygon(0 50%,100% 0,100% 100%);filter:drop-shadow(0 5px 10px rgba(0,0,0,.58)) drop-shadow(0 0 10px rgba(255,201,77,.35))}
-.admin-roulette-ticker{top:-2px;z-index:7;width:218px;height:38px;border-radius:10px;background:linear-gradient(180deg,#4b1bd3 0%,#26107d 48%,#13073a 100%);box-shadow:0 0 0 3px rgba(255,201,77,.78) inset,0 0 22px rgba(77,159,255,.66),0 10px 20px rgba(0,0,0,.54)}
-.admin-roulette-ticker::before,.admin-roulette-ticker::after{content:'◆';font-size:14px}
-.admin-roulette-ticker-reel{position:relative;width:150px;height:20px;overflow:visible;color:#fff44f;font-size:14px;font-weight:900;text-align:center;text-shadow:0 0 9px #ff2bd6,0 0 14px #ffc94d}
-.admin-roulette-ticker-reel span{display:block;height:20px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.admin-roulette-result{margin-top:10px;background:rgba(255,201,77,.11);border:1px solid rgba(255,201,77,.3);border-radius:8px;padding:12px;display:none}
+/* ── 룰렛 미리보기 컨테이너 ── */
+.admin-roulette-preview{
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  border-radius:12px;padding:0;
+  background:#03050e;overflow:hidden;position:relative;
+  border:1px solid rgba(0,212,255,.15);
+  box-shadow:0 0 30px rgba(0,212,255,.08),0 20px 50px rgba(0,0,0,.6);
+}
+/* ── 배너 ── */
+.ar-banner{
+  width:100%;height:50px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  background:linear-gradient(180deg,#0c1a3e,#070f27);
+  border-bottom:2px solid transparent;
+  box-shadow:0 2px 0 #00d4ff,inset 0 0 50px rgba(0,212,255,.05),0 0 20px rgba(0,212,255,.2);
+  position:relative;overflow:hidden;
+}
+.ar-banner::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(0,212,255,.15) 0%,transparent 40%,transparent 60%,rgba(255,45,135,.15) 100%);
+  animation:ar-banner-breathe 3s ease-in-out infinite alternate;
+}
+@keyframes ar-banner-breathe{from{opacity:.4}to{opacity:1}}
+.ar-banner-icon{position:relative;z-index:2;font-size:20px}
+.ar-banner-title{
+  position:relative;z-index:2;
+  font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:900;
+  color:#fff;letter-spacing:4px;text-transform:uppercase;
+  text-shadow:0 0 8px #fff,0 0 20px #00d4ff,0 0 40px rgba(0,212,255,.5);
+}
+.ar-dot{
+  position:relative;z-index:2;
+  width:7px;height:7px;border-radius:50%;background:#ff2d87;
+  box-shadow:0 0 8px #ff2d87,0 0 18px rgba(255,45,135,.7);
+  animation:ar-dot-pulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes ar-dot-pulse{from{transform:scale(.7);opacity:.5}to{transform:scale(1.2);opacity:1}}
+.ar-live{position:relative;z-index:2;font-size:9px;font-weight:900;letter-spacing:2px;color:rgba(255,255,255,.45);text-transform:uppercase}
+/* ── 슬롯 프레임 ── */
+.ar-slot-frame{
+  width:100%;padding:3px;
+  background:linear-gradient(90deg,#00d4ff,#ff2d87,#ffc94d,#a855f7,#00d4ff);
+  background-size:500% 100%;
+  animation:ar-frame-flow 2s linear infinite;
+  box-shadow:0 0 18px rgba(0,212,255,.4),0 0 40px rgba(255,45,135,.28),0 0 70px rgba(0,212,255,.12);
+}
+@keyframes ar-frame-flow{0%{background-position:0% 50%}100%{background-position:500% 50%}}
+.ar-slot-inner{
+  position:relative;width:100%;height:80px;
+  background:#060a15;overflow:hidden;isolation:isolate;
+}
+.ar-slot-inner::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,212,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,212,255,.04) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.ar-slot-inner::after{
+  content:'';position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:linear-gradient(108deg,transparent 25%,rgba(255,255,255,.08) 50%,transparent 75%);
+  animation:ar-sweep 3s ease-in-out infinite;
+}
+@keyframes ar-sweep{0%{transform:translateX(-130%)}55%,100%{transform:translateX(130%)}}
+.ar-fade-l,.ar-fade-r{position:absolute;top:0;bottom:0;z-index:4;pointer-events:none;width:15%}
+.ar-fade-l{left:0;background:linear-gradient(to right,rgba(6,10,21,.88),transparent)}
+.ar-fade-r{right:0;background:linear-gradient(to left,rgba(6,10,21,.88),transparent)}
+.ar-drum-list{position:absolute;top:0;left:0;right:0;z-index:2}
+.ar-drum-row{
+  height:80px;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(18px,2.4vmin,26px);font-weight:900;color:#fff;user-select:none;
+  text-shadow:0 0 10px rgba(255,255,255,.8),0 0 24px rgba(255,255,255,.35),0 2px 10px rgba(0,0,0,.95);
+}
+/* 화살표 */
+.ar-arr{position:absolute;top:50%;transform:translateY(-50%);z-index:20;width:0;height:0;animation:ar-arr-pulse 1s ease-in-out infinite alternate}
+.ar-arr-l{left:-24px;border-top:14px solid transparent;border-bottom:14px solid transparent;border-left:19px solid #00d4ff;filter:drop-shadow(0 0 7px #00d4ff) drop-shadow(0 0 18px rgba(0,212,255,.7))}
+.ar-arr-r{right:-24px;border-top:14px solid transparent;border-bottom:14px solid transparent;border-right:19px solid #ff2d87;filter:drop-shadow(0 0 7px #ff2d87) drop-shadow(0 0 18px rgba(255,45,135,.7))}
+@keyframes ar-arr-pulse{from{opacity:.5;transform:translateY(-50%) scale(.85)}to{opacity:1;transform:translateY(-50%) scale(1.1)}}
+/* 하단 글로우 바 */
+.ar-bottom-glow{width:100%;height:4px;background:linear-gradient(90deg,#00d4ff,#ff2d87,#ffc94d,#a855f7,#00d4ff);background-size:500%;animation:ar-frame-flow 2s linear infinite;box-shadow:0 0 14px rgba(0,212,255,.5),0 0 28px rgba(255,45,135,.3)}
+/* 결과 박스 */
+.ar-result-box{
+  width:100%;padding:16px 24px;
+  background:rgba(4,6,16,.95);
+  border-top:1px solid rgba(168,85,247,.35);
+  position:relative;overflow:hidden;
+  text-align:center;
+  display:none;
+}
+.ar-result-box::before{content:'';position:absolute;top:0;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,#a855f7,#ffc94d,#a855f7,transparent)}
+.ar-result-label{font-size:11px;font-weight:700;color:rgba(148,163,184,.5);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px}
+.ar-result-who{font-size:12px;font-weight:700;color:#475569;margin-bottom:6px}
+.ar-result-what{font-size:clamp(22px,3vmin,34px);font-weight:900;color:#fff;line-height:1.06;
+  text-shadow:0 0 10px #fff,0 0 24px #ffc94d,0 0 50px rgba(255,201,77,.7),0 3px 10px rgba(0,0,0,.9);
+  animation:ar-winner-breathe 1.8s ease-in-out infinite alternate}
+@keyframes ar-winner-breathe{
+  from{text-shadow:0 0 10px #fff,0 0 24px #ffc94d,0 0 50px rgba(255,201,77,.7),0 3px 10px rgba(0,0,0,.9)}
+  to  {text-shadow:0 0 16px #fff,0 0 38px #ffc94d,0 0 80px rgba(255,201,77,.9),0 0 120px rgba(255,201,77,.3),0 3px 10px rgba(0,0,0,.9)}
+}
+.admin-roulette-result{display:none}
 .admin-roulette-history{display:flex;flex-direction:column;gap:8px;max-height:310px;overflow-y:auto}
 .admin-roulette-history-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.025);font-size:12px}
 .admin-roulette-history-main{min-width:0}
@@ -672,13 +751,33 @@ select.console-inline-inp option{background:#2f3136;color:#dcddde}
                   <button class="btn success" onclick="testAdminRoulette()" style="font-size:12px;padding:6px 12px">테스트 돌리기</button>
                 </div>
                 <div class="admin-roulette-preview">
-                  <div class="admin-roulette-stage">
-                    <div class="admin-roulette-ticker"><div id="admin-roulette-ticker-reel" class="admin-roulette-ticker-reel"><span>READY</span></div></div>
-                    <div class="admin-roulette-pointer"></div>
-                    <div id="admin-roulette-wheel" class="admin-roulette-wheel">
-                      <div id="admin-roulette-wheel-face" class="admin-roulette-wheel-face"></div>
-                      <div id="admin-roulette-labels" class="admin-roulette-labels"></div>
+                  <canvas id="ar-burst" style="position:absolute;inset:0;pointer-events:none;z-index:99;width:100%;height:100%"></canvas>
+                  <!-- 배너 -->
+                  <div class="ar-banner">
+                    <span class="ar-banner-icon">🎰</span>
+                    <span class="ar-banner-title" id="ar-banner-title">룰렛 테스트</span>
+                    <span class="ar-dot"></span>
+                    <span class="ar-live">LIVE</span>
+                  </div>
+                  <!-- 슬롯 -->
+                  <div style="position:relative;width:100%;padding:0 32px">
+                    <div class="ar-arr ar-arr-l"></div>
+                    <div class="ar-slot-frame">
+                      <div class="ar-slot-inner">
+                        <div class="ar-drum-list" id="ar-drum-list"></div>
+                        <div class="ar-fade-l"></div>
+                        <div class="ar-fade-r"></div>
+                      </div>
                     </div>
+                    <div class="ar-arr ar-arr-r"></div>
+                  </div>
+                  <!-- 하단 글로우 -->
+                  <div class="ar-bottom-glow"></div>
+                  <!-- 결과 -->
+                  <div class="ar-result-box" id="ar-result-box">
+                    <div class="ar-result-label">🏆 당첨</div>
+                    <div class="ar-result-who" id="ar-result-who"></div>
+                    <div class="ar-result-what" id="ar-result-what"></div>
                   </div>
                 </div>
                 <div id="admin-roulette-result" class="admin-roulette-result"></div>
@@ -1704,81 +1803,131 @@ async function saveAdminRouletteConfig(silent = false) {
   return data.data;
 }
 
+/* ── 드럼 바 상태 ── */
+const AR_DRUM_ITEM_H = 80;
+const AR_DRUM_VISIBLE = 1;
+const AR_DRUM_HALF_H = 0;
+const AR_DRUM_REPEATS = 50;
+let _arDrumItems = [];
+let _arDrumCurY = 0;
+let _arDrumAnimRef = null;
+
 function updateAdminRoulettePreview() {
-  const face = document.getElementById('admin-roulette-wheel-face');
-  const labels = document.getElementById('admin-roulette-labels');
   const summary = document.getElementById('admin-roulette-probability-summary');
-  if (!face || !labels) return;
   const items = adminRouletteItems().filter(item => item.enabled !== false && item.label);
-  if (!items.length) {
-    face.style.background = 'conic-gradient(from 90deg,#2a3a50 0 100%)';
-    labels.innerHTML = '';
-    if (summary) summary.innerHTML = '<span>확률 합계</span><b>0%</b>';
-    return;
-  }
-  const total = items.reduce((sum, item) => sum + (Number(item.weight) || 1), 0);
   if (summary) {
+    const total = items.reduce((sum, item) => sum + (Number(item.weight) || 1), 0);
     const color = Math.abs(total - 100) < 0.01 ? 'var(--acc)' : 'var(--gold)';
-    summary.innerHTML = `<span>확률 합계</span><b style="color:${color}">${total.toFixed(total % 1 ? 1 : 0)}%</b>`;
+    summary.innerHTML = items.length
+      ? `<span>확률 합계</span><b style="color:${color}">${total.toFixed(total % 1 ? 1 : 0)}%</b>`
+      : '<span>확률 합계</span><b>0%</b>';
   }
-  let pct = 0;
-  const labelNodes = [];
-  const stops = items.map((item, i) => {
-    const start = pct;
-    const size = ((Number(item.weight) || 1) / total) * 100;
-    pct += size;
-    const midDeg = ((start + pct) / 2) * 3.6;
-    const labelDeg = midDeg;
-    const cleanLabel = String(item.label || '').length > 9 ? String(item.label).slice(0, 9) + '...' : item.label;
-    const rad = labelDeg * Math.PI / 180;
-    const x = 119 + Math.cos(rad) * 66;
-    const y = 119 + Math.sin(rad) * 66;
-    labelNodes.push(`<div class="admin-roulette-label" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px">${esc(cleanLabel)}</div>`);
-    return `${item.color || ADMIN_ROULETTE_COLORS[i % ADMIN_ROULETTE_COLORS.length]} ${start.toFixed(2)}% ${pct.toFixed(2)}%`;
-  });
-  face.style.background = `conic-gradient(from 90deg,${stops.join(',')})`;
-  labels.innerHTML = labelNodes.join('');
-  updateAdminRouletteTicker(items[0]?.label || 'READY');
+  arDrumBuild(items);
+  arDrumSetHeader(items[0]?.label || 'READY');
 }
 
-function updateAdminRouletteTicker(text) {
-  const reel = document.getElementById('admin-roulette-ticker-reel');
-  if (!reel) return;
-  const nextText = text || 'READY';
-  const current = reel.querySelector('span:last-child')?.textContent || '';
-  if (!current || current === nextText) {
-    reel.style.transition = 'none';
-    reel.style.transform = 'translateY(0)';
-    reel.innerHTML = `<span>${esc(nextText)}</span>`;
-    return;
+function arDrumBuild(items) {
+  _arDrumItems = items || [];
+  const el = document.getElementById('ar-drum-list');
+  if (!el) return;
+  if (!_arDrumItems.length) { el.innerHTML = ''; return; }
+  const tape = Array.from({ length: AR_DRUM_REPEATS }, () => _arDrumItems).flat();
+  el.innerHTML = tape.map(it =>
+    `<div class="ar-drum-row" style="background:${it.color || '#334155'}cc">${esc(it.label)}</div>`
+  ).join('');
+  const midIdx = Math.floor(AR_DRUM_REPEATS / 2) * _arDrumItems.length;
+  _arDrumCurY = -midIdx * AR_DRUM_ITEM_H;
+  el.style.transform = `translateY(${_arDrumCurY + AR_DRUM_HALF_H}px)`;
+}
+
+function arDrumSpin(winLabel, onDone) {
+  const el = document.getElementById('ar-drum-list');
+  if (!el || !_arDrumItems.length) { if (onDone) onDone(); return; }
+  const n = _arDrumItems.length;
+  const winIdx = Math.max(0, _arDrumItems.findIndex(it => it.label === winLabel));
+  const LOOPS = 7;
+  const startY = _arDrumCurY;
+  const targetY = startY - (LOOPS * n + winIdx) * AR_DRUM_ITEM_H;
+  const duration = 2000;
+  const t0 = performance.now();
+  if (_arDrumAnimRef) cancelAnimationFrame(_arDrumAnimRef);
+  function step(now) {
+    const p = Math.min((now - t0) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 4);
+    const y = startY + (targetY - startY) * ease;
+    _arDrumCurY = y;
+    el.style.transform = `translateY(${y + AR_DRUM_HALF_H}px)`;
+    if (p < 1) {
+      _arDrumAnimRef = requestAnimationFrame(step);
+    } else {
+      const midIdx = Math.floor(AR_DRUM_REPEATS / 2) * n;
+      _arDrumCurY = -(midIdx + winIdx) * AR_DRUM_ITEM_H;
+      el.style.transform = `translateY(${_arDrumCurY + AR_DRUM_HALF_H}px)`;
+      if (onDone) onDone();
+    }
   }
-  reel.style.transition = 'none';
-  reel.style.transform = 'translateY(0)';
-  reel.innerHTML = `<span>${esc(current)}</span><span>${esc(nextText)}</span>`;
-  requestAnimationFrame(() => {
-    reel.style.transition = 'transform .22s cubic-bezier(.2,.78,.22,1)';
-    reel.style.transform = 'translateY(-20px)';
-  });
-  setTimeout(() => {
-    reel.style.transition = 'none';
-    reel.style.transform = 'translateY(0)';
-    reel.innerHTML = `<span>${esc(nextText)}</span>`;
-  }, 240);
+  _arDrumAnimRef = requestAnimationFrame(step);
+}
+
+function arDrumSetHeader(text) {
+  const el = document.getElementById('ar-banner-title');
+  if (el) el.textContent = text || '룰렛 테스트';
+}
+
+function arBurstParticles() {
+  const cv = document.getElementById('ar-burst');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const rect = cv.parentElement.getBoundingClientRect();
+  cv.width = rect.width; cv.height = rect.height;
+  const cx = rect.width / 2, cy = rect.height / 2;
+  const colors = ['#ffc94d','#00d4ff','#ff2d87','#a855f7','#fff','#34d399'];
+  const pts = [];
+  for (let i = 0; i < 60; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const spd = 2 + Math.random() * 6;
+    pts.push({ x:cx, y:cy, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-2,
+      life:1, decay:.018+Math.random()*.018, r:2+Math.random()*5,
+      color:colors[Math.floor(Math.random()*colors.length)], star:Math.random()>.5 });
+  }
+  function draw() {
+    ctx.clearRect(0,0,cv.width,cv.height);
+    let alive = false;
+    for (const p of pts) {
+      p.x+=p.vx; p.y+=p.vy; p.vy+=.14; p.life-=p.decay;
+      if (p.life<=0) continue; alive=true;
+      ctx.globalAlpha=p.life; ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=8;
+      ctx.beginPath();
+      if (p.star) {
+        const r=p.r*p.life, ir=r*.4;
+        for (let j=0;j<10;j++){
+          const ang=(j*Math.PI/5)-Math.PI/2, rad=j%2===0?r:ir;
+          j===0 ? ctx.moveTo(p.x+Math.cos(ang)*rad,p.y+Math.sin(ang)*rad)
+                : ctx.lineTo(p.x+Math.cos(ang)*rad,p.y+Math.sin(ang)*rad);
+        }
+        ctx.closePath();
+      } else { ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); }
+      ctx.fill();
+    }
+    ctx.globalAlpha=1; ctx.shadowBlur=0;
+    if (alive) requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  requestAnimationFrame(draw);
 }
 
 function animateAdminRouletteTicker(finalText) {
   clearInterval(_adminRouletteTickerTimer);
-  const pool = adminRouletteItems().filter(item => item.enabled !== false && item.label);
-  if (!pool.length) { updateAdminRouletteTicker(finalText || 'READY'); return; }
+  const pool = _arDrumItems.length ? _arDrumItems : adminRouletteItems().filter(it => it.enabled !== false && it.label);
+  if (!pool.length) { arDrumSetHeader(finalText || 'READY'); return; }
   let i = 0;
   _adminRouletteTickerTimer = setInterval(() => {
-    updateAdminRouletteTicker(pool[i % pool.length].label);
-    i++;
-  }, 120);
+    arDrumSetHeader(pool[i++ % pool.length].label);
+  }, 90);
   setTimeout(() => {
     clearInterval(_adminRouletteTickerTimer);
-    updateAdminRouletteTicker(finalText);
-  }, 2050);
+    arDrumSetHeader(finalText || '');
+  }, 1800);
 }
 
 function copyRouletteOverlayUrl() {
@@ -1826,19 +1975,28 @@ async function testAdminRoulette() {
     const data = await res.json();
     if (!res.ok || data.ok === false) throw new Error(data.error || '룰렛 테스트 실패');
     _adminRouletteConfig = data.config;
-    animateAdminRouletteTicker(data.entry.result);
-    _adminRouletteSpinDeg += 1080 + Math.floor(Math.random() * 360);
-    const wheel = document.getElementById('admin-roulette-wheel');
-    if (wheel) {
-      wheel.style.transform = `rotate(${_adminRouletteSpinDeg}deg)`;
-      wheel.style.setProperty('--spin', `${_adminRouletteSpinDeg}deg`);
-    }
-    const result = document.getElementById('admin-roulette-result');
-    if (result) {
-      result.style.display = 'block';
-      result.innerHTML = `<div style="font-size:12px;color:var(--txt2);margin-bottom:4px">테스트 결과</div><div style="font-size:20px;font-weight:900;color:var(--gold)">${esc(data.entry.result)}</div><div style="font-size:12px;color:var(--txt3);margin-top:4px">${esc(data.entry.nickname)} · ${Number(data.entry.amount)||0}치즈${data.entry.discordError ? ` · 디스코드 전송 실패: ${esc(data.entry.discordError)}` : ''}</div>`;
-    }
     renderAdminRouletteHistory();
+
+    const entries = data.entries || [data.entry];
+    function playNextSpin(idx) {
+      if (idx >= entries.length) return;
+      const entry = entries[idx];
+      const arBox = document.getElementById('ar-result-box');
+      if (arBox) arBox.style.display = 'none';
+      animateAdminRouletteTicker(entry.result);
+      arDrumSpin(entry.result, () => {
+        const who  = document.getElementById('ar-result-who');
+        const what = document.getElementById('ar-result-what');
+        if (who)  who.textContent  = `${esc(entry.nickname)} · ${Number(entry.amount)||0}치즈`;
+        if (what) what.textContent = entry.result || '';
+        if (arBox) arBox.style.display = 'block';
+        arBurstParticles();
+        if (idx + 1 < entries.length) {
+          setTimeout(() => playNextSpin(idx + 1), 0);
+        }
+      });
+    }
+    playNextSpin(0);
   } catch (e) {
     alert(e.message || '룰렛 테스트 실패');
   }
