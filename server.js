@@ -998,6 +998,52 @@ app.post('/api/weflab-sync', (req, res) => {
   res.json({ ok: true, data: weflabSyncStatusPayload() });
 });
 
+// 1회성 검증용: 닉네임+시간으로 특정 결과 1건만 찾아서 강제로 처리(보관함 지급까지) — lastIdx는 건드리지 않음
+app.post('/api/weflab-sync-test-entry', async (req, res) => {
+  try {
+    if (!weflabSync.cookie) return res.status(400).json({ ok: false, error: '먼저 위플랩 세션 쿠키를 저장해주세요' });
+    const cookies = parseCookieString(weflabSync.cookie);
+    const loginIdx = cookies['login_idx'] || '';
+    if (!loginIdx) return res.status(400).json({ ok: false, error: '쿠키에서 login_idx를 찾을 수 없습니다' });
+
+    const nickname = String(req.body?.nickname || '').trim();
+    const timeHint = String(req.body?.createTime || '').trim();
+    if (!nickname) return res.status(400).json({ ok: false, error: '닉네임을 입력해주세요' });
+
+    const now = new Date();
+    const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const end = new Date(now.getTime() + 60 * 60 * 1000);
+    const resp = await postForm(WEFLAB_API_URL, {
+      type: 'alertlist_load', pagetype: 'setup', idx: loginIdx, pageid: 'alertlist', preset: '0',
+      'ver[server]': '20240607', 'ver[socket]': '20240607', lastdate: '',
+      'filter[start]': formatWeflabDate(start), 'filter[end]': formatWeflabDate(end),
+      'filter[min]': '0', 'filter[type]': 'all', 'filter[search]': '',
+    }, { Cookie: weflabSync.cookie });
+
+    if (resp?.result !== 'success' || !Array.isArray(resp?.data)) {
+      return res.status(502).json({ ok: false, error: `위플랩 응답 오류 (쿠키 만료 가능): ${resp?.result || 'unknown'}` });
+    }
+
+    const candidates = resp.data.filter(e => String(e?.name || '').trim() === nickname);
+    if (!candidates.length) {
+      return res.status(404).json({ ok: false, error: `최근 7일 내역에서 "${nickname}" 결과를 찾지 못했습니다` });
+    }
+    const onlyDigits = s => String(s || '').replace(/\D/g, '');
+    const hintDigits = onlyDigits(timeHint);
+    const target = hintDigits
+      ? (candidates.find(e => onlyDigits(e?.create_time).includes(hintDigits)) || candidates[0])
+      : candidates[0];
+
+    await processWeflabAlertEntry(target);
+    res.json({
+      ok: true,
+      entry: { name: target.name, create_time: target.create_time, idx: target.idx, results: parseWeflabResultNames(target) },
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message || '테스트 실행 실패' });
+  }
+});
+
 // 내장(하드코딩) 명령어 — 실제 봇 응답 텍스트 표시
 // 동적 응답 명령어(!포인트, !승률, !참가, !투표N)는 응답 수정 불가 → 목록에서 제외
 const BUILTIN_CMDS = [

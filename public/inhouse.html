@@ -1396,6 +1396,17 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
         시청자가 실제로 보는 룰렛은 위플랩이라, 위플랩의 결과를 그대로 가져와 보관함에 자동 반영합니다.
         쿠키가 만료되면 위 상태 표시에 오류가 뜹니다 — 새 쿠키를 복사해 다시 저장하세요.
       </p>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)">
+        <div style="font-size:.72rem;color:var(--gold,#fbbf24);margin-bottom:8px;line-height:1.5">
+          ⚠️ 1회성 검증용 — 아래에서 지정한 결과 1건만 찾아 실제로 보관함에 지급합니다 (정식 자동 동기화와 별개로 동작, lastIdx에 영향 없음)
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <input id="weflabTestNickname" type="text" placeholder="닉네임 (예: 물티슈나클렌징티슈니)">
+          <input id="weflabTestTime" type="text" placeholder="시간 힌트 (예: 13:04)">
+        </div>
+        <button class="btn btn-o" onclick="runWeflabSyncTestEntry()">선택한 결과 강제 처리 테스트</button>
+        <div id="weflabTestResult" style="font-size:.72rem;color:var(--txt2);margin-top:8px;line-height:1.5"></div>
+      </div>
     </div>
 
     <div class="card" style="grid-column:1/-1">
@@ -2866,6 +2877,33 @@ async function toggleWeflabSyncEnabled(checked){
   }catch(e){
     toast(e.message||'설정 변경 실패');
     loadWeflabSyncStatus();
+  }
+}
+
+async function runWeflabSyncTestEntry(){
+  const nickname=(document.getElementById('weflabTestNickname')?.value||'').trim();
+  const createTime=(document.getElementById('weflabTestTime')?.value||'').trim();
+  const out=document.getElementById('weflabTestResult');
+  if(!nickname){ toast('닉네임을 입력하세요'); return; }
+  if(out){ out.textContent='위플랩에서 결과 찾는 중...'; out.style.color='var(--txt2)'; }
+  try{
+    const res=await fetch('/api/weflab-sync-test-entry',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({nickname,createTime}),
+    });
+    const data=await res.json();
+    if(!res.ok||data.ok===false){
+      if(out){ out.textContent=`실패: ${data.error||'알 수 없는 오류'}`; out.style.color='var(--rl2)'; }
+      return;
+    }
+    const e=data.entry;
+    if(out){
+      out.textContent=`처리 완료 — ${e.name} (${e.create_time}) → [${e.results.join(', ')}] 보관함 지급 시도함. 보관함 탭에서 실제로 들어갔는지 확인해보세요.`;
+      out.style.color='var(--a)';
+    }
+    toast('테스트 처리 완료 — 보관함 확인해보세요');
+  }catch(err){
+    if(out){ out.textContent=`오류: ${err.message}`; out.style.color='var(--rl2)'; }
   }
 }
 
