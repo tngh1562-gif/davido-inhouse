@@ -578,6 +578,27 @@ function pickRouletteItem(items) {
   return pool[pool.length - 1];
 }
 
+// 룰렛 당첨 시 보관함봇에 보상을 자동 지급하고, 관리자 화면에 실시간 반영되도록 알림
+async function grantStorageReward({ nickname, rewardName, count = 1 }) {
+  if (!nickname || !rewardName) return;
+  if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET) return;
+  try {
+    const result = await postJson(`${DISCORD_BOT_API_URL}/api/bot-command`, {
+      secret: DISCORD_BOT_API_SECRET,
+      command: '추가',
+      options: { 닉네임: nickname, 보상이름: rewardName, 개수: count },
+    });
+    if (result?.ok) {
+      console.log(`[STORAGE] ${nickname} 보관함에 "${rewardName}" +${count} 지급 완료`);
+      broadcast({ type: 'storage_update', nickname, rewardName, count });
+    } else {
+      console.warn(`[STORAGE] ${nickname} 보관함 지급 실패:`, result?.error || result?.message);
+    }
+  } catch (err) {
+    console.warn(`[STORAGE] ${nickname} 보관함 지급 호출 실패:`, err.message);
+  }
+}
+
 async function runRouletteSpin({ nickname = '테스트', amount, source = 'manual' } = {}) {
   const cfg = readRouletteConfig();
   const paid = Number(amount) || cfg.triggerAmount;
@@ -620,13 +641,18 @@ async function runRouletteSpin({ nickname = '테스트', amount, source = 'manua
     entries.push(entry);
   }
 
-  // Broadcast spin 1 immediately; schedule subsequent spins every 10s
+  // Broadcast spin 1 immediately; schedule subsequent spins every 2s
   const SPIN_GAP_MS = 2000; // 스핀 1회 = 2초
   broadcast({ type: 'roulette_admin_result', result: entries[0], config: currentCfg });
   for (let i = 1; i < entries.length; i++) {
     const entry = entries[i];
     setTimeout(() => broadcast({ type: 'roulette_admin_result', result: entry, config: currentCfg }), i * SPIN_GAP_MS);
   }
+  // 보관함 지급도 각 회차의 결과가 화면에 뜨는 시점(스핀 시작 + 스핀 1회 길이)에 맞춰 실행
+  entries.forEach((entry, i) => {
+    if (!entry.storageReward) return;
+    setTimeout(() => grantStorageReward({ nickname: entry.nickname, rewardName: entry.storageReward }), (i + 1) * SPIN_GAP_MS);
+  });
 
   return { entry: entries[0], entries, config: currentCfg };
 }
@@ -1935,12 +1961,18 @@ function handleDonation(msg) {
       entries.push(entry);
     }
 
-    // 1번차 즉시 방송, 이후 10초 간격으로 순차 방송
+    // 1번차 즉시 방송, 이후 2초 간격으로 순차 방송 (스핀 1회 = 2초)
+    const SPIN_GAP_MS = 2000;
     broadcast({ type: 'roulette_admin_result', result: entries[0], config: currentCfg });
     for (let i = 1; i < entries.length; i++) {
       const e = entries[i];
-      setTimeout(() => broadcast({ type: 'roulette_admin_result', result: e, config: currentCfg }), i * 2000);
+      setTimeout(() => broadcast({ type: 'roulette_admin_result', result: e, config: currentCfg }), i * SPIN_GAP_MS);
     }
+    // 보관함 지급도 각 회차의 결과가 화면에 뜨는 시점(스핀 시작 + 스핀 1회 길이)에 맞춰 실행
+    entries.forEach((e, i) => {
+      if (!e.storageReward) return;
+      setTimeout(() => grantStorageReward({ nickname: e.nickname, rewardName: e.storageReward }), (i + 1) * SPIN_GAP_MS);
+    });
     console.log(`[DONATION] 룰렛 ${spinCount}연차: ${nickname} ${payAmount}치즈 → ${entries.map(e=>e.result).join(', ')}`);
   });
 }

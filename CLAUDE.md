@@ -60,8 +60,27 @@ node server.js   # http://localhost:3000
 }
 ```
 
+### 룰렛 당첨 → 보관함 자동 지급 + 실시간 갱신 (2026-06-07)
+- `server.js`의 `grantStorageReward()`: 당첨 항목에 `storageReward`가 있으면 보관함봇 `/api/bot-command`에
+  `{ command:'추가', options:{ 닉네임, 보상이름, 개수:1 } }` 자동 호출 → 성공 시 `{ type:'storage_update' }` broadcast
+- `runRouletteSpin()` / `handleDonation()` 양쪽 스핀 루프에서 항목 생성 직후 호출 (fire-and-forget)
+- `index.html`의 WS 핸들러에 `storage_update` 케이스 추가 → `refreshStorageLive()`가 보관함 탭 열려있으면
+  `/api/bot-config` 재조회 후 선택된 유저 화면까지 다시 렌더링
+
+### 보관함봇(`roulette_bot/bot.py`, 별도 레포·배포) — 신규 유저 자동 등록
+- **위치**: `C:\Users\홍수호\OneDrive\Desktop\roulette_bot` (origin: github.com/tngh1562-gif/roulette_bot)
+- 기존엔 `/유저추가`로 `스레드id`를 수동 입력해야만 보관함 유저가 생성됐음 → 처음 룰렛 당첨된 사람은
+  `config.users`에 없어서 `'추가'` 호출이 실패하고 디스코드 포스트도 안 만들어지는 문제가 있었음
+- **해결**: `create_user_post()` 추가 — `FORUM_CHANNEL_ID` 포럼 채널에 새 스레드+임베드를 자동 생성하고
+  `config.users`에 등록. `handle_bot_command_api`의 `"추가"` 분기에서 유저가 없으면 이 함수로 먼저
+  자동 등록한 뒤 보상을 지급하도록 수정 (`bot.py:533` 부근)
+- ⚠️ **이 변경은 `davido-inhouse`와 별도 레포/배포**이므로, 적용하려면 `roulette_bot`도 커밋·푸시 후
+  봇을 재시작(재배포)해야 실제로 동작함
+
 ---
 
 ## 미완료 / 다음에 할 것
 - [ ] 실제 치즈 도네이션으로 cmd 93102 수신 여부 검증
       → 콘솔에 `[DONATION]` 로그 확인, 없으면 cmd 코드 디버깅
+- [ ] `roulette_bot` 변경사항 커밋·푸시 후 봇 재배포 (그래야 신규 유저 자동 등록이 실제로 작동함)
+- [ ] 포럼 채널(`FORUM_CHANNEL_ID`)에 새 스레드를 만들 디스코드 권한이 봇에게 있는지 확인

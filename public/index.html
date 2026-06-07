@@ -921,6 +921,7 @@ function connectWS() {
     else if (msg.type === 'chat') addChatItem(msg);
     else if (msg.type === 'vote_update') { state.vote = msg.vote; renderVote(); }
     else if (msg.type === 'roulette_update') { state.roulette = msg.roulette; renderRoulette(); }
+    else if (msg.type === 'storage_update') refreshStorageLive();
     else if (msg.type === 'music_update') { state.music = msg.music; renderMusic(); }
   };
   ws.onclose = () => { setTimeout(connectWS, 3000); };
@@ -1416,6 +1417,17 @@ async function loadStorageData() {
   } catch(e) {
     document.getElementById('storage-viewer-list').innerHTML =
       `<div style="color:#f04747;font-size:12px;padding:8px">로드 실패: ${e.message}</div>`;
+  }
+}
+
+// 룰렛 당첨으로 보관함이 변경됐다는 알림 수신 → 보관함 탭 실시간 갱신
+async function refreshStorageLive() {
+  if (!document.getElementById('storage-viewer-list')) return; // 보관함 탭이 열려있지 않으면 스킵
+  const reloadedName = _storageSelectedUser?.name;
+  await loadStorageData();
+  if (reloadedName) {
+    const updated = _storageUsers.find(u => u.name === reloadedName);
+    if (updated) { _storageSelectedUser = updated; _storageOriginalCounts = JSON.parse(JSON.stringify(updated.counts || {})); renderStorageContent(); }
   }
 }
 
