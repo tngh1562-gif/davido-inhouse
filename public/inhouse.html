@@ -764,6 +764,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
     <button class="inhouse-nav-btn"     onclick="goTab('viewers',this)"><span class="nav-icon">👥</span>시청자 DB</button>
     <button class="inhouse-nav-btn"     onclick="goTab('overlay',this)"><span class="nav-icon">🖥</span>오버레이</button>
     <button class="inhouse-nav-btn"     onclick="goTab('bot',this)"><span class="nav-icon">🤖</span>치지직 봇</button>
+    <button class="inhouse-nav-btn"     onclick="goTab('roulette',this)"><span class="nav-icon">🎰</span>룰렛 관리자</button>
     <button class="inhouse-nav-btn"     onclick="goTab('settings',this)" style="margin-top:auto"><span class="nav-icon">⚙</span>설정</button>
   </nav>
 </div>
@@ -1241,6 +1242,94 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
   </div>
 </div>
 
+<!-- ══════ TAB: 룰렛 관리자 ══════ -->
+<div id="tab-roulette" class="tab">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:900px">
+
+    <!-- 왼쪽: 기본 설정 + 아이템 -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <div class="card">
+        <div class="card-title">룰렛 설정</div>
+        <div style="display:grid;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="color:#94a3b8;font-size:13px;white-space:nowrap;width:90px">활성화</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="rl-enabled" onchange="rlSave()">
+              <span style="font-size:13px;color:#e2e8f0">룰렛 사용</span>
+            </label>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="color:#94a3b8;font-size:13px;white-space:nowrap;width:90px">트리거 금액</label>
+            <input type="number" id="rl-trigger" min="1" step="1"
+              style="width:100px;padding:6px 10px;border-radius:6px;border:1px solid #334155;background:#0e1420;color:#e2e8f0;font-size:13px"
+              onchange="rlSave()">
+            <span style="color:#64748b;font-size:12px">치즈</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="color:#94a3b8;font-size:13px;white-space:nowrap;width:90px">정확한 금액만</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="rl-exact" onchange="rlSave()">
+              <span style="font-size:13px;color:#e2e8f0">이상 모두 허용 해제</span>
+            </label>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="color:#94a3b8;font-size:13px;white-space:nowrap;width:90px">오버레이 제목</label>
+            <input type="text" id="rl-title" maxlength="40"
+              style="flex:1;padding:6px 10px;border-radius:6px;border:1px solid #334155;background:#0e1420;color:#e2e8f0;font-size:13px"
+              onchange="rlSave()">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="card-title" style="margin-bottom:0">아이템 목록</div>
+          <button class="btn btn-g" style="padding:5px 12px;font-size:12px" onclick="rlAddItem()">+ 추가</button>
+        </div>
+        <div id="rl-items-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #1e2a3a;font-size:11px;color:#475569;line-height:1.6">
+          가중치: 숫자가 클수록 당첨 확률이 높습니다 (합산 기준 비율)
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 오른쪽: 테스트 + 기록 -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <div class="card">
+        <div class="card-title">테스트 스핀</div>
+        <div style="display:grid;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <label style="color:#94a3b8;font-size:13px;width:60px">닉네임</label>
+            <input type="text" id="rl-test-nick" value="테스트시청자"
+              style="flex:1;padding:6px 10px;border-radius:6px;border:1px solid #334155;background:#0e1420;color:#e2e8f0;font-size:13px">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label style="color:#94a3b8;font-size:13px;width:60px">치즈 수</label>
+            <input type="number" id="rl-test-amount" value="1500" min="1"
+              style="width:100px;padding:6px 10px;border-radius:6px;border:1px solid #334155;background:#0e1420;color:#e2e8f0;font-size:13px">
+          </div>
+          <button class="btn" style="background:#00c8a0;color:#000;font-weight:700;margin-top:4px" onclick="rlTestSpin()">
+            🎰 스핀 테스트
+          </button>
+          <div id="rl-test-result" style="font-size:13px;color:#94a3b8;min-height:20px;text-align:center"></div>
+        </div>
+      </div>
+
+      <div class="card" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="card-title" style="margin-bottom:0">히스토리 <span id="rl-history-count" style="font-size:11px;color:#64748b"></span></div>
+          <button class="btn btn-g" style="padding:4px 10px;font-size:11px" onclick="rlClearHistory()">초기화</button>
+        </div>
+        <div id="rl-history-list" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:4px;max-height:340px"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- ══════ TAB: 설정 ══════ -->
 <div id="tab-settings" class="tab">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:720px">
@@ -1289,6 +1378,24 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
         <button class="btn btn-o" style="padding:7px 12px" onclick="toggleBotChatSend()">채팅답장 ON/OFF</button>
       </div>
       <div id="botSendError" style="font-size:.72rem;color:var(--rl2);margin-top:8px;min-height:18px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">위플랩 자동 연동</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <span id="weflabSyncBadge" class="tb">OFF</span>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--txt2);cursor:pointer">
+          <input id="weflabSyncEnabled" type="checkbox" onchange="toggleWeflabSyncEnabled(this.checked)"> 자동 동기화 사용
+        </label>
+      </div>
+      <div id="weflabSyncStatusText" style="font-size:.72rem;color:var(--txt2);margin-bottom:10px;line-height:1.5">상태 확인 중...</div>
+      <textarea id="weflabSyncCookie" rows="3" placeholder="weflab.com/alertlist 페이지에서 개발자도구 → Network → 요청 헤더의 Cookie 값을 그대로 붙여넣으세요"
+        style="width:100%;background:var(--s2);border:1px solid var(--line);color:var(--txt);border-radius:var(--radius);padding:8px 10px;font-family:monospace;font-size:.7rem;outline:none;resize:vertical;margin-bottom:10px;box-sizing:border-box"></textarea>
+      <button class="btn btn-g" onclick="saveWeflabSyncCookie()">쿠키 저장</button>
+      <p style="font-size:.72rem;color:var(--txt2);line-height:1.55;margin-top:10px">
+        시청자가 실제로 보는 룰렛은 위플랩이라, 위플랩의 결과를 그대로 가져와 보관함에 자동 반영합니다.
+        쿠키가 만료되면 위 상태 표시에 오류가 뜹니다 — 새 쿠키를 복사해 다시 저장하세요.
+      </p>
     </div>
 
     <div class="card" style="grid-column:1/-1">
@@ -1930,9 +2037,138 @@ function goTab(name,btn){
     if(name==='discord') renderDiscordTab();
     if(name==='bot')      renderBotTab();
     if(name==='roulette') initRoulette();
-    if(name==='settings') loadCustomCmds();
+    if(name==='settings') { loadCustomCmds(); loadWeflabSyncStatus(); }
   }, 10);
 }
+
+/* ══════════════════════════════════════════
+   룰렛 관리자
+══════════════════════════════════════════ */
+let rlCfg = null;
+
+async function initRoulette() {
+  try {
+    const r = await fetch('/api/roulette-config', { cache: 'no-store' });
+    rlCfg = await r.json();
+  } catch {
+    rlCfg = { enabled: true, triggerAmount: 1500, exactAmountOnly: true, overlayTitle: '1500치즈 룰렛', items: [], history: [] };
+  }
+  rlRender();
+}
+
+function rlRender() {
+  if (!rlCfg) return;
+  document.getElementById('rl-enabled').checked = !!rlCfg.enabled;
+  document.getElementById('rl-trigger').value   = rlCfg.triggerAmount || 1500;
+  document.getElementById('rl-exact').checked   = !!rlCfg.exactAmountOnly;
+  document.getElementById('rl-title').value     = rlCfg.overlayTitle || '';
+  rlRenderItems();
+  rlRenderHistory();
+}
+
+function rlRenderItems() {
+  const el = document.getElementById('rl-items-list');
+  if (!el) return;
+  const items = rlCfg.items || [];
+  if (!items.length) { el.innerHTML = '<div style="color:#475569;font-size:13px;text-align:center;padding:12px">아이템 없음</div>'; return; }
+  el.innerHTML = items.map((it, i) => `
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:7px;background:#0e1420;border:1px solid ${it.enabled ? '#1e2a3a' : '#1a1a2e'}">
+      <input type="color" value="${it.color || '#334155'}"
+        style="width:28px;height:28px;border:none;border-radius:4px;cursor:pointer;background:none;padding:0"
+        onchange="rlCfg.items[${i}].color=this.value;rlSave()">
+      <input type="text" value="${escHtml(it.label)}" maxlength="30"
+        style="flex:1;min-width:0;padding:4px 8px;border-radius:5px;border:1px solid #334155;background:#0a0d14;color:#e2e8f0;font-size:13px"
+        oninput="rlCfg.items[${i}].label=this.value" onchange="rlSave()">
+      <span style="color:#64748b;font-size:11px;white-space:nowrap">가중치</span>
+      <input type="number" value="${it.weight || 1}" min="0.1" max="100" step="0.1"
+        style="width:56px;padding:4px 6px;border-radius:5px;border:1px solid #334155;background:#0a0d14;color:#e2e8f0;font-size:13px;text-align:right"
+        oninput="rlCfg.items[${i}].weight=+this.value" onchange="rlSave()">
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap">
+        <input type="checkbox" ${it.enabled ? 'checked' : ''} onchange="rlCfg.items[${i}].enabled=this.checked;rlSave();rlRenderItems()">
+        <span style="font-size:11px;color:#64748b">ON</span>
+      </label>
+      <button onclick="rlRemoveItem(${i})"
+        style="padding:3px 7px;border-radius:4px;border:1px solid #374151;background:#1a1a2e;color:#f87171;font-size:12px;cursor:pointer;line-height:1">✕</button>
+    </div>
+  `).join('');
+}
+
+function rlRenderHistory() {
+  const el = document.getElementById('rl-history-list');
+  const countEl = document.getElementById('rl-history-count');
+  if (!el) return;
+  const hist = (rlCfg.history || []).slice().reverse();
+  if (countEl) countEl.textContent = `(${hist.length}건)`;
+  if (!hist.length) { el.innerHTML = '<div style="color:#475569;font-size:12px;text-align:center;padding:8px">기록 없음</div>'; return; }
+  el.innerHTML = hist.map(h => {
+    const d = new Date(h.createdAt || Date.now());
+    const time = `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;background:#0e1420;font-size:12px">
+      <span style="color:#475569;flex-shrink:0;font-size:11px">${time}</span>
+      <span style="color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(h.nickname||'')}</span>
+      <span style="color:#ffc94d;font-weight:700;flex-shrink:0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(h.result||'')}</span>
+    </div>`;
+  }).join('');
+}
+
+function rlAddItem() {
+  if (!rlCfg) return;
+  const colors = ['#00c8a0','#4d9fff','#ffc94d','#a78bfa','#f87171','#22c55e','#f97316','#e879f9'];
+  rlCfg.items = rlCfg.items || [];
+  rlCfg.items.push({ id: `reward-${Date.now()}`, label: '새 아이템', weight: 10, color: colors[rlCfg.items.length % colors.length], enabled: true });
+  rlRenderItems();
+  rlSave();
+}
+
+function rlRemoveItem(i) {
+  if (!rlCfg) return;
+  rlCfg.items.splice(i, 1);
+  rlRenderItems();
+  rlSave();
+}
+
+async function rlSave() {
+  if (!rlCfg) return;
+  rlCfg.enabled         = document.getElementById('rl-enabled')?.checked ?? rlCfg.enabled;
+  rlCfg.triggerAmount   = Number(document.getElementById('rl-trigger')?.value) || rlCfg.triggerAmount;
+  rlCfg.exactAmountOnly = document.getElementById('rl-exact')?.checked ?? rlCfg.exactAmountOnly;
+  rlCfg.overlayTitle    = document.getElementById('rl-title')?.value ?? rlCfg.overlayTitle;
+  try {
+    const r = await fetch('/api/roulette-config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(rlCfg) });
+    const j = await r.json();
+    if (j.ok) rlCfg = j.data;
+  } catch {}
+}
+
+async function rlTestSpin() {
+  const nick   = document.getElementById('rl-test-nick')?.value.trim() || '테스트시청자';
+  const amount = Number(document.getElementById('rl-test-amount')?.value) || 1500;
+  const resEl  = document.getElementById('rl-test-result');
+  if (resEl) resEl.textContent = '⏳ 스핀 중...';
+  try {
+    const r = await fetch('/api/roulette-test', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ nickname: nick, amount }) });
+    const j = await r.json();
+    if (j.ok) {
+      if (resEl) resEl.innerHTML = `<span style="color:#ffc94d;font-weight:700">🎰 ${escHtml(j.entry?.result || '결과없음')}</span>`;
+      rlCfg = j.config || rlCfg;
+      rlRenderHistory();
+    } else {
+      if (resEl) resEl.textContent = `오류: ${j.error || 'failed'}`;
+    }
+  } catch(e) {
+    if (resEl) resEl.textContent = `오류: ${e.message}`;
+  }
+}
+
+async function rlClearHistory() {
+  if (!rlCfg) return;
+  if (!confirm('히스토리를 모두 초기화하시겠습니까?')) return;
+  rlCfg.history = [];
+  await rlSave();
+  rlRenderHistory();
+}
+
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
 
 let discordConfig=null;
 let discordVoiceSaveTimer=null;
@@ -2559,6 +2795,80 @@ async function clearBotAuth(){
   toast('봇 계정 인증 삭제');
   setTimeout(refreshBotState,500);
 }
+
+/* ── 위플랩(weflab.com) 자동 동기화 ── */
+async function loadWeflabSyncStatus(){
+  try{
+    const res=await fetch('/api/weflab-sync',{cache:'no-store'});
+    renderWeflabSyncStatus(await res.json());
+  }catch(e){
+    renderWeflabSyncStatus(null,e.message);
+  }
+}
+function renderWeflabSyncStatus(status,errMsg){
+  const badge=document.getElementById('weflabSyncBadge');
+  const text=document.getElementById('weflabSyncStatusText');
+  const enabledBox=document.getElementById('weflabSyncEnabled');
+  if(!status){
+    if(badge){badge.textContent='OFF';badge.style.color='var(--rl2)';badge.style.borderColor='rgba(248,113,113,.35)';badge.style.background='rgba(248,113,113,.08)';}
+    if(text){text.textContent=`상태 조회 실패: ${errMsg||'알 수 없는 오류'}`;text.style.color='var(--rl2)';}
+    return;
+  }
+  if(enabledBox) enabledBox.checked=!!status.enabled;
+  if(badge){
+    const on=!!status.enabled;
+    badge.textContent=on?'ON':'OFF';
+    badge.style.color=on?'var(--a)':'var(--rl2)';
+    badge.style.borderColor=on?'rgba(0,200,160,.35)':'rgba(248,113,113,.35)';
+    badge.style.background=on?'rgba(0,200,160,.08)':'rgba(248,113,113,.08)';
+  }
+  if(text){
+    if(!status.hasCookie){
+      text.textContent='세션 쿠키가 입력되지 않았습니다 — 아래에 쿠키를 붙여넣고 저장하세요.';
+      text.style.color='#fbbf24';
+    }else if(status.lastError){
+      text.textContent=`오류: ${status.lastError} — 쿠키가 만료되었을 수 있습니다. 새 쿠키로 다시 저장해주세요.`;
+      text.style.color='var(--rl2)';
+    }else{
+      const last=status.lastPollAt?new Date(status.lastPollAt).toLocaleTimeString('ko-KR'):'아직 없음';
+      text.textContent=`정상 작동 중 — 마지막 확인: ${last}`;
+      text.style.color='var(--a)';
+    }
+  }
+}
+async function saveWeflabSyncCookie(){
+  const el=document.getElementById('weflabSyncCookie');
+  const cookie=el?el.value.trim():'';
+  if(!cookie){toast('쿠키 값을 입력하세요');return;}
+  try{
+    const res=await fetch('/api/weflab-sync',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({cookie}),
+    });
+    const data=await res.json();
+    if(!res.ok||data.ok===false) throw new Error(data.error||'쿠키 저장 실패');
+    if(el) el.value='';
+    renderWeflabSyncStatus(data.data);
+    toast('위플랩 세션 쿠키 저장 완료');
+  }catch(e){
+    toast(e.message||'쿠키 저장 실패');
+  }
+}
+async function toggleWeflabSyncEnabled(checked){
+  try{
+    const res=await fetch('/api/weflab-sync',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({enabled:checked}),
+    });
+    const data=await res.json();
+    if(!res.ok||data.ok===false) throw new Error(data.error||'설정 변경 실패');
+    renderWeflabSyncStatus(data.data);
+  }catch(e){
+    toast(e.message||'설정 변경 실패');
+    loadWeflabSyncStatus();
+  }
+}
+
 async function testBotChatSend(){
   const text=(document.getElementById('botSendTestText')?.value||'').trim();
   if(!text){toast('전송 테스트 문구를 입력하세요');return;}

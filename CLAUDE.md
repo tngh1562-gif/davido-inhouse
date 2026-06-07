@@ -9,11 +9,12 @@ node server.js   # http://localhost:3000
 | 파일 | 역할 |
 |---|---|
 | `server.js` | Express + WebSocket 서버 (API, 치지직 봇, 룰렛 로직) |
-| `public/index.html` | **실제 내전사이트** (상단 탭 레이아웃) — 항상 이 파일 수정 |
+| `public/index.html` | **실제 내전사이트 셸** (상단 탭 레이아웃: 내전 진행/채팅 투표/관리자) |
+| `public/inhouse.html` | **"내전 진행" 탭의 실제 내용** — `index.html`이 `<iframe id="inhouse-frame">`로 임베드함. 자체 좌측 네비(맨 아래 "⚙ 설정" 탭 포함)를 가진 별도 SPA. **활발히 사용 중 — 절대 구버전 아님** |
 | `public/roulette-overlay.html` | OBS 브라우저 소스용 룰렛 오버레이 |
-| `public/inhouse.html` | 구버전 (사이드바 방식) — 사용 안 함 |
 
-> `inhouse.html`은 구버전. 실제 사이트는 반드시 `index.html` 수정.
+> ⚠️ "내전 진행" 탭 내부(설정/드래프트/명단 등)를 고치려면 `inhouse.html`을, 그 외 상단 탭 레이아웃·
+> 관리자·룰렛 admin·보관함 UI 등은 `index.html`을 수정해야 함. 둘 다 실제 사용 파일이니 헷갈리지 말 것.
 
 ---
 
@@ -67,6 +68,21 @@ node server.js   # http://localhost:3000
 - `index.html`의 WS 핸들러에 `storage_update` 케이스 추가 → `refreshStorageLive()`가 보관함 탭 열려있으면
   `/api/bot-config` 재조회 후 선택된 유저 화면까지 다시 렌더링
 
+### 위플랩(weflab.com) 룰렛 결과 자동 동기화 (2026-06-08 추가)
+- 시청자에게 실제로 보이는 룰렛은 자체 오버레이가 아니라 외부 툴 "위플랩"이라서,
+  `handleDonation()`이 도네이션마다 따로 추첨해 지급하던 기존 로직은 결과가 어긋나 **비활성화**함
+  (감지/로그(`[DONATION]`)만 유지, 룰렛 추첨/보관함 지급 코드는 제거)
+- 대신 위플랩 내부 API(`POST https://weflab.com/api/`, `type=alertlist_load`)를
+  20초 간격(`WEFLAB_POLL_MS`)으로 폴링하는 `pollWeflabAlerts()`가 실제 결과를 가져와
+  `grantStorageReward()`로 보관함에 그대로 반영 (이름 매핑 불필요 — 위플랩 표시명 = 보관함 보상명)
+- **세션 쿠키 입력 필요**: **내전 진행 탭(`inhouse.html`, iframe으로 임베드됨) → 왼쪽 네비 맨 아래
+  "⚙ 설정" 탭 → "위플랩 자동 연동" 카드**에서 `weflab.com/alertlist` 페이지의 개발자도구 →
+  Network → 요청 헤더 `Cookie` 값을 붙여넣고 저장 (관리자 탭이 아님에 주의!)
+  (`POST /api/weflab-sync`로 저장, `data/weflab-sync.json`에 `{ cookie, lastIdx, enabled }` 보관)
+  - 쿠키가 만료되면 카드에 오류 메시지가 표시됨 → 새 쿠키를 복사해 다시 저장하면 이어서 동작
+  - `lastIdx`(idx 기반 중복 처리 방지 기준점)는 쿠키를 갱신해도 유지 — 끊겨있던 동안의 결과도 누락 없이 처리
+- 최초 연동 시에는 과거 내역을 한꺼번에 지급하지 않도록, 그 시점의 최신 idx만 기준점으로 잡고 시작
+
 ### 보관함봇(`roulette_bot/bot.py`, 별도 레포·배포) — 신규 유저 자동 등록
 - **위치**: `C:\Users\홍수호\OneDrive\Desktop\roulette_bot` (origin: github.com/tngh1562-gif/roulette_bot)
 - 기존엔 `/유저추가`로 `스레드id`를 수동 입력해야만 보관함 유저가 생성됐음 → 처음 룰렛 당첨된 사람은
@@ -84,3 +100,5 @@ node server.js   # http://localhost:3000
       → 콘솔에 `[DONATION]` 로그 확인, 없으면 cmd 코드 디버깅
 - [ ] `roulette_bot` 변경사항 커밋·푸시 후 봇 재배포 (그래야 신규 유저 자동 등록이 실제로 작동함)
 - [ ] 포럼 채널(`FORUM_CHANNEL_ID`)에 새 스레드를 만들 디스코드 권한이 봇에게 있는지 확인
+- [ ] 위플랩 자동 동기화: 내전 진행 탭 → ⚙ 설정(왼쪽 네비 맨 아래) → "위플랩 자동 연동" 카드에
+      `weflab.com/alertlist`의 세션 쿠키를 입력해야 동작 시작함 (입력 전까진 폴링이 자동으로 건너뜀)

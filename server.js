@@ -61,6 +61,7 @@ const BOT_AUTH_FILE = path.join(DATA_DIR, 'bot-auth.json');
 const BOT_STATE_FILE = path.join(DATA_DIR, 'bot-state.json');
 const DISCORD_CONFIG_FILE = path.join(DATA_DIR, 'discord-config.json');
 const ROULETTE_CONFIG_FILE = path.join(DATA_DIR, 'roulette-config.json');
+const WEFLAB_SYNC_FILE = path.join(DATA_DIR, 'weflab-sync.json');
 const CUSTOM_CMDS_FILE = path.join(DATA_DIR, 'custom-commands.json');
 // Optional: lets the inhouse site ask the separate Discord bot service to send button messages.
 function normalizeDiscordBotApiUrl(value) {
@@ -599,6 +600,201 @@ async function grantStorageReward({ nickname, rewardName, count = 1 }) {
   }
 }
 
+// ── 위플랩(weflab.com) 룰렛 결과 자동 동기화 ──────────────────────────
+// 시청자가 실제로 보는 룰렛은 위플랩이라, weflab.com/alertlist 의 내부 API를
+// 주기적으로 폴링해서 새 결과가 생기면 그대로 보관함에 반영한다.
+const WEFLAB_POLL_MS = 20000; // 20초마다 확인
+const WEFLAB_API_URL = 'https://weflab.com/api/';
+
+function loadWeflabSync() {
+  try {
+    if (fs.existsSync(WEFLAB_SYNC_FILE)) {
+      const saved = readJsonFile(WEFLAB_SYNC_FILE);
+      if (saved && typeof saved === 'object') {
+        return {
+          cookie: String(saved.cookie || ''),
+          lastIdx: String(saved.lastIdx || ''),
+          enabled: saved.enabled !== false,
+        };
+      }
+    }
+  } catch (e) {}
+  return { cookie: '', lastIdx: '', enabled: true };
+}
+
+function saveWeflabSync() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(WEFLAB_SYNC_FILE, JSON.stringify({
+      cookie: weflabSync.cookie,
+      lastIdx: weflabSync.lastIdx,
+      enabled: weflabSync.enabled,
+    }), 'utf8');
+  } catch (e) {
+    console.error('[WEFLAB_SYNC] 저장 실패:', e.message);
+  }
+}
+
+const weflabSync = Object.assign(loadWeflabSync(), { lastPollAt: null, lastError: null });
+
+function weflabSyncStatusPayload() {
+  return {
+    enabled: weflabSync.enabled !== false,
+    hasCookie: !!weflabSync.cookie,
+    lastIdx: weflabSync.lastIdx || '',
+    lastPollAt: weflabSync.lastPollAt || null,
+    lastError: weflabSync.lastError || null,
+  };
+}
+
+function parseCookieString(cookieStr) {
+  const map = {};
+  String(cookieStr || '').split(';').forEach(pair => {
+    const eq = pair.indexOf('=');
+    if (eq === -1) return;
+    const key = pair.slice(0, eq).trim();
+    const val = pair.slice(eq + 1).trim();
+    if (key) map[key] = val;
+  });
+  return map;
+}
+
+function postForm(url, formData, extraHeaders = {}) {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const body = Buffer.from(
+      Object.entries(formData).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`).join('&'),
+      'utf8'
+    );
+    const lib = target.protocol === 'https:' ? https : http;
+    const req = lib.request(target, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Content-Length': body.length,
+        ...extraHeaders,
+      },
+      timeout: 15000,
+    }, res => {
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => {
+        const text = Buffer.concat(chunks).toString('utf8');
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+        if (res.statusCode >= 400) {
+          const err = new Error(data.error || `HTTP ${res.statusCode}`);
+          err.data = data;
+          reject(err);
+          return;
+        }
+        resolve(data);
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => req.destroy(new Error('request_timeout')));
+    req.write(body);
+    req.end();
+  });
+}
+
+function formatWeflabDate(date) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}`;
+}
+
+// 위플랩 alertlist 항목 1건을 파싱해서 결과 항목명 배열로 반환 ([["꽝꽝꽝꽝꽝꽝","50"], ...] → ["꽝꽝꽝꽝꽝꽝", ...])
+function parseWeflabResultNames(entry) {
+  let names = [];
+  try {
+    const list = JSON.parse(entry?.list || '[]');
+    if (Array.isArray(list)) names = list.map(row => String(row?.[0] || '').trim()).filter(Boolean);
+  } catch (e) {}
+  if (!names.length && entry?.roulette) names = [String(entry.roulette).trim()];
+  return names;
+}
+
+async function processWeflabAlertEntry(entry) {
+  const nickname = String(entry?.name || '').trim();
+  if (!nickname) return;
+  const results = parseWeflabResultNames(entry);
+  if (!results.length) return;
+
+  console.log(`[WEFLAB_SYNC] ${nickname} 룰렛 결과 ${results.length}건 감지: ${results.join(', ')}`);
+  for (const rewardName of results) {
+    await grantStorageReward({ nickname, rewardName });
+  }
+}
+
+let weflabPolling = false;
+async function pollWeflabAlerts() {
+  if (weflabPolling) return;
+  if (!weflabSync.enabled || !weflabSync.cookie) return;
+  weflabPolling = true;
+  try {
+    const cookies = parseCookieString(weflabSync.cookie);
+    const loginIdx = cookies['login_idx'] || '';
+    if (!loginIdx) {
+      weflabSync.lastError = '쿠키에서 login_idx 값을 찾을 수 없습니다. 쿠키 값을 다시 확인해주세요.';
+      return;
+    }
+
+    const now = new Date();
+    const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const end = new Date(now.getTime() + 60 * 60 * 1000);
+
+    const resp = await postForm(WEFLAB_API_URL, {
+      type: 'alertlist_load',
+      pagetype: 'setup',
+      idx: loginIdx,
+      pageid: 'alertlist',
+      preset: '0',
+      'ver[server]': '20240607',
+      'ver[socket]': '20240607',
+      lastdate: '',
+      'filter[start]': formatWeflabDate(start),
+      'filter[end]': formatWeflabDate(end),
+      'filter[min]': '0',
+      'filter[type]': 'all',
+      'filter[search]': '',
+    }, { Cookie: weflabSync.cookie });
+
+    weflabSync.lastPollAt = new Date().toISOString();
+
+    if (resp?.result !== 'success' || !Array.isArray(resp?.data)) {
+      weflabSync.lastError = `위플랩 응답 오류 (쿠키가 만료됐을 수 있어요): ${resp?.result || 'unknown'}`;
+      return;
+    }
+    weflabSync.lastError = null;
+    if (!resp.data.length) return;
+
+    if (!weflabSync.lastIdx) {
+      // 최초 동기화: 과거 내역까지 한꺼번에 지급되는 것을 막기 위해 기준점만 설정
+      weflabSync.lastIdx = String(resp.data[0].idx || '');
+      saveWeflabSync();
+      console.log(`[WEFLAB_SYNC] 최초 연동 — 기준점 idx=${weflabSync.lastIdx} (이전 내역은 지급하지 않음)`);
+      return;
+    }
+
+    const lastIdxNum = Number(weflabSync.lastIdx) || 0;
+    const newEntries = resp.data
+      .filter(e => Number(e?.idx) > lastIdxNum)
+      .reverse(); // 오래된 것부터 순서대로 처리
+
+    for (const entry of newEntries) {
+      await processWeflabAlertEntry(entry);
+      weflabSync.lastIdx = String(entry.idx);
+      saveWeflabSync();
+    }
+  } catch (err) {
+    weflabSync.lastPollAt = new Date().toISOString();
+    weflabSync.lastError = err.message || '위플랩 호출 실패';
+    console.warn('[WEFLAB_SYNC] 폴링 실패:', err.message);
+  } finally {
+    weflabPolling = false;
+  }
+}
+
 async function runRouletteSpin({ nickname = '테스트', amount, source = 'manual' } = {}) {
   const cfg = readRouletteConfig();
   const paid = Number(amount) || cfg.triggerAmount;
@@ -782,6 +978,24 @@ app.post('/api/roulette-test', async (req, res) => {
   } catch (err) {
     res.status(err.statusCode || 500).json({ ok: false, error: err.message || 'roulette_test_failed' });
   }
+});
+
+app.get('/api/weflab-sync', (req, res) => {
+  res.json(weflabSyncStatusPayload());
+});
+
+app.post('/api/weflab-sync', (req, res) => {
+  const body = req.body || {};
+  if (typeof body.cookie === 'string') {
+    weflabSync.cookie = body.cookie.trim();
+    weflabSync.lastError = null;
+    // lastIdx는 유지 — 쿠키가 만료돼서 갱신하는 경우, 끊겨있던 동안의 결과도 이어서 처리하기 위함
+  }
+  if (typeof body.enabled === 'boolean') {
+    weflabSync.enabled = body.enabled;
+  }
+  saveWeflabSync();
+  res.json({ ok: true, data: weflabSyncStatusPayload() });
 });
 
 // 내장(하드코딩) 명령어 — 실제 봇 응답 텍스트 표시
@@ -1925,55 +2139,8 @@ function handleDonation(msg) {
 
     console.log('[DONATION]', nickname, payType || '(타입없음)', payAmount, '치즈 | keys:', Object.keys(chat).join(','));
 
-    if (payAmount <= 0) return;
-    if (payType && payType !== 'CHEESE') return;
-
-    // 1500치즈 배수만 룰렛 실행 (1500=1회, 3000=2회, 4500=3회, ...)
-    const cfg = readRouletteConfig();
-    const base = cfg.triggerAmount || 1500;
-    if (payAmount % base !== 0) {
-      console.log(`[DONATION] 스킵: ${payAmount}치즈는 ${base}의 배수 아님`);
-      return;
-    }
-    const spinCount = Math.floor(payAmount / base);
-
-    const items = (cfg.items || []).filter(it => it.enabled !== false && it.label);
-    if (!items.length) { console.log('[DONATION] 룰렛 항목 없음'); return; }
-
-    // 당첨 항목 미리 뽑고 히스토리에 전부 저장
-    const entries = [];
-    let currentCfg = cfg;
-    for (let i = 0; i < spinCount; i++) {
-      const item = pickRouletteItem(currentCfg.items);
-      if (!item) break;
-      const entry = {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
-        nickname: String(nickname).slice(0, 80),
-        amount: payAmount,
-        result: item.label,
-        storageReward: currentCfg.saveToStorage ? item.storageReward : '',
-        source: 'chzzk_donation',
-        createdAt: new Date().toISOString(),
-        ...(spinCount > 1 ? { spinIndex: i + 1, spinTotal: spinCount } : {}),
-      };
-      const nextHistory = [...(currentCfg.history || []), entry].slice(-80);
-      currentCfg = writeRouletteConfig({ history: nextHistory });
-      entries.push(entry);
-    }
-
-    // 1번차 즉시 방송, 이후 2초 간격으로 순차 방송 (스핀 1회 = 2초)
-    const SPIN_GAP_MS = 2000;
-    broadcast({ type: 'roulette_admin_result', result: entries[0], config: currentCfg });
-    for (let i = 1; i < entries.length; i++) {
-      const e = entries[i];
-      setTimeout(() => broadcast({ type: 'roulette_admin_result', result: e, config: currentCfg }), i * SPIN_GAP_MS);
-    }
-    // 보관함 지급도 각 회차의 결과가 화면에 뜨는 시점(스핀 시작 + 스핀 1회 길이)에 맞춰 실행
-    entries.forEach((e, i) => {
-      if (!e.storageReward) return;
-      setTimeout(() => grantStorageReward({ nickname: e.nickname, rewardName: e.storageReward }), (i + 1) * SPIN_GAP_MS);
-    });
-    console.log(`[DONATION] 룰렛 ${spinCount}연차: ${nickname} ${payAmount}치즈 → ${entries.map(e=>e.result).join(', ')}`);
+    // 룰렛 결과/보관함 지급은 위플랩 동기화(pollWeflabAlerts)가 전담 — 자체 추첨은 비활성화
+    // (시청자가 보는 룰렛은 위플랩이고, 우리 쪽에서 별도로 무작위 추첨하면 결과가 어긋남)
   });
 }
 
@@ -2324,4 +2491,5 @@ server.listen(PORT, () => {
   console.log('========================================');
   startLcuPolling();
   setTimeout(restoreChzzkConnectionAfterBoot, 1500);
+  setInterval(() => { pollWeflabAlerts().catch(() => {}); }, WEFLAB_POLL_MS);
 });
