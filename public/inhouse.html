@@ -1399,6 +1399,11 @@ function tierOrderFloor(key){
   if(key==='CH') return tierBaseMmr('GM')    + 80;
   return 0;
 }
+// 티어가 바뀌었을 때 그 티어에 맞는 기본 MMR (하한선 포함)
+function tierFloorMmr(tierKey){
+  const key=compatTierKey(tierKey);
+  return clampMmr(Math.max(tierBaseMmr(key), tierOrderFloor(key)));
+}
 function viewerMmr(v){
   if(!v) return tierBaseMmr('GO4');
   const key=compatTierKey(v.tier);
@@ -3150,6 +3155,20 @@ function deleteViewer(id){
 function editViewer(id){
   editingVid=id; renderViewers();
 }
+
+// 편집 중 티어 변경 시 기본 MMR · 라인별 MMR을 새 티어 기준값으로 갱신
+function syncMmrToTier(id){
+  id = parseInt(id);
+  const tierEl = document.getElementById('et-'+id);
+  if(!tierEl) return;
+  const mmr = tierFloorMmr(tierEl.value);
+  const mmrEl = document.getElementById('emmr-'+id);
+  if(mmrEl) mmrEl.value = mmr;
+  LINE_POSITIONS.forEach((pos,idx)=>{
+    const el = document.getElementById('eline'+idx+'-'+id);
+    if(el) el.value = mmr;
+  });
+}
 function saveEdit(id){
   id = parseInt(id); // 숫자 타입 보장
   const v=viewers.find(v=>v.id===id);
@@ -3333,7 +3352,7 @@ function renderViewers(){
           <td>
             <input class="edit-inp" id="epas-${v.id}" type="number" min="0" value="${v.pass||0}" style="width:60px;text-align:center">
           </td>
-          <td><select class="edit-inp" id="et-${v.id}" style="width:100%">${buildTierOptions(v.tier)}</select></td>
+          <td><select class="edit-inp" id="et-${v.id}" style="width:100%" onchange="syncMmrToTier(${v.id})">${buildTierOptions(v.tier)}</select></td>
           <td>${(()=>{
             const lm=ensureViewerLineMmrs(v);
             return `<div style="display:grid;gap:3px;min-width:130px">
