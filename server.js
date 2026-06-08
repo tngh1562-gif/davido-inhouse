@@ -2047,8 +2047,10 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
         return;
       }
       if (msg.cmd === 100) return;
-      if (msg.cmd === 93101) { handleChat(msg); }
-      if (msg.cmd === 93102) { handleDonation(msg); }
+      if (msg.cmd === 93101) { handleChat(msg); return; }
+      if (msg.cmd === 93102) { handleDonation(msg); return; }
+      // TODO: 도네이션 cmd 코드 확인용 임시 로그 - 실제 cmd 값 확인되면 제거
+      console.log('[CHZZK] 미확인 cmd:', msg.cmd, '| bdy:', JSON.stringify(msg.bdy).slice(0, 400));
     } catch (e) { console.log('[CHZZK] parse error:', e.message); }
   });
 
