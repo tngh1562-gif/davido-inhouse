@@ -699,8 +699,10 @@ function postForm(url, formData, extraHeaders = {}) {
 }
 
 function formatWeflabDate(date) {
+  // 서버 타임존(예: UTC)에 관계없이 항상 KST(UTC+9) 기준으로 포맷 — 위플랩은 한국 서비스라 KST로 해석함
+  const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
   const pad = n => String(n).padStart(2, '0');
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}`;
+  return `${kst.getUTCFullYear()}${pad(kst.getUTCMonth() + 1)}${pad(kst.getUTCDate())}${pad(kst.getUTCHours())}${pad(kst.getUTCMinutes())}`;
 }
 
 // 위플랩 alertlist 항목 1건을 파싱해서 결과 항목명 배열로 반환 ([["꽝꽝꽝꽝꽝꽝","50"], ...] → ["꽝꽝꽝꽝꽝꽝", ...])
