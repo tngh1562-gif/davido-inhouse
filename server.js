@@ -931,6 +931,12 @@ app.get('/api/inhouse-db', (req, res) => {
   res.json(readInhouseDB());
 });
 
+// 채팅 투표 현황 (경매사이트 등 외부 연동용)
+app.get('/api/vote-state', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.json({ ok: true, vote: state.vote });
+});
+
 app.post('/api/inhouse-db', (req, res) => {
   try {
     res.json({ ok: true, data: writeInhouseDB(req.body || {}, { mergeViewers: false }) });
