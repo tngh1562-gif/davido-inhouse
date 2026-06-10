@@ -1129,7 +1129,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
             <th class="sortable" onclick="toggleSort('tier')">티어 <span id="sh-tier"></span></th>
             <th>MMR</th>
             <th>포지션</th>
-            <th>포지션별 티어</th>
+            <th>모스트</th>
             <th>내전 승률</th>
             <th>추가일</th>
             <th style="width:80px"></th>
@@ -1481,6 +1481,14 @@ function tierObj(key){ return ALL_TIERS.find(t=>t.key===key) || ALL_TIERS[0]; }
 function tierBadge(key){
   const t=tierObj(key);
   return `<span class="tb tb-${t.cls}">${t.label}</span>`;
+}
+const DDRAGON_CHAMP = 'https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion';
+function mostsBadges(v){
+  const mosts = Array.isArray(v.mosts) ? v.mosts.filter(Boolean).slice(0,3) : [];
+  if(!mosts.length) return '<span style="opacity:.3;font-size:.72rem">-</span>';
+  return `<div style="display:flex;gap:3px">${mosts.map(c=>
+    `<img src="${DDRAGON_CHAMP}/${esc(c)}.png" alt="${esc(c)}" title="${esc(c)}" style="width:24px;height:24px;border-radius:4px;border:1px solid var(--line)" onerror="this.onerror=null;this.style.opacity='.2'">`
+  ).join('')}</div>`;
 }
 function pip(pos){
   // 아이콘 대신 한글 텍스트 뱃지
@@ -3771,21 +3779,7 @@ function renderViewers(){
           </div>
         </td>
         <td style="white-space:nowrap">${(()=>{ const ps=Array.isArray(v.positions)?v.positions:normPositions(v); return ps.filter(p=>p&&p!=='무관').map(p=>pip(p)).join('') || pip('무관'); })()} </td>
-        <td style="font-size:.72rem;min-width:120px">${(()=>{
-          const ps=Array.isArray(v.positions)?v.positions:normPositions(v);
-          const pt=v.posTiers||[];
-          const labels=['주','부1','부2'];
-          const rows=ps.map((pos,i)=>{
-            if(!pos||pos==='무관') return '';
-            const t=pt[i];
-            const tLabel=t?(ALL_TIERS.find(x=>x.key===t)||{label:t}).label:'기본';
-            const col=t?'var(--txt)':'var(--txt2)';
-            return `<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px">
-              ${pip(pos)}<span style="color:${col};font-size:.68rem">${tLabel}</span>
-            </span>`;
-          }).filter(Boolean).join('');
-          return rows||'<span style="opacity:.3">-</span>';
-        })()}</td>
+        <td style="font-size:.72rem;min-width:90px">${mostsBadges(v)}</td>
         <td style="white-space:nowrap">${(()=>{
           const st=v.stats||{w:0,l:0,d:0};
           const g=st.w+st.l+(st.d||0);
