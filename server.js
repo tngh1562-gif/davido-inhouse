@@ -11,6 +11,9 @@ const https = require('https');
 const path = require('path');
 const fs = require('fs');
 
+const CHAMPION_KO_MAP = require('./data/champion-ko-map.json');
+const CHAMPION_ID_BY_LOWER = new Map(Object.values(CHAMPION_KO_MAP).map(id => [id.toLowerCase(), id]));
+
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
@@ -341,6 +344,60 @@ function normalizeRegisterName(body) {
   const tagLine = normalizeRegisterText(body.tagLine || body.tag || body.riotTag, 30).replace(/^#/, '');
   if (gameName && tagLine) return `${gameName}#${tagLine}`;
   return gameName;
+}
+
+function normalizeChampionName(raw) {
+  const name = String(raw || '').replace(/\s+/g, '');
+  if (!name) return null;
+  if (CHAMPION_KO_MAP[name]) return CHAMPION_KO_MAP[name];
+  return CHAMPION_ID_BY_LOWER.get(name.toLowerCase()) || null;
+}
+
+function normalizeRegisterMosts(body) {
+  const raw = Array.isArray(body.mosts)
+    ? body.mosts
+    : [
+        body.most1 || body.most_1 || body['모스트1'],
+        body.most2 || body.most_2 || body['모스트2'],
+        body.most3 || body.most_3 || body['모스트3'],
+      ];
+  return raw.map(normalizeChampionName).filter(Boolean).slice(0, 3);
+}
+
+function upsertViewerMostsFromDiscord(body) {
+  const db = readInhouseDB();
+  const discordId = normalizeRegisterText(body.discordId || body.discordUserId || body.userId || body.memberId, 40).replace(/\D/g, '');
+  const name = normalizeRegisterName(body);
+  const chzzk = normalizeRegisterText(body.chzzk || body.chzzkNick || body.chzzkNickname || body.chzzkName || body.chatName || body.chatNickname || body['치지직'], 120);
+  const mosts = normalizeRegisterMosts(body);
+
+  if (!mosts.length) {
+    const err = new Error('인식할 수 있는 챔피언 이름이 없습니다.');
+    err.statusCode = 400;
+    throw err;
+  }
+  if (!discordId && !name && !chzzk) {
+    const err = new Error('등록할 닉네임 또는 디스코드 ID가 필요합니다.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const norm = value => String(value || '').trim().toLowerCase();
+  const cleanName = norm(name);
+  const cleanChzzk = norm(chzzk);
+  const viewer = db.viewers.find(v => discordId && String(v.discordId || '').replace(/\D/g, '') === discordId)
+    || db.viewers.find(v => cleanChzzk && norm(v.chzzk) === cleanChzzk)
+    || db.viewers.find(v => cleanName && norm(v.name) === cleanName);
+
+  if (!viewer) {
+    const err = new Error('내전 참가 등록을 먼저 진행해주세요.');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  viewer.mosts = mosts;
+  viewer.updatedAt = Date.now();
+  return { db: writeViewerUpsert(viewer, null), viewer, mosts };
 }
 
 function upsertViewerFromDiscordRegistration(body) {
@@ -951,6 +1008,21 @@ app.post('/api/register-viewer', handleDiscordInhouseRegister);
 app.post('/api/discord-link', handleDiscordInhouseRegister);
 app.post('/api/inhouse-link', handleDiscordInhouseRegister);
 app.post('/api/link-discord', handleDiscordInhouseRegister);
+
+app.post('/api/inhouse-register-mosts', (req, res) => {
+  if (!validateDiscordBotSecret(req, res)) return;
+  try {
+    const result = upsertViewerMostsFromDiscord(req.body || {});
+    broadcastState();
+    res.json({
+      ok: true,
+      viewer: result.viewer,
+      mosts: result.mosts,
+    });
+  } catch (err) {
+    res.status(err.statusCode || 400).json({ ok: false, error: err.message || 'register_failed' });
+  }
+});
 
 app.get('/api/discord-config', (req, res) => {
   res.json(readDiscordConfig());
