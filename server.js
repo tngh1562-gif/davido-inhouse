@@ -762,6 +762,11 @@ function formatWeflabDate(date) {
   return `${kst.getUTCFullYear()}${pad(kst.getUTCMonth() + 1)}${pad(kst.getUTCDate())}${pad(kst.getUTCHours())}${pad(kst.getUTCMinutes())}`;
 }
 
+// 위플랩 룰렛 항목명 → 보관함봇 보상명이 다른 경우 매핑 (예: "내전 1판 연장" → "내전 1판 연장권")
+const WEFLAB_REWARD_ALIAS = {
+  '내전 1판 연장': '내전 1판 연장권',
+};
+
 // 위플랩 alertlist 항목 1건을 파싱해서 결과 항목명 배열로 반환 ([["꽝꽝꽝꽝꽝꽝","50"], ...] → ["꽝꽝꽝꽝꽝꽝", ...])
 function parseWeflabResultNames(entry) {
   let names = [];
@@ -770,7 +775,7 @@ function parseWeflabResultNames(entry) {
     if (Array.isArray(list)) names = list.map(row => String(row?.[0] || '').trim()).filter(Boolean);
   } catch (e) {}
   if (!names.length && entry?.roulette) names = [String(entry.roulette).trim()];
-  return names;
+  return names.map(name => WEFLAB_REWARD_ALIAS[name] || name);
 }
 
 async function processWeflabAlertEntry(entry) {
