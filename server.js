@@ -78,6 +78,11 @@ function normalizeDiscordBotApiUrl(value) {
 const DISCORD_BOT_API_URL = normalizeDiscordBotApiUrl(process.env.DISCORD_BOT_API_URL);
 const DISCORD_BOT_API_SECRET = process.env.DISCORD_BOT_API_SECRET || '';
 
+// 경매사이트 결과화면 "디스코드 이동" 버튼용 — 경매 전용 음성채널/역할 (내전사이트 채널과 별도)
+const AUCTION_VOICE_LOBBY_ID = '1513880611386036354';
+const AUCTION_TEAM_VOICE_IDS = ['1513879916603506858','1513879935696240640','1513879983003533422','1513880001207078952'];
+const AUCTION_TEAM_ROLE_IDS  = ['1507741474282799245','1507741477869195265','1513871886608764938','1513871903763337276'];
+
 function defaultInhouseDB() {
   return {
     players: [],
@@ -994,6 +999,32 @@ app.post('/api/start-inhouse', async (req, res) => {
     res.json(result);
   } catch (err) {
     res.json({ ok: false, error: err.message || '실패' });
+  }
+});
+
+// 경매사이트 결과화면 - 1~4팀 디스코드 음성 이동 + 역할 부여
+app.post('/api/auction-move-voice-teams', async (req, res) => {
+  if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET) {
+    return res.json({ ok: false, error: 'DISCORD_BOT_API_URL / DISCORD_BOT_API_SECRET 환경변수가 필요합니다.' });
+  }
+  const cleanIds = arr => Array.isArray(arr) ? arr.map(id => String(id || '').replace(/\D/g, '')).filter(Boolean) : [];
+  const teamsIn = Array.isArray(req.body?.teams) ? req.body.teams : [];
+  const teams = teamsIn.slice(0, AUCTION_TEAM_VOICE_IDS.length).map((t, i) => ({
+    name: String(t?.name || `${i + 1}팀`),
+    channelId: AUCTION_TEAM_VOICE_IDS[i],
+    roleId: AUCTION_TEAM_ROLE_IDS[i],
+    discordIds: cleanIds(t?.discordIds),
+  })).filter(t => t.discordIds.length);
+  if (!teams.length) return res.json({ ok: false, error: '디스코드 연동된 팀원이 없습니다.' });
+  try {
+    const result = await postJson(`${DISCORD_BOT_API_URL}/api/move-voice-teams-multi`, {
+      secret: DISCORD_BOT_API_SECRET,
+      lobbyChannelId: AUCTION_VOICE_LOBBY_ID,
+      teams,
+    });
+    res.json(result);
+  } catch (err) {
+    res.json({ ok: false, error: `${err.message || '보관함봇 호출 실패'}` });
   }
 });
 
