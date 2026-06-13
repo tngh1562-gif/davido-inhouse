@@ -77,18 +77,25 @@ const itemsEl   = document.getElementById('voteItems');
 
 let hideContent = false;
 
+// 오버레이에는 !투표1, !투표2, !투표5(취소)만 표시
+const SHOW_INDEXES = [0, 1, 4];
+
 function render(vote){
-  if(!vote || !Array.isArray(vote.items) || !vote.items.length){
+  const shown = (vote && Array.isArray(vote.items) ? vote.items : [])
+    .map((it, i) => ({ ...it, idx: i }))
+    .filter(it => SHOW_INDEXES.includes(it.idx));
+
+  if(!shown.length){
     card.classList.remove('active');
     return;
   }
   card.classList.add('active');
   titleEl.textContent = vote.title || '내전 투표';
 
-  const total = vote.items.reduce((s, it) => s + (it.votes ? it.votes.length : 0), 0);
+  const total = shown.reduce((s, it) => s + (it.votes ? it.votes.length : 0), 0);
   totalEl.innerHTML = `${total}<small>표</small>`;
 
-  itemsEl.innerHTML = vote.items.map((it, i) => {
+  itemsEl.innerHTML = shown.map(it => {
     const cnt = it.votes ? it.votes.length : 0;
     const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
     const labelHtml = hideContent
@@ -96,7 +103,7 @@ function render(vote){
       : `<div class="item-label">${esc(it.label)}</div>`;
     return `
     <div class="item">
-      <div class="item-cmd">!투표${i+1}</div>
+      <div class="item-cmd">!투표${it.idx+1}</div>
       <div class="item-body">
         ${labelHtml}
         <div class="bar-wrap">
