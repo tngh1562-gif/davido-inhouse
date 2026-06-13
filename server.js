@@ -2268,7 +2268,10 @@ function handleChat(msg) {
       const m = text.match(/^!투표\s*(\d+)$/);
       if (m) {
         const idx = parseInt(m[1]) - 1;
-        if (idx >= 0 && idx < state.vote.items.length) {
+        if (idx === 4) {
+          // !투표5 = 취소 (내 투표 취소)
+          state.vote.items.forEach(it => { it.votes = it.votes.filter(v => v !== nickname); });
+        } else if (idx >= 0 && idx < state.vote.items.length) {
           state.vote.items.forEach(it => { it.votes = it.votes.filter(v => v !== nickname); });
           state.vote.items[idx].votes.push(nickname);
         }
