@@ -35,7 +35,7 @@ body.test-mode{background:#03050e}
 .items{display:flex;flex-direction:column;gap:10px}
 .item{display:flex;align-items:center;gap:12px}
 .item-cmd{
-  flex-shrink:0;width:46px;text-align:center;
+  flex-shrink:0;width:68px;text-align:center;
   font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:900;color:#0d1117;
   background:linear-gradient(135deg,#ffc94d,#ffb02e);
   border-radius:6px;padding:4px 0;letter-spacing:.5px;
@@ -90,7 +90,7 @@ function render(vote){
       : `<div class="item-label">${esc(it.label)}</div>`;
     return `
     <div class="item">
-      <div class="item-cmd">!${i+1}</div>
+      <div class="item-cmd">!투표${i+1}</div>
       <div class="item-body">
         ${labelHtml}
         <div class="bar-wrap">
