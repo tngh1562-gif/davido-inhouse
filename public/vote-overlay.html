@@ -12,23 +12,38 @@ body.test-mode{background:#03050e}
 body{display:flex;align-items:flex-start;justify-content:center;padding:2.5vmin}
 
 #card{
+  position:relative;
   display:none;
   width:100%;
-  padding:3.2vmin 3.6vmin;
+  padding:4.2vmin 3.6vmin 3.2vmin;
   border-radius:2.4vmin;
-  background:linear-gradient(150deg,rgba(8,12,24,.94),rgba(13,20,38,.94));
-  border:1px solid rgba(0,200,160,.4);
-  box-shadow:0 0 0 1px rgba(255,255,255,.04),0 0 5vmin rgba(0,200,160,.2),0 2vmin 5vmin rgba(0,0,0,.6);
+  background:linear-gradient(150deg,rgba(14,10,28,.95),rgba(18,14,40,.95));
+  border:2px solid rgba(0,255,200,.55);
+  box-shadow:0 0 0 1px rgba(255,255,255,.06),0 0 6vmin rgba(0,255,200,.35),0 0 10vmin rgba(255,45,117,.25),0 2vmin 5vmin rgba(0,0,0,.6);
   animation:cardIn .35s cubic-bezier(.18,.9,.18,1.1) both;
 }
 #card.active{display:block}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 
-.top-row{display:flex;align-items:baseline;justify-content:space-between;gap:2vmin;margin-bottom:2.8vmin}
+.live-badge{
+  position:absolute;top:-1.8vmin;left:3vmin;
+  display:flex;align-items:center;gap:1vmin;
+  padding:.9vmin 2.2vmin;border-radius:999px;
+  background:linear-gradient(135deg,#ff2d75,#ff6b2b);
+  color:#fff;font-weight:900;font-size:clamp(11px,2.6vmin,18px);letter-spacing:.5px;white-space:nowrap;
+  box-shadow:0 0 3vmin rgba(255,45,117,.7),0 4px 12px rgba(0,0,0,.4);
+  animation:badgePulse 1.6s ease-in-out infinite;
+}
+.live-badge .dot{width:1.2vmin;height:1.2vmin;min-width:7px;min-height:7px;border-radius:50%;background:#fff}
+@keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+.top-row{display:flex;align-items:baseline;justify-content:space-between;gap:2vmin;margin-bottom:2.8vmin;margin-top:1vmin}
 .title{
+  display:flex;align-items:baseline;gap:1vmin;min-width:0;
   font-size:clamp(15px,4vmin,28px);font-weight:800;color:#fff;letter-spacing:.5px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
+.title-icon{flex-shrink:0}
 .total-wrap{display:flex;align-items:center;gap:1.2vmin;flex-shrink:0}
 .live-dot{width:1.6vmin;height:1.6vmin;min-width:8px;min-height:8px;border-radius:50%;background:#00e5a0;box-shadow:0 0 8px #00e5a0,0 0 18px rgba(0,229,160,.8);animation:dotPulse 1s ease-in-out infinite alternate}
 @keyframes dotPulse{from{transform:scale(.7);opacity:.4}to{transform:scale(1.25);opacity:1}}
@@ -42,6 +57,7 @@ body{display:flex;align-items:flex-start;justify-content:center;padding:2.5vmin}
   font-size:clamp(12px,2.8vmin,19px);font-weight:800;color:#0d1117;
   background:linear-gradient(135deg,#ffc94d,#ffb02e);
   border-radius:1vmin;padding:.9vmin 1.4vmin;letter-spacing:.2px;white-space:nowrap;
+  box-shadow:0 0 1.6vmin rgba(255,176,46,.55);
 }
 .item-body{flex:1;min-width:0}
 .item-label{
@@ -50,15 +66,16 @@ body{display:flex;align-items:flex-start;justify-content:center;padding:2.5vmin}
 }
 .item-label.blurred{filter:blur(6px);user-select:none}
 .bar-wrap{position:relative;height:clamp(24px,6vmin,46px);border-radius:1.2vmin;background:rgba(255,255,255,.08);overflow:hidden}
-.bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:1.2vmin;background:linear-gradient(90deg,#00b4d8,#00e5a0);transition:width .5s ease}
+.bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:1.2vmin;background:linear-gradient(90deg,#ff2d75,#ffc94d);box-shadow:0 0 1.6vmin rgba(255,45,117,.45);transition:width .5s ease}
 .bar-text{position:absolute;inset:0;display:flex;align-items:center;padding:0 1.6vmin;font-size:clamp(12px,3.2vmin,22px);font-weight:800;color:#fff;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.5)}
 </style>
 </head>
 <body>
 
 <div id="card">
+  <div class="live-badge"><span class="dot"></span>투표 진행중</div>
   <div class="top-row">
-    <div class="title" id="voteTitle">내전 투표</div>
+    <div class="title"><span class="title-icon">🗳️</span><span id="voteTitle">내전 투표</span></div>
     <div class="total-wrap">
       <span class="live-dot"></span>
       <span class="total" id="voteTotal">0<small>표</small></span>
