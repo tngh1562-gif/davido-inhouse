@@ -2960,6 +2960,10 @@ function renderOverlayTab(){
   if(redCount) redCount.textContent=(curRed?.length||0)+'명';
   const frame=document.getElementById('overlayPreviewFrame');
   if(frame) frame.src='/team-overlay.html?corner=1&width=620&height=385&t='+Date.now();
+  ['overlayUrlInput','voteOverlayUrlInput'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && el.value.startsWith('/')) el.value=location.origin+el.value;
+  });
 }
 function toggleOverlayTabState(){
   const btn=document.getElementById('overlayEnableBtn');
