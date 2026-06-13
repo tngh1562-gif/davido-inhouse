@@ -15,49 +15,88 @@ body{display:flex;align-items:flex-start;justify-content:center;padding:2.5vmin}
   position:relative;
   display:none;
   width:100%;
-  padding:4.2vmin 3.6vmin 3.2vmin;
-  border-radius:2.4vmin;
-  background:linear-gradient(150deg,rgba(14,10,28,.95),rgba(18,14,40,.95));
-  border:2px solid rgba(0,255,200,.55);
-  box-shadow:0 0 0 1px rgba(255,255,255,.06),0 0 6vmin rgba(0,255,200,.35),0 0 10vmin rgba(255,45,117,.25),0 2vmin 5vmin rgba(0,0,0,.6);
+  padding:3px;
+  border-radius:2.6vmin;
+  overflow:hidden;
+  isolation:isolate;
+  filter:drop-shadow(0 2vmin 5vmin rgba(0,0,0,.6));
   animation:cardIn .35s cubic-bezier(.18,.9,.18,1.1) both;
 }
 #card.active{display:block}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 
+#card::before{
+  content:'';
+  position:absolute;inset:-60%;
+  background:conic-gradient(from 0deg,#00ffc8,#7b2ff7,#ff2d75,#ffc94d,#00ffc8);
+  animation:spin 6s linear infinite;
+}
+#card::after{
+  content:'';
+  position:absolute;inset:0;
+  border-radius:2.6vmin;
+  box-shadow:0 0 6vmin rgba(0,255,200,.3),0 0 10vmin rgba(255,45,117,.22);
+  pointer-events:none;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.card-inner{
+  position:relative;
+  overflow:hidden;
+  border-radius:calc(2.6vmin - 3px);
+  padding:4.2vmin 3.6vmin 3.2vmin;
+  background:linear-gradient(150deg,rgba(14,10,28,.97),rgba(18,14,40,.97));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+}
+.card-inner::before{
+  content:'';
+  position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 88% -15%,rgba(123,47,247,.4),transparent 45%),
+    radial-gradient(circle at -10% 115%,rgba(0,255,200,.22),transparent 45%),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.025) 0 2px,transparent 2px 14px);
+}
+
+.sparkle{position:absolute;color:#fff;opacity:.7;animation:twinkle 2.4s ease-in-out infinite}
+.sparkle.s1{top:6%;right:8%;font-size:clamp(10px,2.2vmin,18px);color:#7b2ff7;animation-delay:0s}
+.sparkle.s2{top:42%;right:3%;font-size:clamp(8px,1.6vmin,14px);color:#00ffc8;animation-delay:.8s}
+.sparkle.s3{bottom:8%;left:4%;font-size:clamp(9px,1.8vmin,15px);color:#ffc94d;animation-delay:1.5s}
+@keyframes twinkle{0%,100%{opacity:.15;transform:scale(.7) rotate(0deg)}50%{opacity:1;transform:scale(1.25) rotate(20deg)}}
+
 .live-badge{
   position:absolute;top:-1.8vmin;left:3vmin;
   display:flex;align-items:center;gap:1vmin;
-  padding:.9vmin 2.2vmin;border-radius:999px;
+  padding:.9vmin 2.8vmin .9vmin 2.2vmin;
   background:linear-gradient(135deg,#ff2d75,#ff6b2b);
   color:#fff;font-weight:900;font-size:clamp(11px,2.6vmin,18px);letter-spacing:.5px;white-space:nowrap;
+  clip-path:polygon(0 0,100% 0,calc(100% - 1.4vmin) 50%,100% 100%,0 100%);
   box-shadow:0 0 3vmin rgba(255,45,117,.7),0 4px 12px rgba(0,0,0,.4);
   animation:badgePulse 1.6s ease-in-out infinite;
+  z-index:2;
 }
 .live-badge .dot{width:1.2vmin;height:1.2vmin;min-width:7px;min-height:7px;border-radius:50%;background:#fff}
 @keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 
-.top-row{display:flex;align-items:baseline;justify-content:space-between;gap:2vmin;margin-bottom:2.8vmin;margin-top:1vmin}
+.top-row{position:relative;display:flex;align-items:baseline;justify-content:space-between;gap:2vmin;margin-bottom:2.8vmin;margin-top:1vmin}
 .title{
   display:flex;align-items:baseline;gap:1vmin;min-width:0;
   font-size:clamp(15px,4vmin,28px);font-weight:800;color:#fff;letter-spacing:.5px;
+  text-shadow:0 0 1.6vmin rgba(123,47,247,.6);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.title-icon{flex-shrink:0}
+.title-icon{flex-shrink:0;filter:drop-shadow(0 0 1vmin rgba(255,201,77,.8))}
 .total-wrap{display:flex;align-items:center;gap:1.2vmin;flex-shrink:0}
 .live-dot{width:1.6vmin;height:1.6vmin;min-width:8px;min-height:8px;border-radius:50%;background:#00e5a0;box-shadow:0 0 8px #00e5a0,0 0 18px rgba(0,229,160,.8);animation:dotPulse 1s ease-in-out infinite alternate}
 @keyframes dotPulse{from{transform:scale(.7);opacity:.4}to{transform:scale(1.25);opacity:1}}
-.total{font-size:clamp(20px,5.4vmin,40px);font-weight:900;color:#fff;white-space:nowrap}
+.total{font-size:clamp(20px,5.4vmin,40px);font-weight:900;color:#fff;text-shadow:0 0 1.6vmin rgba(0,229,160,.55);white-space:nowrap}
 .total small{font-size:.5em;font-weight:700;color:rgba(226,232,240,.6);margin-left:.15em}
 
-.items{display:flex;flex-direction:column;gap:2vmin}
+.items{position:relative;display:flex;flex-direction:column;gap:2vmin}
 .item{display:flex;align-items:center;gap:2vmin}
 .item-cmd{
   flex-shrink:0;text-align:center;
-  font-size:clamp(12px,2.8vmin,19px);font-weight:800;color:#0d1117;
-  background:linear-gradient(135deg,#ffc94d,#ffb02e);
-  border-radius:1vmin;padding:.9vmin 1.4vmin;letter-spacing:.2px;white-space:nowrap;
-  box-shadow:0 0 1.6vmin rgba(255,176,46,.55);
+  font-size:clamp(12px,2.6vmin,18px);font-weight:800;color:#0d1117;
+  border-radius:1vmin;padding:.9vmin 1.5vmin;letter-spacing:.2px;white-space:nowrap;
 }
 .item-body{flex:1;min-width:0}
 .item-label{
@@ -66,22 +105,34 @@ body{display:flex;align-items:flex-start;justify-content:center;padding:2.5vmin}
 }
 .item-label.blurred{filter:blur(6px);user-select:none}
 .bar-wrap{position:relative;height:clamp(24px,6vmin,46px);border-radius:1.2vmin;background:rgba(255,255,255,.08);overflow:hidden}
-.bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:1.2vmin;background:linear-gradient(90deg,#ff2d75,#ffc94d);box-shadow:0 0 1.6vmin rgba(255,45,117,.45);transition:width .5s ease}
+.bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:1.2vmin;overflow:hidden;transition:width .5s ease}
+.bar-fill::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.4) 50%,transparent 70%);
+  background-size:250% 100%;
+  animation:shimmer 2.6s linear infinite;
+}
+@keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 .bar-text{position:absolute;inset:0;display:flex;align-items:center;padding:0 1.6vmin;font-size:clamp(12px,3.2vmin,22px);font-weight:800;color:#fff;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.5)}
 </style>
 </head>
 <body>
 
 <div id="card">
-  <div class="live-badge"><span class="dot"></span>투표 진행중</div>
-  <div class="top-row">
-    <div class="title"><span class="title-icon">🗳️</span><span id="voteTitle">내전 투표</span></div>
-    <div class="total-wrap">
-      <span class="live-dot"></span>
-      <span class="total" id="voteTotal">0<small>표</small></span>
+  <div class="card-inner">
+    <span class="sparkle s1">✦</span>
+    <span class="sparkle s2">✦</span>
+    <span class="sparkle s3">✦</span>
+    <div class="live-badge"><span class="dot"></span>투표 진행중</div>
+    <div class="top-row">
+      <div class="title"><span class="title-icon">🗳️</span><span id="voteTitle">내전 투표</span></div>
+      <div class="total-wrap">
+        <span class="live-dot"></span>
+        <span class="total" id="voteTotal">0<small>표</small></span>
+      </div>
     </div>
+    <div class="items" id="voteItems"></div>
   </div>
-  <div class="items" id="voteItems"></div>
 </div>
 
 <script>
@@ -96,6 +147,13 @@ let hideContent = false;
 
 // 오버레이에는 !투표1, !투표2, !투표5(취소)만 표시
 const SHOW_INDEXES = [0, 1, 4];
+
+// 항목별 색상 테마 (idx 기준)
+const THEME = {
+  0: { icon:'⚡', from:'#00d4ff', to:'#7b2ff7' },
+  1: { icon:'🔥', from:'#ff2d75', to:'#ffc94d' },
+  4: { icon:'❌', from:'#94a3b8', to:'#64748b' },
+};
 
 function render(vote){
   const shown = (vote && Array.isArray(vote.items) ? vote.items : [])
@@ -115,16 +173,17 @@ function render(vote){
   itemsEl.innerHTML = shown.map(it => {
     const cnt = it.votes ? it.votes.length : 0;
     const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+    const theme = THEME[it.idx] || THEME[1];
     const labelHtml = hideContent
       ? '<span class="item-label blurred">● ● ●</span>'
       : `<div class="item-label">${esc(it.label)}</div>`;
     return `
     <div class="item">
-      <div class="item-cmd">!투표${it.idx+1}</div>
+      <div class="item-cmd" style="background:linear-gradient(135deg,${theme.from},${theme.to});box-shadow:0 0 1.6vmin ${theme.from}88">${theme.icon} !투표${it.idx+1}</div>
       <div class="item-body">
         ${labelHtml}
         <div class="bar-wrap">
-          <div class="bar-fill" style="width:${pct}%"></div>
+          <div class="bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${theme.from},${theme.to});box-shadow:0 0 1.6vmin ${theme.from}77"></div>
           <div class="bar-text">${cnt}표 · ${pct}%</div>
         </div>
       </div>
