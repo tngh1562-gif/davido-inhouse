@@ -4,48 +4,54 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vote Overlay</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@600;700;900&family=Rajdhani:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:'Noto Sans KR',sans-serif}
 body.test-mode{background:#03050e}
+body{display:flex;align-items:flex-start;justify-content:center;padding:2.5vmin}
 
 #card{
   display:none;
-  width:min(420px,94vw);
-  padding:18px 22px 20px;
-  border-radius:18px;
-  background:linear-gradient(150deg,rgba(8,12,24,.92),rgba(13,20,38,.92));
-  border:1px solid rgba(0,200,160,.35);
-  box-shadow:0 0 0 1px rgba(255,255,255,.04),0 0 40px rgba(0,200,160,.18),0 24px 60px rgba(0,0,0,.6);
-  backdrop-filter:blur(6px);
+  width:100%;
+  padding:3.2vmin 3.6vmin;
+  border-radius:2.4vmin;
+  background:linear-gradient(150deg,rgba(8,12,24,.94),rgba(13,20,38,.94));
+  border:1px solid rgba(0,200,160,.4);
+  box-shadow:0 0 0 1px rgba(255,255,255,.04),0 0 5vmin rgba(0,200,160,.2),0 2vmin 5vmin rgba(0,0,0,.6);
   animation:cardIn .35s cubic-bezier(.18,.9,.18,1.1) both;
 }
 #card.active{display:block}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 
-.top-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
-.title{font-size:14px;font-weight:700;color:rgba(226,232,240,.75);letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px}
-.total-wrap{display:flex;align-items:center;gap:7px;flex-shrink:0}
-.live-dot{width:8px;height:8px;border-radius:50%;background:#00e5a0;box-shadow:0 0 8px #00e5a0,0 0 18px rgba(0,229,160,.8);animation:dotPulse 1s ease-in-out infinite alternate}
+.top-row{display:flex;align-items:baseline;justify-content:space-between;gap:2vmin;margin-bottom:2.8vmin}
+.title{
+  font-size:clamp(15px,4vmin,28px);font-weight:800;color:#fff;letter-spacing:.5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.total-wrap{display:flex;align-items:center;gap:1.2vmin;flex-shrink:0}
+.live-dot{width:1.6vmin;height:1.6vmin;min-width:8px;min-height:8px;border-radius:50%;background:#00e5a0;box-shadow:0 0 8px #00e5a0,0 0 18px rgba(0,229,160,.8);animation:dotPulse 1s ease-in-out infinite alternate}
 @keyframes dotPulse{from{transform:scale(.7);opacity:.4}to{transform:scale(1.25);opacity:1}}
-.total{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:900;color:#fff}
-.total small{font-size:12px;font-weight:700;color:rgba(226,232,240,.55);margin-left:2px}
+.total{font-size:clamp(20px,5.4vmin,40px);font-weight:900;color:#fff;white-space:nowrap}
+.total small{font-size:.5em;font-weight:700;color:rgba(226,232,240,.6);margin-left:.15em}
 
-.items{display:flex;flex-direction:column;gap:10px}
-.item{display:flex;align-items:center;gap:12px}
+.items{display:flex;flex-direction:column;gap:2vmin}
+.item{display:flex;align-items:center;gap:2vmin}
 .item-cmd{
-  flex-shrink:0;width:68px;text-align:center;
-  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:900;color:#0d1117;
+  flex-shrink:0;text-align:center;
+  font-size:clamp(12px,2.8vmin,19px);font-weight:800;color:#0d1117;
   background:linear-gradient(135deg,#ffc94d,#ffb02e);
-  border-radius:6px;padding:4px 0;letter-spacing:.5px;
+  border-radius:1vmin;padding:.9vmin 1.4vmin;letter-spacing:.2px;white-space:nowrap;
 }
 .item-body{flex:1;min-width:0}
-.item-label{font-size:14px;font-weight:700;color:#fff;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item-label{
+  font-size:clamp(15px,4vmin,28px);font-weight:800;color:#fff;margin-bottom:1vmin;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
 .item-label.blurred{filter:blur(6px);user-select:none}
-.bar-wrap{position:relative;height:26px;border-radius:8px;background:rgba(255,255,255,.06);overflow:hidden}
-.bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:8px;background:linear-gradient(90deg,#00b4d8,#00e5a0);transition:width .5s ease}
-.bar-text{position:absolute;inset:0;display:flex;align-items:center;padding:0 10px;font-size:12px;font-weight:700;color:#fff;white-space:nowrap}
+.bar-wrap{position:relative;height:clamp(24px,6vmin,46px);border-radius:1.2vmin;background:rgba(255,255,255,.08);overflow:hidden}
+.bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:1.2vmin;background:linear-gradient(90deg,#00b4d8,#00e5a0);transition:width .5s ease}
+.bar-text{position:absolute;inset:0;display:flex;align-items:center;padding:0 1.6vmin;font-size:clamp(12px,3.2vmin,22px);font-weight:800;color:#fff;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.5)}
 </style>
 </head>
 <body>
@@ -117,26 +123,26 @@ function connectWS(){
 const IS_TEST = new URLSearchParams(location.search).has('test');
 if(IS_TEST){
   document.body.classList.add('test-mode');
-  let votes1 = [], votes2 = [];
-  render({
+  let votes1 = [], votes2 = [], votes3 = [], votes4 = [];
+  const data = () => ({
     active: true,
     title: '내전 투표 - 1세트 진행 방식',
     items: [
       { label: '첫참', votes: votes1 },
       { label: '선참권', votes: votes2 },
+      { label: '중참', votes: votes3 },
+      { label: '연참', votes: votes4 },
+      { label: '취소', votes: [] },
     ],
   });
+  render(data());
   setInterval(() => {
-    if(Math.random() > .5) votes1.push('user'+votes1.length);
-    else votes2.push('user'+votes2.length);
-    render({
-      active: true,
-      title: '내전 투표 - 1세트 진행 방식',
-      items: [
-        { label: '첫참', votes: votes1 },
-        { label: '선참권', votes: votes2 },
-      ],
-    });
+    const r = Math.random();
+    if(r < .35) votes1.push('user'+votes1.length);
+    else if(r < .65) votes2.push('user'+votes2.length);
+    else if(r < .85) votes3.push('user'+votes3.length);
+    else votes4.push('user'+votes4.length);
+    render(data());
   }, 1200);
 }else{
   connectWS();
