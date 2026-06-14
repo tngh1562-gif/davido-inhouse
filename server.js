@@ -2268,12 +2268,13 @@ function handleChat(msg) {
       const m = text.match(/^!투표\s*(\d+)$/);
       if (m) {
         const idx = parseInt(m[1]) - 1;
-        if (idx === 4) {
-          // !투표5 = 취소 (내 투표 취소)
-          state.vote.items.forEach(it => { it.votes = it.votes.filter(v => v !== nickname); });
-        } else if (idx >= 0 && idx < state.vote.items.length) {
+        if (idx >= 0 && idx < state.vote.items.length) {
+          // 항목이 있으면 !투표5(취소 항목 포함)도 일반 투표와 동일하게 집계
           state.vote.items.forEach(it => { it.votes = it.votes.filter(v => v !== nickname); });
           state.vote.items[idx].votes.push(nickname);
+        } else if (idx === 4) {
+          // 취소 항목이 없는 투표에서는 !투표5 = 내 투표 취소
+          state.vote.items.forEach(it => { it.votes = it.votes.filter(v => v !== nickname); });
         }
       }
     }
