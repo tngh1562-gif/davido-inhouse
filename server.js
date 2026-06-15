@@ -81,7 +81,7 @@ const DISCORD_BOT_API_SECRET = process.env.DISCORD_BOT_API_SECRET || '';
 // 경매사이트 결과화면 "디스코드 이동" 버튼용 — 경매 전용 음성채널/역할 (내전사이트 채널과 별도)
 const AUCTION_VOICE_LOBBY_ID = '1513880611386036354';
 const AUCTION_TEAM_VOICE_IDS = ['1513879916603506858','1513879935696240640','1513879983003533422','1513880001207078952'];
-const AUCTION_TEAM_ROLE_IDS  = ['1507741474282799245','1507741477869195265','1513871886608764938','1513871903763337276'];
+const AUCTION_TEAM_ROLE_IDS  = ['1514998921737277624','1514998928519467209','1513871886608764938','1513871903763337276'];
 
 function defaultInhouseDB() {
   return {
@@ -2269,8 +2269,12 @@ function handleChat(msg) {
       if (m) {
         const idx = parseInt(m[1]) - 1;
         if (idx >= 0 && idx < state.vote.items.length) {
+          // 항목이 있으면 !투표5(취소 항목 포함)도 일반 투표와 동일하게 집계
           state.vote.items.forEach(it => { it.votes = it.votes.filter(v => v !== nickname); });
           state.vote.items[idx].votes.push(nickname);
+        } else if (idx === 4) {
+          // 취소 항목이 없는 투표에서는 !투표5 = 내 투표 취소
+          state.vote.items.forEach(it => { it.votes = it.votes.filter(v => v !== nickname); });
         }
       }
     }
