@@ -924,6 +924,10 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
         <div class="card-title">🧾 최근 구매 기록</div>
         <div id="shopLog" class="shop-log"></div>
       </div>
+      <div class="card" style="margin-top:12px">
+        <div class="card-title">💳 포인트 지급/차감 로그</div>
+        <div id="shopPointLog" class="shop-log"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1902,6 +1906,7 @@ function renderShop(){
   renderShopSelected();
   renderShopProducts();
   renderShopLog();
+  renderShopPointLog();
 }
 function renderShopUsers(){
   const box=document.getElementById('shopUserList');
@@ -2015,10 +2020,34 @@ function adjustShopPoints(delta){
   const v=viewers.find(v=>v.id===shopSelectedViewerId);
   if(!v) return;
   v.pass=Math.max(0,viewerPoints(v)+delta);
+  if(!Array.isArray(v.pointHistory)) v.pointHistory=[];
+  v.pointHistory.unshift({id:Date.now(),amount:delta,reason:delta>=0?'상점 수동 지급':'상점 수동 차감',at:Date.now()});
   markViewersDirty();
   save();
   renderShop();
   renderViewers();
+}
+function renderShopPointLog(){
+  const el=document.getElementById('shopPointLog');
+  if(!el) return;
+  const rows=viewers.flatMap(v=>(Array.isArray(v.pointHistory)?v.pointHistory:[]).map(h=>({...h,viewer:v.name})))
+    .sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,30);
+  if(!rows.length){
+    el.innerHTML='<div class="empty-state">아직 포인트 지급/차감 기록이 없습니다.</div>';
+    return;
+  }
+  el.innerHTML=rows.map(h=>{
+    const amt=Number(h.amount)||0;
+    const sign=amt>0?'+':'';
+    const color=amt>0?'#16a34a':'var(--rl2)';
+    return `<div class="shop-log-row">
+      <div><b>${esc(h.viewer)}</b> · ${esc(h.reason||'')}</div>
+      <div style="text-align:right;white-space:nowrap">
+        <b style="color:${color}">${sign}${amt}P</b>
+        <span style="color:var(--txt2)"> · ${new Date(h.at).toLocaleString('ko-KR')}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 function renderShopLog(){
   const el=document.getElementById('shopLog');
@@ -3601,9 +3630,12 @@ function changePass(id, delta){
   const v = viewers.find(v=>v.id===id);
   if(!v) return;
   v.pass = Math.max(0, (v.pass||0) + delta);
+  if(!Array.isArray(v.pointHistory)) v.pointHistory=[];
+  v.pointHistory.unshift({id:Date.now(),amount:delta,reason:delta>=0?'시청자 목록 수동 지급':'시청자 목록 수동 차감',at:Date.now()});
   markViewersDirty();
   save();
   renderViewers();
+  if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
 }
 function clearViewerStats(){
   if(!confirm('시청자 DB 전체 승률을 초기화할까요?')) return;
