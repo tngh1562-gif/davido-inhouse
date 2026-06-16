@@ -117,10 +117,13 @@ app.use((req, res, next) => {
   res.redirect('/login.html');
 });
 
-// 브루트포스 방지: IP당 10분에 10회 실패 시 차단
+// 브루트포스 방지: IP당 10분에 10회 + 전체 10분에 30회 초과 시 차단
 const loginFailMap = new Map(); // ip → { count, firstAt }
-const LOGIN_MAX_FAIL = 10;
-const LOGIN_BLOCK_MS = 10 * 60 * 1000;
+const LOGIN_MAX_FAIL = 10;       // IP당 최대 실패 횟수
+const LOGIN_BLOCK_MS = 10 * 60 * 1000; // 10분
+let globalFailCount = 0;         // 전체 실패 누적
+let globalFailWindowStart = Date.now();
+const GLOBAL_MAX_FAIL = 30;      // 전체 최대 실패 횟수 (분산 공격 대응)
 
 function getClientIp(req) {
   return String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
@@ -133,6 +136,20 @@ app.post('/api/site-login', (req, res) => {
 
   const ip = getClientIp(req);
   const now = Date.now();
+
+  // 전체 실패 카운터 윈도우 초기화
+  if (now - globalFailWindowStart >= LOGIN_BLOCK_MS) {
+    globalFailCount = 0;
+    globalFailWindowStart = now;
+  }
+
+  // 전체 실패 한도 초과 (분산 공격 차단)
+  if (globalFailCount >= GLOBAL_MAX_FAIL) {
+    const remainSec = Math.ceil((LOGIN_BLOCK_MS - (now - globalFailWindowStart)) / 1000);
+    return res.status(429).json({ ok: false, error: `서버가 잠시 잠겼습니다. ${remainSec}초 후 다시 시도하세요.` });
+  }
+
+  // IP별 실패 한도 초과
   const fail = loginFailMap.get(ip);
   if (fail && (now - fail.firstAt) < LOGIN_BLOCK_MS && fail.count >= LOGIN_MAX_FAIL) {
     const remainSec = Math.ceil((LOGIN_BLOCK_MS - (now - fail.firstAt)) / 1000);
@@ -140,13 +157,16 @@ app.post('/api/site-login', (req, res) => {
   }
 
   if (req.body.password !== pw) {
+    // IP별 카운터
     const entry = fail && (now - fail.firstAt) < LOGIN_BLOCK_MS ? fail : { count: 0, firstAt: now };
     entry.count++;
     loginFailMap.set(ip, entry);
+    // 전체 카운터
+    globalFailCount++;
     return res.status(403).json({ ok: false, error: '비밀번호가 틀렸습니다' });
   }
 
-  loginFailMap.delete(ip); // 성공 시 카운터 초기화
+  loginFailMap.delete(ip); // 성공 시 IP 카운터 초기화
   const token = crypto.randomBytes(32).toString('hex');
   siteSessions.add(token);
   saveSiteSessions();
