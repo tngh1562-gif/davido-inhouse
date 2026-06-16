@@ -117,11 +117,36 @@ app.use((req, res, next) => {
   res.redirect('/login.html');
 });
 
+// 브루트포스 방지: IP당 10분에 10회 실패 시 차단
+const loginFailMap = new Map(); // ip → { count, firstAt }
+const LOGIN_MAX_FAIL = 10;
+const LOGIN_BLOCK_MS = 10 * 60 * 1000;
+
+function getClientIp(req) {
+  return String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
+}
+
 // 로그인
 app.post('/api/site-login', (req, res) => {
   const pw = getSitePassword();
   if (!pw) return res.json({ ok: true });
-  if (req.body.password !== pw) return res.status(403).json({ ok: false, error: '비밀번호가 틀렸습니다' });
+
+  const ip = getClientIp(req);
+  const now = Date.now();
+  const fail = loginFailMap.get(ip);
+  if (fail && (now - fail.firstAt) < LOGIN_BLOCK_MS && fail.count >= LOGIN_MAX_FAIL) {
+    const remainSec = Math.ceil((LOGIN_BLOCK_MS - (now - fail.firstAt)) / 1000);
+    return res.status(429).json({ ok: false, error: `너무 많은 시도입니다. ${remainSec}초 후 다시 시도하세요.` });
+  }
+
+  if (req.body.password !== pw) {
+    const entry = fail && (now - fail.firstAt) < LOGIN_BLOCK_MS ? fail : { count: 0, firstAt: now };
+    entry.count++;
+    loginFailMap.set(ip, entry);
+    return res.status(403).json({ ok: false, error: '비밀번호가 틀렸습니다' });
+  }
+
+  loginFailMap.delete(ip); // 성공 시 카운터 초기화
   const token = crypto.randomBytes(32).toString('hex');
   siteSessions.add(token);
   saveSiteSessions();
@@ -1909,7 +1934,11 @@ function handleWinrateCommand(nickname) {
 }
 
 // ── WebSocket 클라이언트 ──
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
+  if (!isSiteAuthenticated(req)) {
+    ws.close(4401, 'Unauthorized');
+    return;
+  }
   console.log('[WS] 브라우저 연결');
   ws.send(JSON.stringify({ type: 'state', data: publicState() }));
   ws.send(JSON.stringify({ type: 'lcu_champ_select', data: state.lcuDraft }));
