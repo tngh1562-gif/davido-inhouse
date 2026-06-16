@@ -10,6 +10,7 @@ const http = require('http');
 const https = require('https');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const CHAMPION_KO_MAP = require('./data/champion-ko-map.json');
 const CHAMPION_ID_BY_LOWER = new Map(Object.values(CHAMPION_KO_MAP).map(id => [id.toLowerCase(), id]));
@@ -28,18 +29,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-app.get('/', (req, res) => {
-  res.type('html').send(fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8'));
-});
-app.use(express.static(path.join(__dirname, 'public'), {
-  etag: false,
-  lastModified: false,
-  setHeaders: res => {
-    res.setHeader('Cache-Control', 'no-store, max-age=0');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-  },
-}));
 
 const IS_RAILWAY = !!(
   process.env.RAILWAY_ENVIRONMENT ||
@@ -77,6 +66,104 @@ function normalizeDiscordBotApiUrl(value) {
 
 const DISCORD_BOT_API_URL = normalizeDiscordBotApiUrl(process.env.DISCORD_BOT_API_URL);
 const DISCORD_BOT_API_SECRET = process.env.DISCORD_BOT_API_SECRET || '';
+
+// ── 사이트 접속 비밀번호 (서버 사이드 세션) ──────────────────────────────────
+const SITE_CONFIG_FILE   = path.join(DATA_DIR, 'site-config.json');
+const SITE_SESSIONS_FILE = path.join(DATA_DIR, 'site-sessions.json');
+const SITE_SESSION_COOKIE = 'siteSession';
+const SITE_SESSION_MAXAGE = 30 * 24 * 60 * 60; // 30일 (초)
+
+// 서버 재시작 후에도 로그인 유지되도록 파일에 세션 토큰 저장
+const siteSessions = new Set();
+try { JSON.parse(fs.readFileSync(SITE_SESSIONS_FILE, 'utf8')).forEach(t => siteSessions.add(t)); } catch {}
+
+function saveSiteSessions() {
+  try { fs.writeFileSync(SITE_SESSIONS_FILE, JSON.stringify([...siteSessions])); } catch {}
+}
+function loadSiteConfig() {
+  try { return JSON.parse(fs.readFileSync(SITE_CONFIG_FILE, 'utf8')); } catch { return {}; }
+}
+function saveSiteConfig(cfg) {
+  fs.writeFileSync(SITE_CONFIG_FILE, JSON.stringify(cfg, null, 2));
+}
+function getSitePassword() {
+  return process.env.SITE_PASSWORD || loadSiteConfig().sitePassword || '';
+}
+function parseSiteCookies(cookieHeader) {
+  const out = {};
+  String(cookieHeader || '').split(';').forEach(p => {
+    const eq = p.indexOf('=');
+    if (eq < 0) return;
+    out[p.slice(0, eq).trim()] = p.slice(eq + 1).trim();
+  });
+  return out;
+}
+function isSiteAuthenticated(req) {
+  const pw = getSitePassword();
+  if (!pw) return true;
+  return siteSessions.has(parseSiteCookies(req.headers.cookie)[SITE_SESSION_COOKIE] || '');
+}
+// OBS 오버레이 경로는 인증 불필요 (브라우저 소스가 쿠키 없이 접근)
+function isPublicPath(p) {
+  return p === '/login.html' || p.startsWith('/api/site-') ||
+    p.includes('overlay') || p === '/favicon.ico' || p.startsWith('/models/');
+}
+
+// 인증 미들웨어 — express.static 보다 먼저 등록
+app.use((req, res, next) => {
+  if (isPublicPath(req.path)) return next();
+  if (isSiteAuthenticated(req)) return next();
+  if (req.path.startsWith('/api/')) return res.status(401).json({ ok: false, error: '인증이 필요합니다' });
+  res.redirect('/login.html');
+});
+
+// 로그인
+app.post('/api/site-login', (req, res) => {
+  const pw = getSitePassword();
+  if (!pw) return res.json({ ok: true });
+  if (req.body.password !== pw) return res.status(403).json({ ok: false, error: '비밀번호가 틀렸습니다' });
+  const token = crypto.randomBytes(32).toString('hex');
+  siteSessions.add(token);
+  saveSiteSessions();
+  res.setHeader('Set-Cookie', `${SITE_SESSION_COOKIE}=${token}; HttpOnly; SameSite=Lax; Max-Age=${SITE_SESSION_MAXAGE}; Path=/`);
+  res.json({ ok: true });
+});
+
+// 비밀번호 변경 (로그인된 상태에서만 가능)
+app.post('/api/site-set-password', (req, res) => {
+  if (!isSiteAuthenticated(req)) return res.status(401).json({ ok: false, error: '인증이 필요합니다' });
+  const newPw = String(req.body.newPassword || '').trim();
+  if (!newPw) return res.status(400).json({ ok: false, error: '비밀번호를 입력해주세요' });
+  const cfg = loadSiteConfig();
+  cfg.sitePassword = newPw;
+  saveSiteConfig(cfg);
+  // 기존 세션 전부 만료 → 새 토큰 발급 (현재 관리자만 즉시 재로그인)
+  siteSessions.clear();
+  const token = crypto.randomBytes(32).toString('hex');
+  siteSessions.add(token);
+  saveSiteSessions();
+  res.setHeader('Set-Cookie', `${SITE_SESSION_COOKIE}=${token}; HttpOnly; SameSite=Lax; Max-Age=${SITE_SESSION_MAXAGE}; Path=/`);
+  res.json({ ok: true });
+});
+
+// 비밀번호 설정 여부 확인 (로그인 페이지에서 호출)
+app.get('/api/site-auth-status', (req, res) => {
+  res.json({ hasPassword: !!getSitePassword(), authenticated: isSiteAuthenticated(req) });
+});
+
+// 정적 파일 서빙 (인증 미들웨어 이후)
+app.get('/', (req, res) => {
+  res.type('html').send(fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8'));
+});
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: res => {
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  },
+}));
 
 // 경매사이트 결과화면 "디스코드 이동" 버튼용 — 경매 전용 음성채널/역할 (내전사이트 채널과 별도)
 const AUCTION_VOICE_LOBBY_ID = '1513880611386036354';

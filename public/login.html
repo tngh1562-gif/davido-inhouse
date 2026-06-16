@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>다비도 내전사이트</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#0d1117;
+    color:#e6edf3;
+    font-family:'Noto Sans KR',sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    min-height:100vh;
+  }
+  .box{
+    background:#161b22;
+    border:1px solid #30363d;
+    border-radius:16px;
+    padding:36px 32px;
+    width:100%;max-width:360px;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);
+    text-align:center;
+  }
+  .logo{font-size:1.5rem;font-weight:900;color:#58a6ff;margin-bottom:6px;letter-spacing:-0.5px}
+  .sub{font-size:.8rem;color:#8b949e;margin-bottom:28px}
+  label{display:block;text-align:left;font-size:.78rem;color:#8b949e;margin-bottom:6px}
+  input[type=password]{
+    width:100%;
+    background:#0d1117;
+    border:1px solid #30363d;
+    border-radius:10px;
+    color:#e6edf3;
+    font-size:.95rem;
+    padding:12px 14px;
+    outline:none;
+    font-family:inherit;
+    transition:border-color .15s;
+  }
+  input[type=password]:focus{border-color:#58a6ff}
+  button{
+    width:100%;
+    margin-top:16px;
+    background:#238636;
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:12px;
+    font-size:.95rem;
+    font-family:inherit;
+    font-weight:700;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  button:hover{background:#2ea043}
+  button:disabled{background:#21262d;color:#484f58;cursor:not-allowed}
+  .err{
+    margin-top:14px;
+    font-size:.8rem;
+    color:#f85149;
+    min-height:20px;
+  }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">⚔ 다비도 내전</div>
+  <div class="sub">접속 비밀번호를 입력하세요</div>
+  <label for="pw">비밀번호</label>
+  <input id="pw" type="password" placeholder="••••••••" autocomplete="current-password">
+  <button id="btn" onclick="login()">입장</button>
+  <div class="err" id="err"></div>
+</div>
+<script>
+document.getElementById('pw').addEventListener('keydown', e => {
+  if (e.key === 'Enter') login();
+});
+async function login() {
+  const pw = document.getElementById('pw').value;
+  const btn = document.getElementById('btn');
+  const err = document.getElementById('err');
+  if (!pw) { err.textContent = '비밀번호를 입력해주세요'; return; }
+  btn.disabled = true;
+  btn.textContent = '확인 중...';
+  err.textContent = '';
+  try {
+    const r = await fetch('/api/site-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+      const dest = new URLSearchParams(location.search).get('next') || '/';
+      location.replace(dest);
+    } else {
+      err.textContent = data.error || '비밀번호가 틀렸습니다';
+      btn.disabled = false;
+      btn.textContent = '입장';
+    }
+  } catch {
+    err.textContent = '서버 연결 실패';
+    btn.disabled = false;
+    btn.textContent = '입장';
+  }
+}
+</script>
+</body>
+</html>

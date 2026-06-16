@@ -1379,6 +1379,17 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus,#qui
     </div>
 
     <div class="card">
+      <div class="card-title">🔒 사이트 접속 비밀번호</div>
+      <div style="display:grid;gap:8px;margin-bottom:10px">
+        <input id="siteNewPw" type="password" placeholder="새 비밀번호 (비우면 잠금 해제)">
+      </div>
+      <button class="btn btn-g" onclick="setSitePassword()">변경</button>
+      <p style="font-size:.72rem;color:var(--txt2);line-height:1.55;margin-top:10px">
+        변경 시 다른 기기의 기존 세션이 모두 만료됩니다. 비밀번호를 비우면 잠금이 해제됩니다.
+      </p>
+    </div>
+
+    <div class="card">
       <div class="card-title">치지직 채널 연결</div>
       <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:12px">
         <input id="botChannelId" type="text" placeholder="채널 ID">
@@ -2836,6 +2847,14 @@ async function deleteCustomCmd(cmd){
   }catch{ toast('삭제 실패'); }
 }
 
+async function setSitePassword(){
+  const pw=(document.getElementById('siteNewPw')?.value||'');
+  if(!confirm(pw?`비밀번호를 "${pw}"로 설정하면 모든 기기에서 재로그인이 필요합니다. 계속할까요?`:'비밀번호를 제거하면 누구나 접속할 수 있습니다. 계속할까요?')) return;
+  const r=await fetch('/api/site-set-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({newPassword:pw})});
+  const d=await r.json();
+  if(d.ok){ toast(pw?'비밀번호가 변경됐습니다':'비밀번호가 제거됐습니다 (잠금 해제)'); document.getElementById('siteNewPw').value=''; }
+  else toast('오류: '+(d.error||'실패'));
+}
 async function saveBotAuth(){
   const nidAut=(document.getElementById('botNidAut')?.value||'').trim();
   const nidSes=(document.getElementById('botNidSes')?.value||'').trim();
