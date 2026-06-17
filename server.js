@@ -106,7 +106,10 @@ function isSiteAuthenticated(req) {
 // OBS 오버레이 경로는 인증 불필요 (브라우저 소스가 쿠키 없이 접근)
 function isPublicPath(p) {
   return p === '/login.html' || p.startsWith('/api/site-') ||
-    p.includes('overlay') || p === '/favicon.ico' || p.startsWith('/models/');
+    p.includes('overlay') || p === '/favicon.ico' || p.startsWith('/models/') ||
+    p.startsWith('/api/inhouse-register') || p.startsWith('/api/discord-') ||
+    p.startsWith('/api/register-') || p === '/api/inhouse-link' ||
+    p === '/api/link-discord' || p === '/api/inhouse-register-mosts';
 }
 
 // 인증 미들웨어 — express.static 보다 먼저 등록
