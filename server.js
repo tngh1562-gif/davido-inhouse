@@ -107,9 +107,12 @@ function isSiteAuthenticated(req) {
 function isPublicPath(p) {
   return p === '/login.html' || p.startsWith('/api/site-') ||
     p.includes('overlay') || p === '/favicon.ico' || p.startsWith('/models/') ||
+    // 봇 API (자체 secret 검증)
     p.startsWith('/api/inhouse-register') || p.startsWith('/api/discord-') ||
     p.startsWith('/api/register-') || p === '/api/inhouse-link' ||
-    p === '/api/link-discord' || p === '/api/inhouse-register-mosts';
+    p === '/api/link-discord' || p === '/api/inhouse-register-mosts' ||
+    // OBS 오버레이에서 쿠키 없이 읽는 읽기 전용 엔드포인트
+    p === '/api/vote-state' || p === '/api/inhouse-db';
 }
 
 // 인증 미들웨어 — express.static 보다 먼저 등록
