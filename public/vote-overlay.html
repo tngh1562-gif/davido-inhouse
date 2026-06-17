@@ -20,9 +20,8 @@ body{display:flex;align-items:flex-start;justify-content:center;padding:2.5vmin}
   overflow:hidden;
   isolation:isolate;
   filter:drop-shadow(0 2vmin 5vmin rgba(0,0,0,.6));
-  animation:cardIn .35s cubic-bezier(.18,.9,.18,1.1) both;
 }
-#card.active{display:block}
+#card.active{display:block;animation:cardIn .35s cubic-bezier(.18,.9,.18,1.1) both}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 
 #card::before{
