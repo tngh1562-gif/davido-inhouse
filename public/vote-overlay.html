@@ -231,6 +231,14 @@ if(IS_TEST){
   }, 1200);
 }else{
   connectWS();
+  function pollVoteState(){
+    fetch('/api/vote-state')
+      .then(r=>r.json())
+      .then(d=>{ if(d.vote) render(d.vote); })
+      .catch(()=>{});
+  }
+  setInterval(pollVoteState, 3000);
+  pollVoteState();
 }
 </script>
 </body>
