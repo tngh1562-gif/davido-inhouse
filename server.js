@@ -116,7 +116,7 @@ function isPublicPath(p) {
     p === '/api/link-discord' || p === '/api/inhouse-register-mosts' ||
     // OBS 오버레이에서 쿠키 없이 읽는 읽기 전용 엔드포인트
     p === '/api/vote-state' || p === '/api/inhouse-db' || p === '/api/viewer-points' ||
-    p === '/api/viewer-deduct' || p === '/api/viewer-grant';
+    p === '/api/viewer-deduct' || p === '/api/viewer-grant' || p === '/api/viewer-shop-buy';
 }
 
 // 인증 미들웨어 — express.static 보다 먼저 등록
@@ -1141,6 +1141,40 @@ app.post('/api/viewer-grant', (req, res) => {
     const amount = Number(req.body.amount) || 0;
     if (!findViewerByChzzkNickname(nickname)) return res.json({ ok: false, error: '시청자 없음' });
     const after = viewerPointsDelta(nickname, amount);
+    res.json({ ok: true, points: after });
+  } catch(e) { res.json({ ok: false, error: e.message }); }
+});
+
+// 뷰어 상점 구매 처리: 포인트 차감 + 보관함봇 추가
+app.post('/api/viewer-shop-buy', async (req, res) => {
+  try {
+    if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin'))
+      return res.status(403).json({ ok: false, error: '권한 없음' });
+    const { nickname, itemName, price } = req.body;
+    if (!nickname || !itemName || !price) return res.json({ ok: false, error: '파라미터 누락' });
+    // 1. 포인트 확인 및 차감
+    const viewer = findViewerByChzzkNickname(nickname);
+    if (!viewer) return res.json({ ok: false, error: '시청자 없음 (내전 등록 필요)' });
+    const current = Math.max(0, Number(viewer.pass) || 0);
+    if (current < price) return res.json({ ok: false, error: `포인트 부족 (보유: ${current}P, 필요: ${price}P)` });
+    const after = viewerPointsDelta(nickname, -price);
+    // 2. 보관함봇에 아이템 추가
+    if (DISCORD_BOT_API_URL && DISCORD_BOT_API_SECRET) {
+      try {
+        const result = await postJson(`${DISCORD_BOT_API_URL}/api/bot-command`, {
+          secret: DISCORD_BOT_API_SECRET,
+          command: '추가',
+          options: { 닉네임: nickname, 보상이름: itemName, 개수: 1 }
+        });
+        if (!result.ok) {
+          viewerPointsDelta(nickname, price); // 환불
+          return res.json({ ok: false, error: `보관함 추가 실패: ${result.error || '봇 오류'}` });
+        }
+      } catch(e) {
+        viewerPointsDelta(nickname, price); // 환불
+        return res.json({ ok: false, error: `보관함봇 연결 실패: ${e.message}` });
+      }
+    }
     res.json({ ok: true, points: after });
   } catch(e) { res.json({ ok: false, error: e.message }); }
 });
