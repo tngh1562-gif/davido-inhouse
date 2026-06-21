@@ -67,6 +67,9 @@ function normalizeDiscordBotApiUrl(value) {
 const DISCORD_BOT_API_URL = normalizeDiscordBotApiUrl(process.env.DISCORD_BOT_API_URL);
 const DISCORD_BOT_API_SECRET = process.env.DISCORD_BOT_API_SECRET || '';
 
+const VIEWER_SERVER_URL = (process.env.VIEWER_SERVER_URL || '').replace(/\/+$/, '');
+const VIEWER_SERVER_SECRET = process.env.VIEWER_SERVER_SECRET || 'davido-admin';
+
 // ── 사이트 접속 비밀번호 (서버 사이드 세션) ──────────────────────────────────
 const SITE_CONFIG_FILE   = path.join(DATA_DIR, 'site-config.json');
 const SITE_SESSIONS_FILE = path.join(DATA_DIR, 'site-sessions.json');
@@ -1715,7 +1718,7 @@ async function fetchChzzkJson(url, options = {}, timeoutMs = 5000) {
   }
 }
 
-function postJson(url, payload) {
+function postJson(url, payload, extraHeaders) {
   return new Promise((resolve, reject) => {
     const target = new URL(url);
     const body = Buffer.from(JSON.stringify(payload || {}), 'utf8');
@@ -1725,6 +1728,7 @@ function postJson(url, payload) {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Content-Length': body.length,
+        ...(extraHeaders || {}),
       },
       timeout: 10000,
     }, res => {
@@ -2425,6 +2429,11 @@ function handleChat(msg) {
     if (text.startsWith('!신청곡 ')) {
       const query = text.slice(5).trim();
       if (query) handleMusicRequest(nickname, query);
+    }
+
+    // 시청자 사이트 채팅 인증 코드 감지 (5자리: A-HJ-NP-Z2-9)
+    if (VIEWER_SERVER_URL && /^[A-HJ-NP-Z2-9]{5}$/i.test(text.trim())) {
+      postJson(`${VIEWER_SERVER_URL}/api/auth/confirm`, { token: text.trim().toUpperCase(), name: nickname }, { 'x-admin-secret': VIEWER_SERVER_SECRET }).catch(() => {});
     }
 
     broadcast({ type: 'chat', nickname, text, ts: Date.now() });
