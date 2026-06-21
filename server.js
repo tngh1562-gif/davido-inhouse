@@ -2435,7 +2435,10 @@ function handleChat(msg) {
     if (VIEWER_SERVER_URL) {
       const authMatch = text.trim().match(/^!인증\s+([A-HJ-NP-Z2-9]{5})$/i);
       if (authMatch) {
-        postJson(`${VIEWER_SERVER_URL}/api/auth/confirm`, { token: authMatch[1].toUpperCase(), name: nickname }, { 'x-admin-secret': VIEWER_SERVER_SECRET }).catch(() => {});
+        console.log(`[AUTH] 코드 감지: ${authMatch[1]} by ${nickname}`);
+        postJson(`${VIEWER_SERVER_URL}/api/auth/confirm`, { token: authMatch[1].toUpperCase(), name: nickname }, { 'x-admin-secret': VIEWER_SERVER_SECRET })
+          .then(() => { console.log(`[AUTH] 인증 성공: ${nickname}`); sendBotNotice(nickname, `✅ ${nickname}님 인증 완료!`); })
+          .catch(err => { console.log(`[AUTH] 인증 실패: ${err.message}`); sendBotNotice(nickname, `❌ 인증 실패: ${err.message}`); });
       }
     }
 
