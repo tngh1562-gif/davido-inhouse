@@ -1114,7 +1114,7 @@ function viewerPointsDelta(nickname, delta) {
   );
   if (!v) return null;
   v.pass = Math.max(0, (Number(v.pass) || 0) + delta);
-  saveInhouseDB(db);
+  writeInhouseDB(db);
   return v.pass;
 }
 
