@@ -1082,6 +1082,15 @@ app.get('/api/inhouse-db', (req, res) => {
   res.json(readInhouseDB());
 });
 
+// 뷰어 배팅 제어 프록시 (inhouse → viewer-server)
+app.post('/api/viewer-bet', async (req, res) => {
+  if (!VIEWER_SERVER_URL) return res.json({ ok: false, error: 'VIEWER_SERVER_URL 미설정' });
+  try {
+    const result = await postJson(`${VIEWER_SERVER_URL}/api/admin/bet`, req.body, { 'x-admin-secret': VIEWER_SERVER_SECRET });
+    res.json(result);
+  } catch(e) { res.json({ ok: false, error: e.message }); }
+});
+
 // 시청자 포인트 조회 (뷰어 플랫폼 실시간 연동용)
 app.get('/api/viewer-points', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
