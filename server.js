@@ -115,7 +115,7 @@ function isPublicPath(p) {
     p.startsWith('/api/register-') || p === '/api/inhouse-link' ||
     p === '/api/link-discord' || p === '/api/inhouse-register-mosts' ||
     // OBS 오버레이에서 쿠키 없이 읽는 읽기 전용 엔드포인트
-    p === '/api/vote-state' || p === '/api/inhouse-db';
+    p === '/api/vote-state' || p === '/api/inhouse-db' || p === '/api/viewer-points';
 }
 
 // 인증 미들웨어 — express.static 보다 먼저 등록
@@ -1080,6 +1080,17 @@ app.get('/api/livegame', (req, res) => {
 
 app.get('/api/inhouse-db', (req, res) => {
   res.json(readInhouseDB());
+});
+
+// 시청자 포인트 조회 (뷰어 플랫폼 실시간 연동용)
+app.get('/api/viewer-points', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const nickname = String(req.query.nickname || '').trim();
+  if (!nickname) return res.json({ ok: false, error: 'nickname 필요' });
+  const viewer = findViewerByChzzkNickname(nickname);
+  if (!viewer) return res.json({ ok: false, points: 0 });
+  const points = Math.max(0, Number(viewer.pass) || 0);
+  res.json({ ok: true, points, name: viewer.name || nickname });
 });
 
 // 채팅 투표 현황 (경매사이트 등 외부 연동용)
