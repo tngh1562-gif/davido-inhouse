@@ -1120,25 +1120,29 @@ function viewerPointsDelta(nickname, delta) {
 
 // 뷰어 서버 미니게임 포인트 차감 (secret 검증)
 app.post('/api/viewer-deduct', (req, res) => {
-  if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin')) return res.status(403).json({ ok: false, error: '권한 없음' });
-  const nickname = String(req.body.nickname || '').trim();
-  const amount = Number(req.body.amount) || 0;
-  const viewer = findViewerByChzzkNickname(nickname);
-  if (!viewer) return res.json({ ok: false, error: '시청자 없음' });
-  const current = Math.max(0, Number(viewer.pass) || 0);
-  if (current < amount) return res.json({ ok: false, error: `포인트 부족 (보유: ${current}P)` });
-  const after = viewerPointsDelta(nickname, -amount);
-  res.json({ ok: true, points: after });
+  try {
+    if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin')) return res.status(403).json({ ok: false, error: '권한 없음' });
+    const nickname = String(req.body.nickname || '').trim();
+    const amount = Number(req.body.amount) || 0;
+    const viewer = findViewerByChzzkNickname(nickname);
+    if (!viewer) return res.json({ ok: false, error: '시청자 없음' });
+    const current = Math.max(0, Number(viewer.pass) || 0);
+    if (current < amount) return res.json({ ok: false, error: `포인트 부족 (보유: ${current}P)` });
+    const after = viewerPointsDelta(nickname, -amount);
+    res.json({ ok: true, points: after });
+  } catch(e) { res.json({ ok: false, error: e.message }); }
 });
 
 // 뷰어 서버 미니게임 포인트 지급 (secret 검증)
 app.post('/api/viewer-grant', (req, res) => {
-  if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin')) return res.status(403).json({ ok: false, error: '권한 없음' });
-  const nickname = String(req.body.nickname || '').trim();
-  const amount = Number(req.body.amount) || 0;
-  if (!findViewerByChzzkNickname(nickname)) return res.json({ ok: false, error: '시청자 없음' });
-  const after = viewerPointsDelta(nickname, amount);
-  res.json({ ok: true, points: after });
+  try {
+    if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin')) return res.status(403).json({ ok: false, error: '권한 없음' });
+    const nickname = String(req.body.nickname || '').trim();
+    const amount = Number(req.body.amount) || 0;
+    if (!findViewerByChzzkNickname(nickname)) return res.json({ ok: false, error: '시청자 없음' });
+    const after = viewerPointsDelta(nickname, amount);
+    res.json({ ok: true, points: after });
+  } catch(e) { res.json({ ok: false, error: e.message }); }
 });
 
 // 채팅 투표 현황 (경매사이트 등 외부 연동용)
