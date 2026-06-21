@@ -2431,9 +2431,12 @@ function handleChat(msg) {
       if (query) handleMusicRequest(nickname, query);
     }
 
-    // 시청자 사이트 채팅 인증 코드 감지 (5자리: A-HJ-NP-Z2-9)
-    if (VIEWER_SERVER_URL && /^[A-HJ-NP-Z2-9]{5}$/i.test(text.trim())) {
-      postJson(`${VIEWER_SERVER_URL}/api/auth/confirm`, { token: text.trim().toUpperCase(), name: nickname }, { 'x-admin-secret': VIEWER_SERVER_SECRET }).catch(() => {});
+    // 시청자 사이트 채팅 인증 코드 감지 (!인증 XXXXX)
+    if (VIEWER_SERVER_URL) {
+      const authMatch = text.trim().match(/^!인증\s+([A-HJ-NP-Z2-9]{5})$/i);
+      if (authMatch) {
+        postJson(`${VIEWER_SERVER_URL}/api/auth/confirm`, { token: authMatch[1].toUpperCase(), name: nickname }, { 'x-admin-secret': VIEWER_SERVER_SECRET }).catch(() => {});
+      }
     }
 
     broadcast({ type: 'chat', nickname, text, ts: Date.now() });
