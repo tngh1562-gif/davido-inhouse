@@ -116,7 +116,8 @@ function isPublicPath(p) {
     p === '/api/link-discord' || p === '/api/inhouse-register-mosts' ||
     // OBS 오버레이에서 쿠키 없이 읽는 읽기 전용 엔드포인트
     p === '/api/vote-state' || p === '/api/inhouse-db' || p === '/api/viewer-points' ||
-    p === '/api/viewer-deduct' || p === '/api/viewer-grant' || p === '/api/viewer-shop-buy';
+    p === '/api/viewer-deduct' || p === '/api/viewer-grant' || p === '/api/viewer-shop-buy' ||
+    p === '/api/viewer-timing-winner';
 }
 
 // 인증 미들웨어 — express.static 보다 먼저 등록
@@ -1178,6 +1179,22 @@ app.post('/api/viewer-shop-buy', async (req, res) => {
     res.json({ ok: true, points: after });
   } catch(e) { res.json({ ok: false, error: e.message }); }
 });
+
+// 타이밍 복권 당첨자 저장소 (뷰어 서버 배포 후에도 유지)
+const TIMING_WINNER_FILE = path.join(DATA_DIR, 'timing-winner.json');
+app.route('/api/viewer-timing-winner')
+  .get((req, res) => {
+    try { res.json(JSON.parse(fs.readFileSync(TIMING_WINNER_FILE, 'utf8'))); }
+    catch { res.json({}); }
+  })
+  .post((req, res) => {
+    if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin'))
+      return res.status(403).json({ ok: false });
+    try {
+      fs.writeFileSync(TIMING_WINNER_FILE, JSON.stringify(req.body || {}));
+      res.json({ ok: true });
+    } catch(e) { res.json({ ok: false, error: e.message }); }
+  });
 
 // 채팅 투표 현황 (경매사이트 등 외부 연동용)
 app.get('/api/vote-state', (req, res) => {
