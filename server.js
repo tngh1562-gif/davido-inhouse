@@ -1129,6 +1129,10 @@ function viewerPointsDelta(nickname, delta, reason) {
   if (!v) return null;
   const before = Math.max(0, Number(v.pass) || 0);
   v.pass = Math.max(0, before + delta);
+  // 기존 인하우스 UI가 읽는 pointHistory에도 기록
+  if (!Array.isArray(v.pointHistory)) v.pointHistory = [];
+  v.pointHistory.unshift({ id: Date.now(), amount: delta, reason: reason || (delta >= 0 ? '지급' : '차감'), at: Date.now() });
+  v.pointHistory = v.pointHistory.slice(0, 200); // 최대 200개
   writeInhouseDB(db);
   addPointLog(nickname, delta, reason, before, v.pass);
   return v.pass;
