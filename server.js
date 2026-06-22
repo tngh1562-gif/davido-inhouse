@@ -73,6 +73,7 @@ const VIEWER_SERVER_SECRET = process.env.VIEWER_SERVER_SECRET || 'davido-admin';
 // ── 사이트 접속 비밀번호 (서버 사이드 세션) ──────────────────────────────────
 const SITE_CONFIG_FILE   = path.join(DATA_DIR, 'site-config.json');
 const SITE_SESSIONS_FILE = path.join(DATA_DIR, 'site-sessions.json');
+const POINT_LOG_FILE     = path.join(DATA_DIR, 'point-log.json');
 const SITE_SESSION_COOKIE = 'siteSession';
 const SITE_SESSION_MAXAGE = 30 * 24 * 60 * 60; // 30일 (초)
 
@@ -1105,7 +1106,19 @@ app.get('/api/viewer-points', (req, res) => {
 });
 
 // 뷰어 서버 미니게임 포인트 차감/지급 헬퍼
-function viewerPointsDelta(nickname, delta) {
+// ── 포인트 로그 ──────────────────────────────────────────
+function addPointLog(nickname, delta, reason, before, after) {
+  try {
+    if (!fs.existsSync(POINT_LOG_FILE)) fs.writeFileSync(POINT_LOG_FILE, JSON.stringify({ logs: [] }), 'utf8');
+    const data = JSON.parse(fs.readFileSync(POINT_LOG_FILE, 'utf8'));
+    if (!Array.isArray(data.logs)) data.logs = [];
+    data.logs.unshift({ nickname, delta, reason: reason || '', before, after, at: Date.now() });
+    data.logs = data.logs.slice(0, 2000); // 최대 2000개 유지
+    fs.writeFileSync(POINT_LOG_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch(e) { console.error('[POINT_LOG]', e.message); }
+}
+
+function viewerPointsDelta(nickname, delta, reason) {
   const key = normalizeChatName(nickname);
   if (!key) return null;
   const db = readInhouseDB();
@@ -1114,8 +1127,10 @@ function viewerPointsDelta(nickname, delta) {
     normalizeChatName(v.chzzk) === key || normalizeChatName(v.name) === key || stripTag(v.name) === key
   );
   if (!v) return null;
-  v.pass = Math.max(0, (Number(v.pass) || 0) + delta);
+  const before = Math.max(0, Number(v.pass) || 0);
+  v.pass = Math.max(0, before + delta);
   writeInhouseDB(db);
+  addPointLog(nickname, delta, reason, before, v.pass);
   return v.pass;
 }
 
@@ -1125,11 +1140,12 @@ app.post('/api/viewer-deduct', (req, res) => {
     if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin')) return res.status(403).json({ ok: false, error: '권한 없음' });
     const nickname = String(req.body.nickname || '').trim();
     const amount = Number(req.body.amount) || 0;
+    const reason = String(req.body.reason || '차감').slice(0, 80);
     const viewer = findViewerByChzzkNickname(nickname);
     if (!viewer) return res.json({ ok: false, error: '시청자 없음' });
     const current = Math.max(0, Number(viewer.pass) || 0);
     if (current < amount) return res.json({ ok: false, error: `포인트 부족 (보유: ${current}P)` });
-    const after = viewerPointsDelta(nickname, -amount);
+    const after = viewerPointsDelta(nickname, -amount, reason);
     res.json({ ok: true, points: after });
   } catch(e) { res.json({ ok: false, error: e.message }); }
 });
@@ -1140,9 +1156,30 @@ app.post('/api/viewer-grant', (req, res) => {
     if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin')) return res.status(403).json({ ok: false, error: '권한 없음' });
     const nickname = String(req.body.nickname || '').trim();
     const amount = Number(req.body.amount) || 0;
+    const reason = String(req.body.reason || '지급').slice(0, 80);
     if (!findViewerByChzzkNickname(nickname)) return res.json({ ok: false, error: '시청자 없음' });
-    const after = viewerPointsDelta(nickname, amount);
+    const after = viewerPointsDelta(nickname, amount, reason);
     res.json({ ok: true, points: after });
+  } catch(e) { res.json({ ok: false, error: e.message }); }
+});
+
+// 포인트 로그 조회 API
+app.get('/api/point-log', (req, res) => {
+  try {
+    if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin') &&
+        req.headers['x-secret'] !== (process.env.BOT_API_SECRET || '')) {
+      return res.status(403).json({ ok: false, error: '권한 없음' });
+    }
+    const nickname = req.query.nickname ? String(req.query.nickname).trim() : null;
+    const limit = Math.min(200, parseInt(req.query.limit) || 50);
+    if (!fs.existsSync(POINT_LOG_FILE)) return res.json({ ok: true, logs: [] });
+    const data = JSON.parse(fs.readFileSync(POINT_LOG_FILE, 'utf8'));
+    let logs = data.logs || [];
+    if (nickname) {
+      const key = normalizeChatName(nickname);
+      logs = logs.filter(l => normalizeChatName(l.nickname) === key);
+    }
+    res.json({ ok: true, logs: logs.slice(0, limit) });
   } catch(e) { res.json({ ok: false, error: e.message }); }
 });
 
@@ -1158,7 +1195,7 @@ app.post('/api/viewer-shop-buy', async (req, res) => {
     if (!viewer) return res.json({ ok: false, error: '시청자 없음 (내전 등록 필요)' });
     const current = Math.max(0, Number(viewer.pass) || 0);
     if (current < price) return res.json({ ok: false, error: `포인트 부족 (보유: ${current}P, 필요: ${price}P)` });
-    const after = viewerPointsDelta(nickname, -price);
+    const after = viewerPointsDelta(nickname, -price, `🛒 상점 구매: ${itemName} (-${price}P)`);
     // 2. 보관함봇에 아이템 추가
     if (DISCORD_BOT_API_URL && DISCORD_BOT_API_SECRET) {
       try {
