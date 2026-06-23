@@ -1118,24 +1118,31 @@ function addPointLog(nickname, delta, reason, before, after) {
   } catch(e) { console.error('[POINT_LOG]', e.message); }
 }
 
-function viewerPointsDelta(nickname, delta, reason) {
+function viewerPointsDelta(nickname, delta, reason, retries = 5) {
   const key = normalizeChatName(nickname);
   if (!key) return null;
-  const db = readInhouseDB();
   const stripTag = n => normalizeChatName(String(n || '').replace(/#.+$/, ''));
-  const v = db.viewers.find(v =>
-    normalizeChatName(v.chzzk) === key || normalizeChatName(v.name) === key || stripTag(v.name) === key
-  );
-  if (!v) return null;
-  const before = Math.max(0, Number(v.pass) || 0);
-  v.pass = Math.max(0, before + delta);
-  // 기존 인하우스 UI가 읽는 pointHistory에도 기록
-  if (!Array.isArray(v.pointHistory)) v.pointHistory = [];
-  v.pointHistory.unshift({ id: Date.now(), amount: delta, reason: reason || (delta >= 0 ? '지급' : '차감'), at: Date.now() });
-  v.pointHistory = v.pointHistory.slice(0, 200); // 최대 200개
-  writeInhouseDB(db);
-  addPointLog(nickname, delta, reason, before, v.pass);
-  return v.pass;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const db = readInhouseDB();
+      const v = db.viewers.find(v =>
+        normalizeChatName(v.chzzk) === key || normalizeChatName(v.name) === key || stripTag(v.name) === key
+      );
+      if (!v) return null;
+      const before = Math.max(0, Number(v.pass) || 0);
+      v.pass = Math.max(0, before + delta);
+      if (!Array.isArray(v.pointHistory)) v.pointHistory = [];
+      v.pointHistory.unshift({ id: Date.now(), amount: delta, reason: reason || (delta >= 0 ? '지급' : '차감'), at: Date.now() });
+      v.pointHistory = v.pointHistory.slice(0, 200);
+      writeInhouseDB(db);
+      addPointLog(nickname, delta, reason, before, v.pass);
+      return v.pass;
+    } catch(e) {
+      if (e.message === 'stale_db_snapshot' && attempt < retries - 1) continue; // 재시도
+      throw e;
+    }
+  }
+  return null;
 }
 
 // 뷰어 서버 미니게임 포인트 차감 (secret 검증)
