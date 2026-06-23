@@ -1119,15 +1119,23 @@ function addPointLog(nickname, delta, reason, before, after) {
 }
 
 function viewerPointsDelta(nickname, delta, reason, retries = 5) {
+  if (!nickname) return null;
   const key = normalizeChatName(nickname);
   if (!key) return null;
   const stripTag = n => normalizeChatName(String(n || '').replace(/#.+$/, ''));
+  // findViewerByChzzkNickname과 완전히 동일한 매칭 로직
+  const findInDB = (viewers) => viewers.find(v =>
+    normalizeChatName(v.chzzk) === key ||
+    normalizeChatName(v.name) === key ||
+    stripTag(v.name) === key ||
+    (key.length >= 2 && normalizeChatName(v.chzzk || '').includes(key)) ||
+    (key.length >= 2 && normalizeChatName(v.name || '').includes(key))
+  ) || null;
+
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
       const db = readInhouseDB();
-      const v = db.viewers.find(v =>
-        normalizeChatName(v.chzzk) === key || normalizeChatName(v.name) === key || stripTag(v.name) === key
-      );
+      const v = findInDB(db.viewers);
       if (!v) return null;
       const before = Math.max(0, Number(v.pass) || 0);
       v.pass = Math.max(0, before + delta);
@@ -1138,7 +1146,7 @@ function viewerPointsDelta(nickname, delta, reason, retries = 5) {
       addPointLog(nickname, delta, reason, before, v.pass);
       return v.pass;
     } catch(e) {
-      if (e.message === 'stale_db_snapshot' && attempt < retries - 1) continue; // 재시도
+      if (e.message === 'stale_db_snapshot' && attempt < retries - 1) continue;
       throw e;
     }
   }
