@@ -5,7 +5,9 @@
 // =============================================
 
 const express = require('express');
-const { WebSocketServer } = require('ws');
+const ws_module = require('ws');
+const { WebSocketServer } = ws_module;
+const WebSocket = ws_module; // alias for connectChatWs
 const http = require('http');
 const https = require('https');
 const path = require('path');
@@ -1388,6 +1390,7 @@ app.get('/api/roulette-config', (req, res) => {
 });
 
 app.post('/api/roulette-config', (req, res) => {
+  if (!isSiteAuthenticated(req)) return res.status(401).json({ ok: false, error: '인증 필요' });
   try {
     res.json({ ok: true, data: writeRouletteConfig(req.body || {}) });
   } catch (err) {
@@ -1728,6 +1731,7 @@ app.post('/api/import-backup', (req, res) => {
 });
 
 app.post('/api/discord-config', (req, res) => {
+  if (!isSiteAuthenticated(req)) return res.status(401).json({ ok: false, error: '인증 필요' });
   try {
     res.json({ ok: true, data: writeDiscordConfig(req.body || {}) });
   } catch (err) {
@@ -2398,7 +2402,7 @@ async function connectChzzk(channelId) {
 }
 
 function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = null, extraToken = null) {
-  const WS = require('ws');
+  const WS = ws_module;
   chzzkAuthed = false;
   const chatAuthMode = state.bot.sendToChat && hasChzzkAuth() ? 'SEND' : 'READ';
   const serverNum = Math.floor(Math.random() * 9) + 1;
@@ -2483,8 +2487,7 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
       if (msg.cmd === 100) return;
       if (msg.cmd === 93101) { handleChat(msg); return; }
       if (msg.cmd === 93102) { handleDonation(msg); return; }
-      // TODO: 도네이션 cmd 코드 확인용 임시 로그 - 실제 cmd 값 확인되면 제거
-      console.log('[CHZZK] 미확인 cmd:', msg.cmd, '| bdy:', JSON.stringify(msg.bdy).slice(0, 400));
+      // 미확인 cmd는 무시
     } catch (e) { console.log('[CHZZK] parse error:', e.message); }
   });
 
@@ -2499,20 +2502,6 @@ function connectChatWs(chatChannelId, originalChannelId, accessToken, botUid = n
     }
     broadcastState();
     scheduleChzzkReconnect(chatChannelId, originalChannelId);
-    return;
-    if (state.channelId === originalChannelId) {
-      console.log('[CHZZK] 재연결 5초 후...');
-      setTimeout(async () => {
-        let newToken = null;
-        try {
-          const res = await fetch(`https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`,
-            { headers: chzzkHeaders() });
-          const json = await res.json();
-          newToken = json?.content?.accessToken || null;
-        } catch {}
-        connectChatWs(chatChannelId, originalChannelId, newToken);
-      }, 5000);
-    }
   });
 
   ws.on('error', (err) => {
