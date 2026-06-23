@@ -5019,6 +5019,16 @@ function connectInhouseChatCommands(){
       if(msg.type==='bot_reply') toast(msg.text);
       if(msg.type==='custom_cmds_update'){ _customCmds=msg.commands||[]; renderCustomCmds(); }
       if(msg.type==='state') setBotState(msg.data);
+      // 뷰어 서버가 포인트 변경 시 인하우스 브라우저 캐시 동기화
+      if(msg.type==='viewer_pass_changed' && msg.nickname && msg.pass != null){
+        const key=msg.nickname.trim().toLowerCase();
+        const v=viewers.find(v=>
+          (v.chzzk||'').trim().toLowerCase()===key ||
+          (v.name||'').trim().toLowerCase()===key ||
+          (v.name||'').replace(/#.+$/,'').trim().toLowerCase()===key
+        );
+        if(v){ v.pass=msg.pass; renderShop(); renderViewers(); }
+      }
     }catch{}
   };
   inhouseCommandWs.onclose=()=>{

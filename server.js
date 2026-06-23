@@ -1144,6 +1144,8 @@ function viewerPointsDelta(nickname, delta, reason, retries = 5) {
       v.pointHistory = v.pointHistory.slice(0, 200);
       writeInhouseDB(db);
       addPointLog(nickname, delta, reason, before, v.pass);
+      // 인하우스 사이트 브라우저에 DB 변경 알림 (캐시 동기화)
+      broadcast({ type: 'viewer_pass_changed', nickname, pass: v.pass });
       return v.pass;
     } catch(e) {
       if (e.message === 'stale_db_snapshot' && attempt < retries - 1) continue;
