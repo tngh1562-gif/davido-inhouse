@@ -1109,15 +1109,29 @@ app.get('/api/viewer-points', (req, res) => {
 
 // 뷰어 서버 미니게임 포인트 차감/지급 헬퍼
 // ── 포인트 로그 ──────────────────────────────────────────
+const POINT_LOG_CHANNEL = process.env.POINT_LOG_CHANNEL_ID || '1519309432394219583';
+
 function addPointLog(nickname, delta, reason, before, after) {
   try {
     if (!fs.existsSync(POINT_LOG_FILE)) fs.writeFileSync(POINT_LOG_FILE, JSON.stringify({ logs: [] }), 'utf8');
     const data = JSON.parse(fs.readFileSync(POINT_LOG_FILE, 'utf8'));
     if (!Array.isArray(data.logs)) data.logs = [];
     data.logs.unshift({ nickname, delta, reason: reason || '', before, after, at: Date.now() });
-    data.logs = data.logs.slice(0, 2000); // 최대 2000개 유지
+    data.logs = data.logs.slice(0, 2000);
     fs.writeFileSync(POINT_LOG_FILE, JSON.stringify(data, null, 2), 'utf8');
   } catch(e) { console.error('[POINT_LOG]', e.message); }
+
+  // 디스코드 포인트 로그 채널 전송
+  if (DISCORD_BOT_API_URL && DISCORD_BOT_API_SECRET) {
+    const sign = delta >= 0 ? '+' : '';
+    const emoji = delta >= 0 ? '🟢' : '🔴';
+    const content = `${emoji} **${nickname}** ${sign}${delta}P → ${after}P${reason ? `  |  ${reason}` : ''}`;
+    postJson(`${DISCORD_BOT_API_URL}/api/send-channel-message`, {
+      secret: DISCORD_BOT_API_SECRET,
+      channelId: POINT_LOG_CHANNEL,
+      content
+    }).catch(e => console.warn('[POINT_LOG_DISCORD]', e.message));
+  }
 }
 
 function viewerPointsDelta(nickname, delta, reason, retries = 5) {
