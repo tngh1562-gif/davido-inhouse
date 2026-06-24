@@ -1124,8 +1124,16 @@ function addPointLog(nickname, delta, reason, before, after) {
   // 디스코드 포인트 로그 채널 전송
   if (DISCORD_BOT_API_URL && DISCORD_BOT_API_SECRET) {
     const sign = delta >= 0 ? '+' : '';
-    const emoji = delta >= 0 ? '🟢' : '🔴';
-    const content = `${emoji} **${nickname}** ${sign}${delta}P → ${after}P${reason ? `  |  ${reason}` : ''}`;
+    const arrow = delta >= 0 ? '▲' : '▼';
+    // reason에서 게임명 추출 (이모지 + 앞부분)
+    const reasonText = reason
+      ? reason.replace(/\s*\([^)]*\)\s*$/, '').trim()  // 괄호 제거
+      : (delta >= 0 ? '지급' : '차감');
+    const content = [
+      `**${arrow} ${nickname}**`,
+      `\`${sign}${delta}P\` → \`${after}P\``,
+      reasonText ? `— ${reasonText}` : ''
+    ].filter(Boolean).join('  ');
     postJson(`${DISCORD_BOT_API_URL}/api/send-channel-message`, {
       secret: DISCORD_BOT_API_SECRET,
       channelId: POINT_LOG_CHANNEL,
