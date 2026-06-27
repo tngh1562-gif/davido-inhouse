@@ -1267,8 +1267,7 @@ const PAWN_PRICES = {
   '선참권': 70,          // 120 - 50
   '노밴권': 190,         // 240 - 50
   '종일권': 410,         // 460 - 50
-  '연장권': 550,         // 600 - 50
-  '내전 1판 연장권': 550, // 연장권 구버전 이름
+  '내전 1판 연장권': 550, // 600 - 50
 };
 const PAWN_DAILY_LIMIT = 10;
 const PAWN_LOG_FILE = path.join(DATA_DIR, 'pawn-log.json');
