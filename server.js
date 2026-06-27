@@ -120,7 +120,7 @@ function isPublicPath(p) {
     // OBS 오버레이에서 쿠키 없이 읽는 읽기 전용 엔드포인트
     p === '/api/vote-state' || p === '/api/inhouse-db' || p === '/api/viewer-points' ||
     p === '/api/viewer-deduct' || p === '/api/viewer-grant' || p === '/api/viewer-shop-buy' ||
-    p === '/api/viewer-timing-winner';
+    p === '/api/viewer-timing-winner' || p === '/api/viewer-inventory' || p === '/api/viewer-pawn-sell';
 }
 
 // 인증 미들웨어 — express.static 보다 먼저 등록
@@ -1259,6 +1259,80 @@ app.post('/api/viewer-shop-buy', async (req, res) => {
       }
     }
     res.json({ ok: true, points: after });
+  } catch(e) { res.json({ ok: false, error: e.message }); }
+});
+
+// ── 전당포 아이템 가격표 (상점가 - 50P) ──
+const PAWN_PRICES = {
+  '선참권': 70,   // 120 - 50
+  '노밴권': 190,  // 240 - 50
+  '종일권': 410,  // 460 - 50
+  '연장권': 550,  // 600 - 50
+};
+const PAWN_DAILY_LIMIT = 10;
+const PAWN_LOG_FILE = path.join(DATA_DIR, 'pawn-log.json');
+if (!fs.existsSync(PAWN_LOG_FILE)) fs.writeFileSync(PAWN_LOG_FILE, '{}', 'utf8');
+
+function getPawnLog() {
+  try { return JSON.parse(fs.readFileSync(PAWN_LOG_FILE, 'utf8')); } catch { return {}; }
+}
+function savePawnLog(log) { fs.writeFileSync(PAWN_LOG_FILE, JSON.stringify(log, null, 2), 'utf8'); }
+
+// 보관함 조회
+app.get('/api/viewer-inventory', async (req, res) => {
+  try {
+    if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin'))
+      return res.status(403).json({ ok: false, error: '권한 없음' });
+    const { nickname } = req.query;
+    if (!nickname) return res.json({ ok: false, error: '닉네임 필요' });
+    if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET)
+      return res.json({ ok: false, error: '보관함봇 미설정' });
+    const result = await postJson(`${DISCORD_BOT_API_URL}/api/bot-command`, {
+      secret: DISCORD_BOT_API_SECRET,
+      command: '보관함조회',
+      options: { 닉네임: nickname }
+    });
+    res.json(result);
+  } catch(e) { res.json({ ok: false, error: e.message }); }
+});
+
+// 전당포 판매
+app.post('/api/viewer-pawn-sell', async (req, res) => {
+  try {
+    if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin'))
+      return res.status(403).json({ ok: false, error: '권한 없음' });
+    const { nickname, itemName } = req.body;
+    if (!nickname || !itemName) return res.json({ ok: false, error: '파라미터 누락' });
+
+    const price = PAWN_PRICES[itemName];
+    if (!price) return res.json({ ok: false, error: `판매 불가 아이템: ${itemName}` });
+
+    // 일일 거래 횟수 확인
+    const today = new Date(Date.now() + 9*3600000).toISOString().slice(0,10);
+    const log = getPawnLog();
+    const key = `${nickname}:${today}`;
+    const usedToday = log[key] || 0;
+    if (usedToday >= PAWN_DAILY_LIMIT)
+      return res.json({ ok: false, error: `오늘 전당포 거래 한도 초과 (${PAWN_DAILY_LIMIT}회/일)` });
+
+    // 보관함에서 아이템 차감
+    if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET)
+      return res.json({ ok: false, error: '보관함봇 미설정' });
+    const deduct = await postJson(`${DISCORD_BOT_API_URL}/api/bot-command`, {
+      secret: DISCORD_BOT_API_SECRET,
+      command: '차감',
+      options: { 닉네임: nickname, 보상이름: itemName, 개수: 1 }
+    });
+    if (!deduct.ok) return res.json({ ok: false, error: `차감 실패: ${deduct.error}` });
+
+    // 포인트 지급
+    const after = viewerPointsDelta(nickname, price, `🏪 전당포: ${itemName} 판매 (+${price}P)`);
+
+    // 거래 횟수 기록
+    log[key] = usedToday + 1;
+    savePawnLog(log);
+
+    res.json({ ok: true, points: after, usedToday: usedToday + 1, limit: PAWN_DAILY_LIMIT });
   } catch(e) { res.json({ ok: false, error: e.message }); }
 });
 
