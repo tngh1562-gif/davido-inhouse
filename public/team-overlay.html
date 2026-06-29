@@ -129,15 +129,16 @@
   }
   .tier{
     max-width:92px;
-    padding:5px 8px;
-    border-radius:4px;
-    font-size:12px;
+    padding:4px 8px;
+    border-radius:5px;
+    font-size:11px;
     font-weight:900;
-    color:#0c1018;
-    background:#e8eef8;
+    letter-spacing:0.3px;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    text-shadow:0 1px 2px rgba(0,0,0,0.35);
+    box-shadow:0 1px 4px rgba(0,0,0,0.3);
   }
   .empty{
     height:100%;
@@ -279,6 +280,19 @@ function posLabel(p, fallback){
 function tierLabel(p){
   return p.tierLabel || p.tier || '';
 }
+function tierColor(key){
+  const k = String(key || '').toUpperCase();
+  if(k.startsWith('CH')) return {bg:'#f0c030',text:'#1a0800'};  // 챌린저 — 금
+  if(k.startsWith('GM')) return {bg:'#d93450',text:'#fff'};      // 그랜드마스터 — 진홍
+  if(k.startsWith('MS')) return {bg:'#9b4dff',text:'#fff'};      // 마스터 — 보라
+  if(k.startsWith('DI')) return {bg:'#3a9bd5',text:'#fff'};      // 다이아 — 파랑
+  if(k.startsWith('EM')) return {bg:'#00b96b',text:'#fff'};      // 에메랄드 — 초록
+  if(k.startsWith('PL')) return {bg:'#00c4c4',text:'#fff'};      // 플래티넘 — 청록
+  if(k.startsWith('GO')) return {bg:'#d4a017',text:'#1a0800'};   // 골드 — 황금
+  if(k.startsWith('SI')) return {bg:'#8a9bb0',text:'#fff'};      // 실버 — 회청
+  if(k.startsWith('BR')) return {bg:'#7c4a2c',text:'#f5d9c8'};   // 브론즈 — 갈색
+  return {bg:'#4a4a5a',text:'#c0c0c0'};                           // 아이언 — 어두운 회색
+}
 function playerPos(p){
   return p.assignedPos || (p.positions||[])[0] || '무관';
 }
@@ -299,7 +313,7 @@ function renderTeam(id, side, label){
       return `<div class="player" style="opacity:.34">
         <span class="pos">${idx+1}</span>
         <div><div class="name">빈 슬롯</div><div class="sub">대기 중</div></div>
-        <span class="tier">-</span>
+        <span class="tier" style="background:#3a3a4a;color:#555">-</span>
       </div>`;
     }
     const sub = [p.chzzk, (p.positions||[]).filter(Boolean).join(' / ')].filter(Boolean).join(' · ');
@@ -309,12 +323,12 @@ function renderTeam(id, side, label){
         <div class="name">${esc(p.name || '?')}</div>
         <div class="sub">${esc(sub || ' ')}</div>
       </div>
-      <span class="tier">${esc(tierLabel(p))}</span>
+      ${(()=>{const t=tierLabel(p);const c=tierColor(t);return t?`<span class="tier" style="background:${c.bg};color:${c.text}">${esc(t)}</span>`:`<span class="tier" style="background:#3a3a4a;color:#666">-</span>`;})()}
     </div>`;
   }).join('');
   box.innerHTML = `<div class="head">
     <div class="label">${label}</div>
-    <div class="meta"><span class="score">${score}</span><span>PTS</span></div>
+    <div class="meta"><span class="score">${score.toLocaleString()}</span><span>MMR</span></div>
   </div><div class="list">${rows}</div>`;
 }
 function render(){
