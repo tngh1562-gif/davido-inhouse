@@ -4068,6 +4068,21 @@ function record(res){
   if(document.getElementById('tab-shop')?.classList.contains('on')) renderShop();
   const baseMsg={blue:'🔵 블루 승리!',red:'🔴 레드 승리!',draw:'🤝 무승부!'}[res];
   toast(bonusCount?`${baseMsg} 승리팀 ${bonusCount}명 +1P` : baseMsg);
+
+  // 시청자 배팅 포인트 지급 (blue/red만, draw는 종료 처리)
+  if(res==='blue'||res==='red'){
+    fetch('/api/viewer-bet',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'resolve',result:res})
+    }).then(r=>r.json()).then(d=>{
+      if(d.ok) toast('🎉 시청자 배팅 포인트 지급 완료!');
+      else toast('[배팅] 지급 실패: '+(d.error||''),'err');
+    }).catch(e=>toast('[배팅] 오류: '+e.message,'err'));
+  } else {
+    // 무승부 → 배팅 종료만
+    fetch('/api/viewer-bet',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'ended'})
+    }).catch(()=>{});
+  }
 }
 
 function autoIfReady(){
