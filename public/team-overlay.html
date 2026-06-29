@@ -381,8 +381,29 @@ function connect(){
     setTimeout(connect, 1500);
   }
 }
+
+// DB 폴링 — WebSocket으로 못 받은 변경사항을 3초마다 캐치
+let _lastTeamSig = '';
+async function pollTeams(){
+  try{
+    const res = await fetch('/api/inhouse-db', { cache:'no-store' });
+    if(!res.ok) return;
+    const db = await res.json();
+    const blue = Array.isArray(db.curBlue) ? db.curBlue.map(normalizePlayer) : [];
+    const red  = Array.isArray(db.curRed)  ? db.curRed.map(normalizePlayer)  : [];
+    // 변경됐을 때만 렌더 (불필요한 깜빡임 방지)
+    const sig = JSON.stringify({ blue: blue.map(p=>p.name+p.tier), red: red.map(p=>p.name+p.tier) });
+    if(sig !== _lastTeamSig){
+      _lastTeamSig = sig;
+      teams = { blue, red, updatedAt: db.updatedAt || null };
+      render();
+    }
+  }catch(e){}
+}
+
 fetchState();
 connect();
+setInterval(pollTeams, 3000);
 </script>
 </body>
 </html>
