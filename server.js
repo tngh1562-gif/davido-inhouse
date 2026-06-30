@@ -1246,7 +1246,7 @@ app.post('/api/viewer-shop-buy', async (req, res) => {
       try {
         const result = await postJson(`${DISCORD_BOT_API_URL}/api/bot-command`, {
           secret: DISCORD_BOT_API_SECRET,
-          command: '추가',
+          command: 'shop_grant',
           options: { 닉네임: nickname, 보상이름: itemName, 개수: 1 }
         });
         if (!result.ok) {
