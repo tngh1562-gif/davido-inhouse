@@ -120,7 +120,8 @@ function isPublicPath(p) {
     // OBS 오버레이에서 쿠키 없이 읽는 읽기 전용 엔드포인트
     p === '/api/vote-state' || p === '/api/inhouse-db' || p === '/api/viewer-points' ||
     p === '/api/viewer-deduct' || p === '/api/viewer-grant' || p === '/api/viewer-shop-buy' ||
-    p === '/api/viewer-timing-winner' || p === '/api/viewer-inventory' || p === '/api/viewer-pawn-sell';
+    p === '/api/viewer-timing-winner' || p === '/api/viewer-inventory' || p === '/api/viewer-pawn-sell' ||
+    p === '/api/auction-move-voice-teams';
 }
 
 // 인증 미들웨어 — express.static 보다 먼저 등록
@@ -1415,6 +1416,8 @@ app.post('/api/start-inhouse', async (req, res) => {
 
 // 경매사이트 결과화면 - 1~4팀 디스코드 음성 이동 + 역할 부여
 app.post('/api/auction-move-voice-teams', async (req, res) => {
+  if (req.headers['x-viewer-secret'] !== (VIEWER_SERVER_SECRET || 'davido-admin'))
+    return res.status(403).json({ ok: false, error: '권한 없음' });
   if (!DISCORD_BOT_API_URL || !DISCORD_BOT_API_SECRET) {
     return res.json({ ok: false, error: 'DISCORD_BOT_API_URL / DISCORD_BOT_API_SECRET 환경변수가 필요합니다.' });
   }
