@@ -1891,7 +1891,7 @@ const SHOP_ITEMS=[
   {id:'priority',name:'선참권',price:60,desc:''},
   {id:'all_day',name:'종일권',price:230,desc:''},
   {id:'no_ban',name:'노밴권',price:120,desc:''},
-  {id:'extend',name:'연장권',price:300,desc:''},
+  {id:'extend',name:'내전 1판 연장권',price:300,desc:''},
 ];
 let shopSelectedViewerId=null;
 function viewerPoints(v){ return Math.max(0, Number(v?.pass)||0); }
@@ -1999,7 +1999,7 @@ function renderShopProducts(){
   }).join('');
 }
 // 보관함 자동 추가 대상 아이템 (봇 config.json rewards에 등록된 이름과 일치해야 함)
-const SHOP_STORAGE_ITEMS = new Set(['선참권','종일권','연장권']);
+const SHOP_STORAGE_ITEMS = new Set(['선참권','종일권','내전 1판 연장권']);
 
 async function buyShopItem(itemId){
   const v=viewers.find(v=>v.id===shopSelectedViewerId);
